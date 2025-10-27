@@ -103,16 +103,31 @@ npm run preview  # Preview production build
 
 ## Deployment
 
-This is set up for Cloudflare Pages deployment:
+This project supports deployment to both Cloudflare Pages and GitHub Pages:
+
+### Cloudflare Pages
 
 1. **Framework**: Astro
 2. **Build Command**: `npm run build`
 3. **Output Directory**: `dist`
 
+### GitHub Pages
+
+1. **Framework**: Astro
+2. **Build Command**: `npm run build:github`
+3. **Output Directory**: `dist`
+4. **Base URL**: `/stupid-web-tricks`
+5. **Custom Domain**: `https://richlewis007.com`
+
 ### Manual Build
 
 ```bash
+# For Cloudflare Pages
 npm run build
+
+# For GitHub Pages
+npm run build:github
+
 # The dist/ folder has your static files
 ```
 

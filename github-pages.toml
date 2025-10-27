@@ -1,0 +1,31 @@
+# GitHub Pages Configuration
+
+# Build settings for GitHub Pages deployment
+build_command = "npm run build"
+build_output_directory = "dist"
+
+# GitHub Pages specific settings
+[env]
+NODE_ENV = "production"
+PUBLIC_BASE_URL = "/stupid-web-tricks"
+
+# Headers for GitHub Pages
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+X-XSS-Protection = "1; mode=block"
+Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+for = "/_astro/*"
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache images
+[[headers]]
+for = "*.svg"
+[headers.values]
+Cache-Control = "public, max-age=31536000"
