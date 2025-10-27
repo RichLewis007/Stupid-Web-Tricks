@@ -1,0 +1,597 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="SVG & Canvas - Stupid Web Tricks">
+  <!-- Hero Section -->
+  <section class="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-green-900 via-teal-900 to-blue-900">
+    <div class="max-w-7xl mx-auto text-center">
+      <h1 class="text-5xl sm:text-6xl font-bold mb-6 gradient-text">
+        SVG & Canvas
+      </h1>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+        Create stunning vector graphics, interactive animations, and dynamic visualizations using SVG and HTML5 Canvas.
+      </p>
+    </div>
+  </section>
+
+  <!-- Interactive Demos -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Interactive Graphics Demos
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- SVG Animation -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">SVG Path Animation</h3>
+          <div class="demo-container">
+            <div class="svg-demo">
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                <path id="svgPath" d="M50,100 Q100,50 150,100 T250,100" stroke="#667eea" stroke-width="3" fill="none"/>
+                <circle id="svgCircle" cx="50" cy="100" r="8" fill="#764ba2">
+                  <animateMotion dur="3s" repeatCount="indefinite">
+                    <mpath href="#svgPath"/>
+                  </animateMotion>
+                </circle>
+              </svg>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>&lt;svg viewBox="0 0 200 200"&gt;
+  &lt;path id="path" d="M50,100 Q100,50 150,100" 
+        stroke="#667eea" fill="none"/&gt;
+  &lt;circle fill="#764ba2"&gt;
+    &lt;animateMotion dur="3s" repeatCount="indefinite"&gt;
+      &lt;mpath href="#path"/&gt;
+    &lt;/animateMotion&gt;
+  &lt;/circle&gt;
+&lt;/svg&gt;</code></pre>
+          </div>
+        </div>
+
+        <!-- Canvas Drawing -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Canvas Interactive Drawing</h3>
+          <div class="demo-container">
+            <div class="canvas-demo">
+              <canvas id="drawingCanvas" width="200" height="200"></canvas>
+              <div class="canvas-controls">
+                <button id="clearCanvas">Clear</button>
+                <input type="color" id="colorPicker" value="#667eea">
+                <input type="range" id="brushSize" min="1" max="20" value="5">
+              </div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let isDrawing = false;
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+
+function draw(e) {
+  if (!isDrawing) return;
+  
+  ctx.lineWidth = brushSize.value;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = colorPicker.value;
+  
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- SVG Morphing -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">SVG Shape Morphing</h3>
+          <div class="demo-container">
+            <div class="svg-morph-demo">
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                <path id="morphPath" d="M100,50 L150,100 L100,150 L50,100 Z" fill="#667eea">
+                  <animate attributeName="d" 
+                           values="M100,50 L150,100 L100,150 L50,100 Z;
+                                   M100,25 L175,100 L100,175 L25,100 Z;
+                                   M100,50 L150,100 L100,150 L50,100 Z" 
+                           dur="2s" 
+                           repeatCount="indefinite"/>
+                </path>
+              </svg>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>&lt;path fill="#667eea"&gt;
+  &lt;animate attributeName="d" 
+           values="M100,50 L150,100 L100,150 L50,100 Z;
+                   M100,25 L175,100 L100,175 L25,100 Z;
+                   M100,50 L150,100 L100,150 L50,100 Z" 
+           dur="2s" 
+           repeatCount="indefinite"/&gt;
+&lt;/path&gt;</code></pre>
+          </div>
+        </div>
+
+        <!-- Canvas Particles -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Canvas Particle System</h3>
+          <div class="demo-container">
+            <div class="particles-demo">
+              <canvas id="particlesCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = (Math.random() - 0.5) * 2;
+    this.life = 1;
+  }
+  
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life -= 0.01;
+  }
+  
+  draw(ctx) {
+    ctx.globalAlpha = this.life;
+    ctx.fillRect(this.x, this.y, 2, 2);
+  }
+}</code></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Advanced Techniques -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-gray-900 to-gray-800">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Advanced Graphics Techniques
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- SVG Filters -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">SVG Filters & Effects</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Create stunning visual effects using SVG filters like blur, shadow, and distortion.
+            </p>
+            <div class="code-example">
+              <pre><code>&lt;defs&gt;
+  &lt;filter id="glow"&gt;
+    &lt;feGaussianBlur stdDeviation="3" result="coloredBlur"/&gt;
+    &lt;feMerge&gt;
+      &lt;feMergeNode in="coloredBlur"/&gt;
+      &lt;feMergeNode in="SourceGraphic"/&gt;
+    &lt;/feMerge&gt;
+  &lt;/filter&gt;
+&lt;/defs&gt;
+
+&lt;circle cx="100" cy="100" r="50" 
+        fill="#667eea" filter="url(#glow)"/&gt;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Image Processing -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Canvas Image Processing</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Manipulate images with Canvas for effects like grayscale, sepia, and custom filters.
+            </p>
+            <div class="code-example">
+              <pre><code>function applyFilter(imageData, filterType) {
+  const data = imageData.data;
+  
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    
+    if (filterType === 'grayscale') {
+      const gray = r * 0.299 + g * 0.587 + b * 0.114;
+      data[i] = data[i + 1] = data[i + 2] = gray;
+    }
+  }
+  
+  return imageData;
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- SVG Clipping -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">SVG Clipping & Masking</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Use clipping paths and masks to create complex visual effects and shapes.
+            </p>
+            <div class="code-example">
+              <pre><code>&lt;defs&gt;
+  &lt;clipPath id="circleClip"&gt;
+    &lt;circle cx="100" cy="100" r="80"/&gt;
+  &lt;/clipPath&gt;
+&lt;/defs&gt;
+
+&lt;rect x="50" y="50" width="100" height="100" 
+      fill="#667eea" clip-path="url(#circleClip)"/&gt;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas WebGL -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Canvas WebGL Integration</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Combine Canvas with WebGL for high-performance graphics and 3D effects.
+            </p>
+            <div class="code-example">
+              <pre><code>const canvas = document.getElementById('canvas');
+const gl = canvas.getContext('webgl');
+
+const vertexShaderSource = `
+  attribute vec2 position;
+  void main() {
+    gl_Position = vec4(position, 0.0, 1.0);
+  }
+`;
+
+const fragmentShaderSource = `
+  precision mediump float;
+  void main() {
+    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  }
+`;</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Performance Tips -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Performance Tips
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="tip-card">
+          <div class="tip-icon">⚡</div>
+          <h3 class="text-xl font-bold mb-3">SVG Optimization</h3>
+          <p class="text-gray-400">
+            Use SVG sprites and optimize paths to reduce file size and improve performance.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎯</div>
+          <h3 class="text-xl font-bold mb-3">Canvas Offscreen</h3>
+          <p class="text-gray-400">
+            Use OffscreenCanvas for heavy computations without blocking the main thread.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🔄</div>
+          <h3 class="text-xl font-bold mb-3">RequestAnimationFrame</h3>
+          <p class="text-gray-400">
+            Always use requestAnimationFrame for smooth animations instead of setTimeout.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">📱</div>
+          <h3 class="text-xl font-bold mb-3">Mobile Considerations</h3>
+          <p class="text-gray-400">
+            Reduce complexity on mobile devices and consider using CSS transforms when possible.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎨</div>
+          <h3 class="text-xl font-bold mb-3">Memory Management</h3>
+          <p class="text-gray-400">
+            Clear Canvas contexts and remove unused SVG elements to prevent memory leaks.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">⏱️</div>
+          <h3 class="text-xl font-bold mb-3">Batch Operations</h3>
+          <p class="text-gray-400">
+            Group multiple drawing operations together to minimize context switches.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .demo-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .demo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .demo-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 1rem 0;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .code-snippet {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-snippet pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* SVG Demo */
+  .svg-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .svg-demo svg {
+    border-radius: 10px;
+  }
+  
+  /* Canvas Demo */
+  .canvas-demo {
+    text-align: center;
+  }
+  
+  #drawingCanvas {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    cursor: crosshair;
+    background: white;
+  }
+  
+  .canvas-controls {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .canvas-controls button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .canvas-controls input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  .canvas-controls input[type="range"] {
+    width: 100px;
+  }
+  
+  /* SVG Morph Demo */
+  .svg-morph-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .svg-morph-demo svg {
+    border-radius: 10px;
+  }
+  
+  /* Particles Demo */
+  .particles-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #particlesCanvas {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: #1a1a2e;
+  }
+  
+  /* Technique Cards */
+  .technique-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .technique-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .code-example {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-example pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* Tip Cards */
+  .tip-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .tip-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .tip-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Canvas drawing functionality
+    const canvas = document.getElementById('drawingCanvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      let isDrawing = false;
+      const colorPicker = document.getElementById('colorPicker');
+      const brushSize = document.getElementById('brushSize');
+      const clearBtn = document.getElementById('clearCanvas');
+
+      function startDrawing(e) {
+        isDrawing = true;
+        ctx.beginPath();
+        ctx.moveTo(e.offsetX, e.offsetY);
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        
+        ctx.lineWidth = brushSize.value;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = colorPicker.value;
+        
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(e.offsetX, e.offsetY);
+      }
+
+      function stopDrawing() {
+        isDrawing = false;
+        ctx.beginPath();
+      }
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing);
+
+      clearBtn?.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+    }
+
+    // Particles system
+    const particlesCanvas = document.getElementById('particlesCanvas');
+    if (particlesCanvas) {
+      const ctx = particlesCanvas.getContext('2d');
+      const particles = [];
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * particlesCanvas.width;
+          this.y = Math.random() * particlesCanvas.height;
+          this.vx = (Math.random() - 0.5) * 2;
+          this.vy = (Math.random() - 0.5) * 2;
+          this.life = 1;
+          this.maxLife = 1;
+        }
+        
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.life -= 0.01;
+          
+          if (this.life <= 0) {
+            this.x = Math.random() * particlesCanvas.width;
+            this.y = Math.random() * particlesCanvas.height;
+            this.life = this.maxLife;
+          }
+        }
+        
+        draw() {
+          ctx.globalAlpha = this.life;
+          ctx.fillStyle = '#667eea';
+          ctx.fillRect(this.x, this.y, 2, 2);
+        }
+      }
+      
+      // Create particles
+      for (let i = 0; i < 50; i++) {
+        particles.push(new Particle());
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+        
+        particles.forEach(particle => {
+          particle.update();
+          particle.draw();
+        });
+        
+        requestAnimationFrame(animate);
+      }
+      
+      animate();
+    }
+  });
+</script>

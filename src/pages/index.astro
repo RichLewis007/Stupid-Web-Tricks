@@ -1,0 +1,417 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Stupid Web Tricks - Amazing Web Effects & Animations">
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <!-- Animated background -->
+    <div class="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+    </div>
+    
+    <!-- Floating particles -->
+    <div class="absolute inset-0">
+      <div class="particle particle-1 animate-float"></div>
+      <div class="particle particle-2 animate-float" style="animation-delay: 1s;"></div>
+      <div class="particle particle-3 animate-float" style="animation-delay: 2s;"></div>
+      <div class="particle particle-4 animate-float" style="animation-delay: 0.5s;"></div>
+      <div class="particle particle-5 animate-float" style="animation-delay: 1.5s;"></div>
+    </div>
+
+    <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up">
+        <span class="gradient-text">Stupid</span>
+        <br>
+        <span class="text-white">Web Tricks</span>
+      </h1>
+      <p class="text-xl sm:text-2xl text-gray-300 mb-8 animate-slide-up" style="animation-delay: 0.2s;">
+        Discover amazing web effects, animations, and techniques that will blow your mind
+      </p>
+      <div class="animate-slide-up" style="animation-delay: 0.4s;">
+        <a href="#categories" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">
+          Explore Tricks
+          <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Section -->
+  <section id="categories" class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl sm:text-5xl font-bold mb-6 gradient-text">
+          Choose Your Adventure
+        </h2>
+        <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+          Dive into different categories of web tricks, from simple CSS animations to complex WebGL experiments
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- HTML Tricks Card -->
+        <div class="category-card group">
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="card-icon">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </div>
+              <h3 class="card-title">HTML Tricks</h3>
+              <p class="card-description">
+                Clever HTML techniques, semantic markup tricks, and accessibility hacks
+              </p>
+            </div>
+            <div class="card-back">
+              <h3 class="text-xl font-bold mb-4">HTML Tricks</h3>
+              <ul class="text-sm space-y-2">
+                <li>• Semantic HTML patterns</li>
+                <li>• Accessibility improvements</li>
+                <li>• Form validation tricks</li>
+                <li>• Meta tag optimizations</li>
+              </ul>
+              <a href="/html" class="mt-4 inline-block bg-white text-gray-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                Explore →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CSS Effects Card -->
+        <div class="category-card group">
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="card-icon">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+              <h3 class="card-title">CSS Effects</h3>
+              <p class="card-description">
+                Stunning animations, transitions, and visual effects using pure CSS
+              </p>
+            </div>
+            <div class="card-back">
+              <h3 class="text-xl font-bold mb-4">CSS Effects</h3>
+              <ul class="text-sm space-y-2">
+                <li>• Advanced animations</li>
+                <li>• Glass morphism</li>
+                <li>• Gradient effects</li>
+                <li>• 3D transforms</li>
+              </ul>
+              <a href="/css" class="mt-4 inline-block bg-white text-gray-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                Explore →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- JavaScript Card -->
+        <div class="category-card group">
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="card-icon">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.804-.83-1.43l-.003-.032h-2.419v-.814c.63-.893 1.233-1.805 1.817-2.728 1.061-1.645 2.268-3.287 3.35-4.844h2.008v5.797h.005z"/>
+                </svg>
+              </div>
+              <h3 class="card-title">JavaScript</h3>
+              <p class="card-description">
+                Interactive features, DOM manipulation, and modern JavaScript techniques
+              </p>
+            </div>
+            <div class="card-back">
+              <h3 class="text-xl font-bold mb-4">JavaScript</h3>
+              <ul class="text-sm space-y-2">
+                <li>• DOM manipulation</li>
+                <li>• Event handling</li>
+                <li>• Async patterns</li>
+                <li>• Performance tricks</li>
+              </ul>
+              <a href="/javascript" class="mt-4 inline-block bg-white text-gray-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                Explore →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- SVG & Canvas Card -->
+        <div class="category-card group">
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="card-icon">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </div>
+              <h3 class="card-title">SVG & Canvas</h3>
+              <p class="card-description">
+                Vector graphics, canvas animations, and creative visual effects
+              </p>
+            </div>
+            <div class="card-back">
+              <h3 class="text-xl font-bold mb-4">SVG & Canvas</h3>
+              <ul class="text-sm space-y-2">
+                <li>• SVG animations</li>
+                <li>• Canvas drawings</li>
+                <li>• Interactive graphics</li>
+                <li>• Data visualizations</li>
+              </ul>
+              <a href="/svg-canvas" class="mt-4 inline-block bg-white text-gray-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                Explore →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- WebGL Card -->
+        <div class="category-card group">
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="card-icon">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+              <h3 class="card-title">WebGL</h3>
+              <p class="card-description">
+                Advanced 3D graphics, shaders, and immersive web experiences
+              </p>
+            </div>
+            <div class="card-back">
+              <h3 class="text-xl font-bold mb-4">WebGL</h3>
+              <ul class="text-sm space-y-2">
+                <li>• 3D graphics</li>
+                <li>• Shader programming</li>
+                <li>• Interactive 3D</li>
+                <li>• Performance optimization</li>
+              </ul>
+              <a href="/webgl" class="mt-4 inline-block bg-white text-gray-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                Explore →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coming Soon Card -->
+        <div class="category-card group opacity-75">
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="card-icon">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+              <h3 class="card-title">More Coming</h3>
+              <p class="card-description">
+                Additional categories and tricks are being added regularly
+              </p>
+            </div>
+            <div class="card-back">
+              <h3 class="text-xl font-bold mb-4">Stay Tuned</h3>
+              <p class="text-sm">
+                We're constantly adding new tricks and categories. Follow us on GitHub for updates!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-gray-900 to-gray-800">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl sm:text-5xl font-bold mb-6 gradient-text">
+          Why Stupid Web Tricks?
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-4">Lightning Fast</h3>
+          <p class="text-gray-400">
+            Built with Astro for optimal performance and zero JavaScript by default
+          </p>
+        </div>
+
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-4">Modern Design</h3>
+          <p class="text-gray-400">
+            Featuring the latest UI trends, animations, and responsive design patterns
+          </p>
+        </div>
+
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-4">Educational</h3>
+          <p class="text-gray-400">
+            Learn from real examples with detailed explanations and best practices
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  /* Particle animations */
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+  
+  .particle-1 {
+    top: 20%;
+    left: 20%;
+    animation-delay: 0s;
+  }
+  
+  .particle-2 {
+    top: 60%;
+    left: 80%;
+    animation-delay: 1s;
+  }
+  
+  .particle-3 {
+    top: 80%;
+    left: 40%;
+    animation-delay: 2s;
+  }
+  
+  .particle-4 {
+    top: 30%;
+    left: 70%;
+    animation-delay: 0.5s;
+  }
+  
+  .particle-5 {
+    top: 70%;
+    left: 10%;
+    animation-delay: 1.5s;
+  }
+
+  /* Category cards */
+  .category-card {
+    perspective: 1000px;
+    height: 300px;
+  }
+  
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    cursor: pointer;
+  }
+  
+  .category-card:hover .card-inner {
+    transform: rotateY(180deg);
+  }
+  
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  }
+  
+  .card-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: white;
+  }
+  
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: white;
+  }
+  
+  .card-description {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+<script>
+  // Add GSAP animations on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Animate category cards on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, index * 100);
+        }
+      });
+    }, observerOptions);
+
+    // Observe all category cards
+    document.querySelectorAll('.category-card').forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(30px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(card);
+    });
+  });
+</script>

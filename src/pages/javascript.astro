@@ -1,0 +1,647 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="JavaScript Tricks - Stupid Web Tricks">
+  <!-- Hero Section -->
+  <section class="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-yellow-900 via-orange-900 to-red-900">
+    <div class="max-w-7xl mx-auto text-center">
+      <h1 class="text-5xl sm:text-6xl font-bold mb-6 gradient-text">
+        JavaScript Tricks
+      </h1>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+        Master modern JavaScript techniques, DOM manipulation, and interactive features that will make your websites come alive.
+      </p>
+    </div>
+  </section>
+
+  <!-- Interactive Demos -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Interactive JavaScript Demos
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Interactive Counter -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Interactive Counter</h3>
+          <div class="demo-container">
+            <div class="counter-demo">
+              <div class="counter-display" id="counter">0</div>
+              <div class="counter-controls">
+                <button class="counter-btn" id="decrement">-</button>
+                <button class="counter-btn" id="increment">+</button>
+                <button class="counter-btn reset" id="reset">Reset</button>
+              </div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>let count = 0;
+const counter = document.getElementById('counter');
+
+function updateCounter() {
+  counter.textContent = count;
+  counter.style.transform = 'scale(1.1)';
+  setTimeout(() => {
+    counter.style.transform = 'scale(1)';
+  }, 150);
+}
+
+document.getElementById('increment')
+  .addEventListener('click', () => {
+    count++;
+    updateCounter();
+  });</code></pre>
+          </div>
+        </div>
+
+        <!-- Color Picker -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Dynamic Color Picker</h3>
+          <div class="demo-container">
+            <div class="color-picker-demo">
+              <input type="color" id="colorPicker" value="#667eea">
+              <div class="color-preview" id="colorPreview"></div>
+              <div class="color-info">
+                <span id="colorValue">#667eea</span>
+              </div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>const colorPicker = document.getElementById('colorPicker');
+const colorPreview = document.getElementById('colorPreview');
+const colorValue = document.getElementById('colorValue');
+
+colorPicker.addEventListener('input', (e) => {
+  const color = e.target.value;
+  colorPreview.style.backgroundColor = color;
+  colorValue.textContent = color;
+});</code></pre>
+          </div>
+        </div>
+
+        <!-- Typing Effect -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Typing Animation</h3>
+          <div class="demo-container">
+            <div class="typing-demo">
+              <div class="typing-text" id="typingText"></div>
+              <button class="typing-btn" id="startTyping">Start Typing</button>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>function typeText(element, text, speed = 100) {
+  let i = 0;
+  element.textContent = '';
+  
+  const timer = setInterval(() => {
+    element.textContent += text.charAt(i);
+    i++;
+    
+    if (i > text.length) {
+      clearInterval(timer);
+    }
+  }, speed);
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Drag and Drop -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Drag & Drop</h3>
+          <div class="demo-container">
+            <div class="drag-drop-demo">
+              <div class="draggable" id="draggable" draggable="true">
+                Drag Me
+              </div>
+              <div class="drop-zone" id="dropZone">
+                Drop Zone
+              </div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>const draggable = document.getElementById('draggable');
+const dropZone = document.getElementById('dropZone');
+
+draggable.addEventListener('dragstart', (e) => {
+  e.dataTransfer.setData('text/plain', e.target.id);
+});
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const data = e.dataTransfer.getData('text/plain');
+  dropZone.appendChild(document.getElementById(data));
+});</code></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Advanced Techniques -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-gray-900 to-gray-800">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Advanced JavaScript Techniques
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Async/Await -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Async/Await Patterns</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Modern asynchronous JavaScript patterns for handling promises elegantly.
+            </p>
+            <div class="code-example">
+              <pre><code>async function fetchUserData(userId) {
+  try {
+    const response = await fetch(`/api/users/${userId}`);
+    const user = await response.json();
+    
+    const posts = await fetch(`/api/users/${userId}/posts`);
+    const userPosts = await posts.json();
+    
+    return { user, posts: userPosts };
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    throw error;
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Delegation -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Event Delegation</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Efficient event handling for dynamic content using event delegation.
+            </p>
+            <div class="code-example">
+              <pre><code>document.addEventListener('click', (e) => {
+  if (e.target.matches('.delete-btn')) {
+    const item = e.target.closest('.item');
+    item.remove();
+  }
+  
+  if (e.target.matches('.toggle-btn')) {
+    const content = e.target.nextElementSibling;
+    content.classList.toggle('hidden');
+  }
+});</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Intersection Observer -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Intersection Observer</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Efficient scroll-based animations and lazy loading with Intersection Observer.
+            </p>
+            <div class="code-example">
+              <pre><code>const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-in');
+      observer.unobserve(entry.target);
+    }
+  });
+});
+
+document.querySelectorAll('.animate-on-scroll')
+  .forEach(el => observer.observe(el));</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Web Workers -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Web Workers</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Offload heavy computations to background threads for better performance.
+            </p>
+            <div class="code-example">
+              <pre><code>// Main thread
+const worker = new Worker('worker.js');
+worker.postMessage({ data: largeDataSet });
+
+worker.onmessage = (e) => {
+  const result = e.data;
+  updateUI(result);
+};
+
+// worker.js
+self.onmessage = (e) => {
+  const data = e.data.data;
+  const result = processLargeData(data);
+  self.postMessage(result);
+};</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Performance Tips -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Performance Tips
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="tip-card">
+          <div class="tip-icon">⚡</div>
+          <h3 class="text-xl font-bold mb-3">Debounce & Throttle</h3>
+          <p class="text-gray-400">
+            Use debounce for search inputs and throttle for scroll events to improve performance.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎯</div>
+          <h3 class="text-xl font-bold mb-3">Event Delegation</h3>
+          <p class="text-gray-400">
+            Attach event listeners to parent elements instead of individual child elements.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🔄</div>
+          <h3 class="text-xl font-bold mb-3">Lazy Loading</h3>
+          <p class="text-gray-400">
+            Load images and content only when they're about to enter the viewport.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">📱</div>
+          <h3 class="text-xl font-bold mb-3">Mobile Optimization</h3>
+          <p class="text-gray-400">
+            Use touch events and optimize for mobile performance and battery life.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎨</div>
+          <h3 class="text-xl font-bold mb-3">Memory Management</h3>
+          <p class="text-gray-400">
+            Clean up event listeners and remove references to prevent memory leaks.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">⏱️</div>
+          <h3 class="text-xl font-bold mb-3">RequestAnimationFrame</h3>
+          <p class="text-gray-400">
+            Use requestAnimationFrame for smooth animations instead of setTimeout.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .demo-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .demo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .demo-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 1rem 0;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .code-snippet {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-snippet pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* Counter Demo */
+  .counter-demo {
+    text-align: center;
+    color: white;
+  }
+  
+  .counter-display {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    transition: transform 0.15s ease;
+  }
+  
+  .counter-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+  
+  .counter-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .counter-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .counter-btn.reset {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+  }
+  
+  /* Color Picker Demo */
+  .color-picker-demo {
+    text-align: center;
+    color: white;
+  }
+  
+  #colorPicker {
+    width: 80px;
+    height: 80px;
+    border: none;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    cursor: pointer;
+  }
+  
+  .color-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 15px;
+    margin: 0 auto 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .color-info {
+    font-family: monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  /* Typing Demo */
+  .typing-demo {
+    text-align: center;
+    color: white;
+  }
+  
+  .typing-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    min-height: 2rem;
+  }
+  
+  .typing-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .typing-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Drag and Drop Demo */
+  .drag-drop-demo {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .draggable {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 15px;
+    cursor: move;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+  
+  .draggable:hover {
+    transform: scale(1.05);
+  }
+  
+  .draggable:active {
+    transform: scale(0.95);
+  }
+  
+  .drop-zone {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 2rem;
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+  
+  .drop-zone.drag-over {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+  }
+  
+  /* Technique Cards */
+  .technique-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .technique-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .code-example {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-example pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* Tip Cards */
+  .tip-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .tip-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .tip-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<script>
+  // Counter functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    let count = 0;
+    const counter = document.getElementById('counter');
+    const incrementBtn = document.getElementById('increment');
+    const decrementBtn = document.getElementById('decrement');
+    const resetBtn = document.getElementById('reset');
+
+    function updateCounter() {
+      counter.textContent = count;
+      counter.style.transform = 'scale(1.1)';
+      setTimeout(() => {
+        counter.style.transform = 'scale(1)';
+      }, 150);
+    }
+
+    incrementBtn?.addEventListener('click', () => {
+      count++;
+      updateCounter();
+    });
+
+    decrementBtn?.addEventListener('click', () => {
+      count--;
+      updateCounter();
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      count = 0;
+      updateCounter();
+    });
+
+    // Color picker functionality
+    const colorPicker = document.getElementById('colorPicker');
+    const colorPreview = document.getElementById('colorPreview');
+    const colorValue = document.getElementById('colorValue');
+
+    colorPicker?.addEventListener('input', (e) => {
+      const color = e.target.value;
+      colorPreview.style.backgroundColor = color;
+      colorValue.textContent = color;
+    });
+
+    // Typing animation
+    const typingText = document.getElementById('typingText');
+    const startTypingBtn = document.getElementById('startTyping');
+    const textToType = "This is a typing animation effect!";
+
+    function typeText(element, text, speed = 100) {
+      let i = 0;
+      element.textContent = '';
+      
+      const timer = setInterval(() => {
+        element.textContent += text.charAt(i);
+        i++;
+        
+        if (i > text.length) {
+          clearInterval(timer);
+        }
+      }, speed);
+    }
+
+    startTypingBtn?.addEventListener('click', () => {
+      typeText(typingText, textToType, 100);
+    });
+
+    // Drag and drop functionality
+    const draggable = document.getElementById('draggable');
+    const dropZone = document.getElementById('dropZone');
+
+    draggable?.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', e.target.id);
+      e.target.style.opacity = '0.5';
+    });
+
+    draggable?.addEventListener('dragend', (e) => {
+      e.target.style.opacity = '1';
+    });
+
+    dropZone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone?.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const data = e.dataTransfer.getData('text/plain');
+      const draggedElement = document.getElementById(data);
+      dropZone.appendChild(draggedElement);
+    });
+  });
+</script>

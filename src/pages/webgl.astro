@@ -1,0 +1,768 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="WebGL - Stupid Web Tricks">
+  <!-- Hero Section -->
+  <section class="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+    <div class="max-w-7xl mx-auto text-center">
+      <h1 class="text-5xl sm:text-6xl font-bold mb-6 gradient-text">
+        WebGL
+      </h1>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+        Dive into the world of 3D graphics, shaders, and immersive web experiences using WebGL and modern JavaScript.
+      </p>
+    </div>
+  </section>
+
+  <!-- Interactive Demos -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        WebGL Interactive Demos
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Basic WebGL Triangle -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Basic WebGL Triangle</h3>
+          <div class="demo-container">
+            <div class="webgl-demo">
+              <canvas id="triangleCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>const canvas = document.getElementById('canvas');
+const gl = canvas.getContext('webgl');
+
+const vertexShaderSource = `
+  attribute vec2 position;
+  void main() {
+    gl_Position = vec4(position, 0.0, 1.0);
+  }
+`;
+
+const fragmentShaderSource = `
+  precision mediump float;
+  void main() {
+    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  }
+`;</code></pre>
+          </div>
+        </div>
+
+        <!-- Rotating Cube -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Rotating 3D Cube</h3>
+          <div class="demo-container">
+            <div class="webgl-demo">
+              <canvas id="cubeCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>function createCube() {
+  const vertices = [
+    // Front face
+    -1, -1,  1,
+     1, -1,  1,
+     1,  1,  1,
+    -1,  1,  1,
+    // Back face
+    -1, -1, -1,
+    -1,  1, -1,
+     1,  1, -1,
+     1, -1, -1
+  ];
+  
+  return vertices;
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Shader Effects -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Custom Shader Effects</h3>
+          <div class="demo-container">
+            <div class="webgl-demo">
+              <canvas id="shaderCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>const fragmentShader = `
+  precision mediump float;
+  uniform float time;
+  uniform vec2 resolution;
+  
+  void main() {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec3 color = vec3(
+      sin(uv.x * 10.0 + time),
+      cos(uv.y * 10.0 + time),
+      sin(uv.x + uv.y + time)
+    );
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;</code></pre>
+          </div>
+        </div>
+
+        <!-- Particle System -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">WebGL Particle System</h3>
+          <div class="demo-container">
+            <div class="webgl-demo">
+              <canvas id="particlesCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>const particleVertexShader = `
+  attribute vec2 position;
+  attribute float size;
+  uniform float time;
+  
+  void main() {
+    vec2 pos = position + vec2(sin(time), cos(time)) * 0.1;
+    gl_Position = vec4(pos, 0.0, 1.0);
+    gl_PointSize = size;
+  }
+`;</code></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Advanced Techniques -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-gray-900 to-gray-800">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Advanced WebGL Techniques
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Texture Mapping -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Texture Mapping</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Apply textures to 3D objects for realistic rendering and visual effects.
+            </p>
+            <div class="code-example">
+              <pre><code>function loadTexture(url) {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  
+  const image = new Image();
+  image.onload = function() {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 
+                  gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_2D);
+  };
+  
+  image.src = url;
+  return texture;
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lighting -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">3D Lighting</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Implement Phong lighting model for realistic 3D scene illumination.
+            </p>
+            <div class="code-example">
+              <pre><code>const lightingVertexShader = `
+  attribute vec3 position;
+  attribute vec3 normal;
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
+  uniform mat3 normalMatrix;
+  
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vPosition = vec3(modelViewMatrix * vec4(position, 1.0));
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Post-Processing -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Post-Processing Effects</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Apply screen-space effects like bloom, blur, and color grading.
+            </p>
+            <div class="code-example">
+              <pre><code>const postProcessFragmentShader = `
+  precision mediump float;
+  uniform sampler2D texture;
+  uniform vec2 resolution;
+  
+  void main() {
+    vec2 uv = gl_FragCoord.xy / resolution;
+    vec4 color = texture2D(texture, uv);
+    
+    // Bloom effect
+    float brightness = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if (brightness > 0.8) {
+      color.rgb += color.rgb * 0.5;
+    }
+    
+    gl_FragColor = color;
+  }
+`;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instanced Rendering -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Instanced Rendering</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Render thousands of objects efficiently using instanced rendering techniques.
+            </p>
+            <div class="code-example">
+              <pre><code>const instancedVertexShader = `
+  attribute vec3 position;
+  attribute vec3 instancePosition;
+  attribute float instanceScale;
+  
+  uniform mat4 viewMatrix;
+  uniform mat4 projectionMatrix;
+  
+  void main() {
+    vec3 worldPosition = position * instanceScale + instancePosition;
+    gl_Position = projectionMatrix * viewMatrix * vec4(worldPosition, 1.0);
+  }
+`;</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Performance Tips -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Performance Tips
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="tip-card">
+          <div class="tip-icon">⚡</div>
+          <h3 class="text-xl font-bold mb-3">Batch Draw Calls</h3>
+          <p class="text-gray-400">
+            Minimize draw calls by batching similar objects and using instanced rendering.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎯</div>
+          <h3 class="text-xl font-bold mb-3">Texture Atlases</h3>
+          <p class="text-gray-400">
+            Use texture atlases to reduce texture switching and improve performance.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🔄</div>
+          <h3 class="text-xl font-bold mb-3">Level of Detail</h3>
+          <p class="text-gray-400">
+            Implement LOD systems to reduce polygon count for distant objects.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">📱</div>
+          <h3 class="text-xl font-bold mb-3">Mobile Optimization</h3>
+          <p class="text-gray-400">
+            Reduce shader complexity and polygon count for mobile devices.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎨</div>
+          <h3 class="text-xl font-bold mb-3">Frustum Culling</h3>
+          <p class="text-gray-400">
+            Only render objects that are visible in the camera's view frustum.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">⏱️</div>
+          <h3 class="text-xl font-bold mb-3">Shader Optimization</h3>
+          <p class="text-gray-400">
+            Optimize shaders by reducing calculations and using appropriate precision.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .demo-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .demo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .demo-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 1rem 0;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .code-snippet {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-snippet pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* WebGL Demo */
+  .webgl-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .webgl-demo canvas {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: #1a1a2e;
+  }
+  
+  /* Technique Cards */
+  .technique-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .technique-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .code-example {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-example pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* Tip Cards */
+  .tip-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .tip-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .tip-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Basic WebGL Triangle
+    const triangleCanvas = document.getElementById('triangleCanvas');
+    if (triangleCanvas) {
+      const gl = triangleCanvas.getContext('webgl');
+      
+      if (gl) {
+        const vertexShaderSource = `
+          attribute vec2 position;
+          void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+          }
+        `;
+        
+        const fragmentShaderSource = `
+          precision mediump float;
+          void main() {
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+          }
+        `;
+        
+        function createShader(gl, type, source) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          
+          if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+          }
+          
+          return shader;
+        }
+        
+        function createProgram(gl, vertexShader, fragmentShader) {
+          const program = gl.createProgram();
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+          gl.linkProgram(program);
+          
+          if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error('Program linking error:', gl.getProgramInfoLog(program));
+            gl.deleteProgram(program);
+            return null;
+          }
+          
+          return program;
+        }
+        
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+        
+        const vertices = new Float32Array([
+          0.0,  0.5,
+         -0.5, -0.5,
+          0.5, -0.5
+        ]);
+        
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        
+        const positionAttributeLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        
+        gl.useProgram(program);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+    }
+    
+    // Rotating Cube
+    const cubeCanvas = document.getElementById('cubeCanvas');
+    if (cubeCanvas) {
+      const gl = cubeCanvas.getContext('webgl');
+      
+      if (gl) {
+        // Simple rotating square (2D version of cube for demo)
+        const vertexShaderSource = `
+          attribute vec2 position;
+          uniform float time;
+          void main() {
+            float angle = time;
+            float cosA = cos(angle);
+            float sinA = sin(angle);
+            vec2 rotated = vec2(
+              position.x * cosA - position.y * sinA,
+              position.x * sinA + position.y * cosA
+            );
+            gl_Position = vec4(rotated, 0.0, 1.0);
+          }
+        `;
+        
+        const fragmentShaderSource = `
+          precision mediump float;
+          uniform float time;
+          void main() {
+            gl_FragColor = vec4(
+              sin(time) * 0.5 + 0.5,
+              cos(time) * 0.5 + 0.5,
+              1.0,
+              1.0
+            );
+          }
+        `;
+        
+        function createShader(gl, type, source) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          return shader;
+        }
+        
+        function createProgram(gl, vertexShader, fragmentShader) {
+          const program = gl.createProgram();
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+          gl.linkProgram(program);
+          return program;
+        }
+        
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+        
+        const vertices = new Float32Array([
+          -0.5, -0.5,
+           0.5, -0.5,
+           0.5,  0.5,
+          -0.5,  0.5
+        ]);
+        
+        const indices = new Uint16Array([
+          0, 1, 2,
+          0, 2, 3
+        ]);
+        
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+        
+        const positionAttributeLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        
+        let time = 0;
+        function animate() {
+          time += 0.01;
+          
+          gl.useProgram(program);
+          
+          const timeUniformLocation = gl.getUniformLocation(program, 'time');
+          gl.uniform1f(timeUniformLocation, time);
+          
+          gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+          
+          requestAnimationFrame(animate);
+        }
+        
+        animate();
+      }
+    }
+    
+    // Shader Effects
+    const shaderCanvas = document.getElementById('shaderCanvas');
+    if (shaderCanvas) {
+      const gl = shaderCanvas.getContext('webgl');
+      
+      if (gl) {
+        const vertexShaderSource = `
+          attribute vec2 position;
+          void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+          }
+        `;
+        
+        const fragmentShaderSource = `
+          precision mediump float;
+          uniform float time;
+          uniform vec2 resolution;
+          
+          void main() {
+            vec2 uv = gl_FragCoord.xy / resolution.xy;
+            vec3 color = vec3(
+              sin(uv.x * 10.0 + time),
+              cos(uv.y * 10.0 + time),
+              sin(uv.x + uv.y + time)
+            );
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+        
+        function createShader(gl, type, source) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          return shader;
+        }
+        
+        function createProgram(gl, vertexShader, fragmentShader) {
+          const program = gl.createProgram();
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+          gl.linkProgram(program);
+          return program;
+        }
+        
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+        
+        const vertices = new Float32Array([
+          -1, -1,
+           1, -1,
+           1,  1,
+          -1,  1
+        ]);
+        
+        const indices = new Uint16Array([
+          0, 1, 2,
+          0, 2, 3
+        ]);
+        
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+        
+        const positionAttributeLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        
+        let time = 0;
+        function animate() {
+          time += 0.01;
+          
+          gl.useProgram(program);
+          
+          const timeUniformLocation = gl.getUniformLocation(program, 'time');
+          const resolutionUniformLocation = gl.getUniformLocation(program, 'resolution');
+          
+          gl.uniform1f(timeUniformLocation, time);
+          gl.uniform2f(resolutionUniformLocation, shaderCanvas.width, shaderCanvas.height);
+          
+          gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+          
+          requestAnimationFrame(animate);
+        }
+        
+        animate();
+      }
+    }
+    
+    // Particle System
+    const particlesCanvas = document.getElementById('particlesCanvas');
+    if (particlesCanvas) {
+      const gl = particlesCanvas.getContext('webgl');
+      
+      if (gl) {
+        const vertexShaderSource = `
+          attribute vec2 position;
+          uniform float time;
+          
+          void main() {
+            vec2 pos = position + vec2(sin(time), cos(time)) * 0.1;
+            gl_Position = vec4(pos, 0.0, 1.0);
+            gl_PointSize = 3.0;
+          }
+        `;
+        
+        const fragmentShaderSource = `
+          precision mediump float;
+          uniform float time;
+          
+          void main() {
+            float alpha = sin(time) * 0.5 + 0.5;
+            gl_FragColor = vec4(1.0, 0.5, 0.0, alpha);
+          }
+        `;
+        
+        function createShader(gl, type, source) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          return shader;
+        }
+        
+        function createProgram(gl, vertexShader, fragmentShader) {
+          const program = gl.createProgram();
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+          gl.linkProgram(program);
+          return program;
+        }
+        
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+        
+        // Create random particle positions
+        const particleCount = 100;
+        const positions = new Float32Array(particleCount * 2);
+        for (let i = 0; i < particleCount * 2; i++) {
+          positions[i] = (Math.random() - 0.5) * 2;
+        }
+        
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+        
+        const positionAttributeLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        
+        let time = 0;
+        function animate() {
+          time += 0.01;
+          
+          gl.useProgram(program);
+          
+          const timeUniformLocation = gl.getUniformLocation(program, 'time');
+          gl.uniform1f(timeUniformLocation, time);
+          
+          gl.drawArrays(gl.POINTS, 0, particleCount);
+          
+          requestAnimationFrame(animate);
+        }
+        
+        animate();
+      }
+    }
+  });
+</script>

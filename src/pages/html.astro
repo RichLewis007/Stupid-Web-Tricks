@@ -1,0 +1,436 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="HTML Tricks - Stupid Web Tricks">
+  <!-- Hero Section -->
+  <section class="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-orange-900 via-red-900 to-pink-900">
+    <div class="max-w-7xl mx-auto text-center">
+      <h1 class="text-5xl sm:text-6xl font-bold mb-6 gradient-text">
+        HTML Tricks
+      </h1>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+        Discover clever HTML techniques, semantic markup tricks, and accessibility hacks that will make your websites more powerful and user-friendly.
+      </p>
+    </div>
+  </section>
+
+  <!-- Tricks Grid -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Trick 1: Semantic HTML -->
+        <div class="trick-card">
+          <div class="trick-header">
+            <h3 class="text-2xl font-bold mb-4">Semantic HTML Patterns</h3>
+            <div class="difficulty-badge easy">Easy</div>
+          </div>
+          <div class="trick-content">
+            <p class="text-gray-300 mb-6">
+              Use semantic HTML elements to improve accessibility and SEO. Here are some powerful patterns:
+            </p>
+            
+            <div class="code-example">
+              <h4 class="text-lg font-semibold mb-3">Example: Article Structure</h4>
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;article&gt;
+  &lt;header&gt;
+    &lt;h1&gt;Article Title&lt;/h1&gt;
+    &lt;time datetime="2025-01-01"&gt;January 1, 2025&lt;/time&gt;
+  &lt;/header&gt;
+  &lt;main&gt;
+    &lt;p&gt;Article content...&lt;/p&gt;
+  &lt;/main&gt;
+  &lt;footer&gt;
+    &lt;address&gt;Author: John Doe&lt;/address&gt;
+  &lt;/footer&gt;
+&lt;/article&gt;</code></pre>
+            </div>
+            
+            <div class="trick-benefits">
+              <h5 class="font-semibold mb-2">Benefits:</h5>
+              <ul class="text-sm space-y-1">
+                <li>• Better screen reader support</li>
+                <li>• Improved SEO rankings</li>
+                <li>• Cleaner, more maintainable code</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trick 2: Form Validation -->
+        <div class="trick-card">
+          <div class="trick-header">
+            <h3 class="text-2xl font-bold mb-4">Native Form Validation</h3>
+            <div class="difficulty-badge medium">Medium</div>
+          </div>
+          <div class="trick-content">
+            <p class="text-gray-300 mb-6">
+              Use HTML5 validation attributes for instant client-side validation without JavaScript:
+            </p>
+            
+            <div class="code-example">
+              <h4 class="text-lg font-semibold mb-3">Example: Advanced Form</h4>
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;form&gt;
+  &lt;input type="email" 
+         required 
+         pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+         title="Enter a valid email address"&gt;
+  
+  &lt;input type="password" 
+         minlength="8" 
+         pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])"
+         title="Password must contain uppercase, lowercase, and number"&gt;
+  
+  &lt;input type="tel" 
+         pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+         placeholder="123-456-7890"&gt;
+&lt;/form&gt;</code></pre>
+            </div>
+            
+            <div class="trick-benefits">
+              <h5 class="font-semibold mb-2">Benefits:</h5>
+              <ul class="text-sm space-y-1">
+                <li>• Instant validation feedback</li>
+                <li>• No JavaScript required</li>
+                <li>• Mobile-friendly keyboard types</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trick 3: Meta Tags -->
+        <div class="trick-card">
+          <div class="trick-header">
+            <h3 class="text-2xl font-bold mb-4">Meta Tag Optimization</h3>
+            <div class="difficulty-badge easy">Easy</div>
+          </div>
+          <div class="trick-content">
+            <p class="text-gray-300 mb-6">
+              Essential meta tags for better SEO, social sharing, and mobile optimization:
+            </p>
+            
+            <div class="code-example">
+              <h4 class="text-lg font-semibold mb-3">Essential Meta Tags</h4>
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;meta name="description" content="Your page description"&gt;
+  &lt;meta name="keywords" content="keyword1, keyword2, keyword3"&gt;
+  &lt;meta name="author" content="Your Name"&gt;
+  
+  &lt;!-- Open Graph / Facebook --&gt;
+  &lt;meta property="og:type" content="website"&gt;
+  &lt;meta property="og:url" content="https://yoursite.com/"&gt;
+  &lt;meta property="og:title" content="Your Site Title"&gt;
+  &lt;meta property="og:description" content="Your description"&gt;
+  &lt;meta property="og:image" content="https://yoursite.com/image.jpg"&gt;
+  
+  &lt;!-- Twitter --&gt;
+  &lt;meta property="twitter:card" content="summary_large_image"&gt;
+  &lt;meta property="twitter:url" content="https://yoursite.com/"&gt;
+  &lt;meta property="twitter:title" content="Your Site Title"&gt;
+  &lt;meta property="twitter:description" content="Your description"&gt;
+  &lt;meta property="twitter:image" content="https://yoursite.com/image.jpg"&gt;
+&lt;/head&gt;</code></pre>
+            </div>
+            
+            <div class="trick-benefits">
+              <h5 class="font-semibold mb-2">Benefits:</h5>
+              <ul class="text-sm space-y-1">
+                <li>• Better search engine rankings</li>
+                <li>• Improved social media sharing</li>
+                <li>• Enhanced mobile experience</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trick 4: Accessibility -->
+        <div class="trick-card">
+          <div class="trick-header">
+            <h3 class="text-2xl font-bold mb-4">Accessibility Features</h3>
+            <div class="difficulty-badge medium">Medium</div>
+          </div>
+          <div class="trick-content">
+            <p class="text-gray-300 mb-6">
+              Make your website accessible to everyone with these HTML techniques:
+            </p>
+            
+            <div class="code-example">
+              <h4 class="text-lg font-semibold mb-3">Accessibility Example</h4>
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;!-- Skip navigation link --&gt;
+&lt;a href="#main" class="skip-link"&gt;Skip to main content&lt;/a&gt;
+
+&lt;!-- Proper heading hierarchy --&gt;
+&lt;h1&gt;Main Title&lt;/h1&gt;
+&lt;h2&gt;Section Title&lt;/h2&gt;
+&lt;h3&gt;Subsection Title&lt;/h3&gt;
+
+&lt;!-- Alt text for images --&gt;
+&lt;img src="image.jpg" alt="Descriptive text about the image"&gt;
+
+&lt;!-- Form labels --&gt;
+&lt;label for="email"&gt;Email Address:&lt;/label&gt;
+&lt;input type="email" id="email" name="email" required&gt;
+
+&lt;!-- ARIA attributes --&gt;
+&lt;button aria-expanded="false" aria-controls="menu"&gt;
+  Toggle Menu
+&lt;/button&gt;
+&lt;ul id="menu" aria-hidden="true"&gt;
+  &lt;li&gt;&lt;a href="#"&gt;Menu Item&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+            </div>
+            
+            <div class="trick-benefits">
+              <h5 class="font-semibold mb-2">Benefits:</h5>
+              <ul class="text-sm space-y-1">
+                <li>• Better screen reader support</li>
+                <li>• Keyboard navigation friendly</li>
+                <li>• Legal compliance (ADA/WCAG)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trick 5: Data Attributes -->
+        <div class="trick-card">
+          <div class="trick-header">
+            <h3 class="text-2xl font-bold mb-4">Data Attributes</h3>
+            <div class="difficulty-badge easy">Easy</div>
+          </div>
+          <div class="trick-content">
+            <p class="text-gray-300 mb-6">
+              Use data attributes to store custom information and create interactive elements:
+            </p>
+            
+            <div class="code-example">
+              <h4 class="text-lg font-semibold mb-3">Interactive Example</h4>
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;!-- Store custom data --&gt;
+&lt;div data-user-id="123" data-role="admin"&gt;
+  User Content
+&lt;/div&gt;
+
+&lt;!-- Toggle functionality --&gt;
+&lt;button data-toggle="modal" data-target="#myModal"&gt;
+  Open Modal
+&lt;/button&gt;
+
+&lt;!-- Progress tracking --&gt;
+&lt;div class="progress" data-progress="75"&gt;
+  &lt;div class="progress-bar"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- Tooltip data --&gt;
+&lt;span data-tooltip="This is a helpful tooltip"&gt;
+  Hover me
+&lt;/span&gt;</code></pre>
+            </div>
+            
+            <div class="trick-benefits">
+              <h5 class="font-semibold mb-2">Benefits:</h5>
+              <ul class="text-sm space-y-1">
+                <li>• Clean separation of data and presentation</li>
+                <li>• Easy JavaScript integration</li>
+                <li>• Custom attributes without validation issues</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trick 6: Microdata -->
+        <div class="trick-card">
+          <div class="trick-header">
+            <h3 class="text-2xl font-bold mb-4">Microdata & Schema</h3>
+            <div class="difficulty-badge hard">Hard</div>
+          </div>
+          <div class="trick-content">
+            <p class="text-gray-300 mb-6">
+              Add structured data to help search engines understand your content:
+            </p>
+            
+            <div class="code-example">
+              <h4 class="text-lg font-semibold mb-3">Schema.org Example</h4>
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;article itemscope itemtype="https://schema.org/Article"&gt;
+  &lt;header&gt;
+    &lt;h1 itemprop="headline"&gt;Article Title&lt;/h1&gt;
+    &lt;time itemprop="datePublished" datetime="2025-01-01"&gt;
+      January 1, 2025
+    &lt;/time&gt;
+  &lt;/header&gt;
+  
+  &lt;div itemprop="author" itemscope itemtype="https://schema.org/Person"&gt;
+    &lt;span itemprop="name"&gt;John Doe&lt;/span&gt;
+  &lt;/div&gt;
+  
+  &lt;div itemprop="articleBody"&gt;
+    &lt;p&gt;Article content...&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/article&gt;</code></pre>
+            </div>
+            
+            <div class="trick-benefits">
+              <h5 class="font-semibold mb-2">Benefits:</h5>
+              <ul class="text-sm space-y-1">
+                <li>• Rich snippets in search results</li>
+                <li>• Better content understanding</li>
+                <li>• Enhanced SEO performance</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Tips Section -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-gray-900 to-gray-800">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Pro Tips
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="tip-card">
+          <div class="tip-icon">💡</div>
+          <h3 class="text-xl font-bold mb-3">Use Semantic Elements</h3>
+          <p class="text-gray-400">
+            Always prefer semantic HTML elements like &lt;nav&gt;, &lt;main&gt;, &lt;article&gt; over generic &lt;div&gt; elements.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🔍</div>
+          <h3 class="text-xl font-bold mb-3">Test with Screen Readers</h3>
+          <p class="text-gray-400">
+            Use tools like NVDA or VoiceOver to test your HTML structure for accessibility.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">📱</div>
+          <h3 class="text-xl font-bold mb-3">Mobile-First Forms</h3>
+          <p class="text-gray-400">
+            Use appropriate input types (email, tel, url) for better mobile keyboard layouts.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">⚡</div>
+          <h3 class="text-xl font-bold mb-3">Validate Early</h3>
+          <p class="text-gray-400">
+            Use HTML5 validation attributes to catch errors before JavaScript processing.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎯</div>
+          <h3 class="text-xl font-bold mb-3">Meaningful Alt Text</h3>
+          <p class="text-gray-400">
+            Write descriptive alt text that conveys the purpose and content of images.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🔗</div>
+          <h3 class="text-xl font-bold mb-3">Link Context</h3>
+          <p class="text-gray-400">
+            Make link text descriptive and avoid generic phrases like "click here" or "read more".
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .trick-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .trick-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .trick-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .difficulty-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .difficulty-badge.easy {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+  
+  .difficulty-badge.medium {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+  
+  .difficulty-badge.hard {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  
+  .code-example {
+    margin: 1.5rem 0;
+  }
+  
+  .code-example pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .code-example code {
+    color: #e5e7eb;
+  }
+  
+  .trick-benefits {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 10px;
+    margin-top: 1rem;
+  }
+  
+  .tip-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .tip-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .tip-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+</style>

@@ -1,0 +1,667 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="CSS Effects - Stupid Web Tricks">
+  <!-- Hero Section -->
+  <section class="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
+    <div class="max-w-7xl mx-auto text-center">
+      <h1 class="text-5xl sm:text-6xl font-bold mb-6 gradient-text">
+        CSS Effects
+      </h1>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+        Create stunning animations, transitions, and visual effects using pure CSS. No JavaScript required!
+      </p>
+    </div>
+  </section>
+
+  <!-- Live Demo Section -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Live CSS Demos
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Glass Morphism Effect -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Glass Morphism</h3>
+          <div class="demo-container">
+            <div class="glass-morphism-demo">
+              <div class="glass-card">
+                <h4 class="text-lg font-semibold mb-2">Glass Card</h4>
+                <p class="text-sm opacity-80">This card uses backdrop-filter for the glass effect</p>
+              </div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 1.5rem;
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Animated Gradient -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Animated Gradient</h3>
+          <div class="demo-container">
+            <div class="gradient-demo">
+              <div class="animated-gradient">
+                <span>Animated Background</span>
+              </div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>.animated-gradient {
+  background: linear-gradient(-45deg, 
+    #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- 3D Card Hover -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">3D Card Hover</h3>
+          <div class="demo-container">
+            <div class="card-3d-demo">
+              <div class="card-3d">
+                <div class="card-content">
+                  <h4>3D Card</h4>
+                  <p>Hover to see the 3D effect</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+}
+
+.card-3d:hover {
+  transform: rotateY(15deg) rotateX(15deg);
+}
+
+.card-content {
+  transform: translateZ(50px);
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Morphing Button -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Morphing Button</h3>
+          <div class="demo-container">
+            <div class="morph-demo">
+              <button class="morph-button">
+                <span class="button-text">Click Me</span>
+                <span class="button-icon">→</span>
+              </button>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>.morph-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.morph-button:hover {
+  transform: scale(1.05);
+  border-radius: 50px;
+}
+
+.morph-button:hover .button-text {
+  transform: translateX(-100%);
+}
+
+.morph-button:hover .button-icon {
+  transform: translateX(0);
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Text Reveal Animation -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Text Reveal</h3>
+          <div class="demo-container">
+            <div class="text-reveal-demo">
+              <h4 class="text-reveal">Amazing Text Effect</h4>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>.text-reveal {
+  position: relative;
+  overflow: hidden;
+}
+
+.text-reveal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, #fff, transparent);
+  animation: reveal 2s ease-in-out;
+}
+
+@keyframes reveal {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Floating Animation -->
+        <div class="demo-card">
+          <h3 class="text-2xl font-bold mb-4">Floating Elements</h3>
+          <div class="demo-container">
+            <div class="floating-demo">
+              <div class="floating-element element-1"></div>
+              <div class="floating-element element-2"></div>
+              <div class="floating-element element-3"></div>
+            </div>
+          </div>
+          <div class="code-snippet">
+            <pre><code>.floating-element {
+  animation: float 3s ease-in-out infinite;
+}
+
+.element-1 { animation-delay: 0s; }
+.element-2 { animation-delay: 1s; }
+.element-3 { animation-delay: 2s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}</code></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Advanced Techniques -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-gray-900 to-gray-800">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Advanced CSS Techniques
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- CSS Grid Magic -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">CSS Grid Magic</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Create complex layouts with CSS Grid and add animations for dynamic effects.
+            </p>
+            <div class="code-example">
+              <pre><code>.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  animation: gridPulse 2s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+  0%, 100% { gap: 1rem; }
+  50% { gap: 2rem; }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Properties -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">CSS Custom Properties</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Use CSS variables for dynamic theming and animations.
+            </p>
+            <div class="code-example">
+              <pre><code>:root {
+  --primary-color: #667eea;
+  --animation-duration: 0.3s;
+}
+
+.button {
+  background: var(--primary-color);
+  transition: all var(--animation-duration) ease;
+}
+
+.button:hover {
+  --primary-color: #764ba2;
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clip Path -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Clip Path Animations</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Create unique shapes and reveal animations with clip-path.
+            </p>
+            <div class="code-example">
+              <pre><code>.clip-reveal {
+  clip-path: circle(0% at 50% 50%);
+  animation: clipReveal 1s ease-out forwards;
+}
+
+@keyframes clipReveal {
+  to {
+    clip-path: circle(100% at 50% 50%);
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scroll Animations -->
+        <div class="technique-card">
+          <h3 class="text-2xl font-bold mb-4">Scroll Animations</h3>
+          <div class="technique-content">
+            <p class="text-gray-300 mb-4">
+              Create scroll-triggered animations using CSS only.
+            </p>
+            <div class="code-example">
+              <pre><code>.scroll-element {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s ease;
+}
+
+.scroll-element.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Performance Tips -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 gradient-text">
+        Performance Tips
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="tip-card">
+          <div class="tip-icon">⚡</div>
+          <h3 class="text-xl font-bold mb-3">Use Transform</h3>
+          <p class="text-gray-400">
+            Always use transform and opacity for animations - they're GPU accelerated and don't trigger layout.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎯</div>
+          <h3 class="text-xl font-bold mb-3">Will-Change</h3>
+          <p class="text-gray-400">
+            Use will-change property to hint the browser about upcoming animations for better performance.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🔄</div>
+          <h3 class="text-xl font-bold mb-3">Reduce Repaints</h3>
+          <p class="text-gray-400">
+            Avoid animating properties that cause layout recalculations like width, height, or margins.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">📱</div>
+          <h3 class="text-xl font-bold mb-3">Mobile First</h3>
+          <p class="text-gray-400">
+            Test animations on mobile devices and consider reducing complexity for better performance.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">🎨</div>
+          <h3 class="text-xl font-bold mb-3">CSS Containment</h3>
+          <p class="text-gray-400">
+            Use contain property to isolate animations and prevent unnecessary recalculations.
+          </p>
+        </div>
+        
+        <div class="tip-card">
+          <div class="tip-icon">⏱️</div>
+          <h3 class="text-xl font-bold mb-3">Timing Functions</h3>
+          <p class="text-gray-400">
+            Choose appropriate easing functions - cubic-bezier for custom curves, ease-out for natural feel.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .demo-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .demo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .demo-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 1rem 0;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .code-snippet {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-snippet pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* Glass Morphism Demo */
+  .glass-morphism-demo {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+  }
+  
+  /* Animated Gradient Demo */
+  .gradient-demo {
+    width: 100%;
+    height: 100%;
+    background: #1a1a2e;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .animated-gradient {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 3s ease infinite;
+    padding: 2rem 3rem;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  /* 3D Card Demo */
+  .card-3d-demo {
+    width: 100%;
+    height: 100%;
+    background: #1a1a2e;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1000px;
+  }
+  
+  .card-3d {
+    width: 150px;
+    height: 100px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 15px;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    cursor: pointer;
+  }
+  
+  .card-3d:hover {
+    transform: rotateY(15deg) rotateX(15deg);
+  }
+  
+  .card-content {
+    padding: 1rem;
+    color: white;
+    text-align: center;
+    transform: translateZ(50px);
+  }
+  
+  /* Morphing Button Demo */
+  .morph-demo {
+    width: 100%;
+    height: 100%;
+    background: #1a1a2e;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .morph-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .morph-button:hover {
+    transform: scale(1.05);
+    border-radius: 50px;
+  }
+  
+  .button-text {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  
+  .button-icon {
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%) translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .morph-button:hover .button-text {
+    transform: translateX(-100%);
+  }
+  
+  .morph-button:hover .button-icon {
+    transform: translateY(-50%) translateX(0);
+  }
+  
+  /* Text Reveal Demo */
+  .text-reveal-demo {
+    width: 100%;
+    height: 100%;
+    background: #1a1a2e;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .text-reveal {
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .text-reveal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #fff, transparent);
+    animation: reveal 2s ease-in-out;
+  }
+  
+  @keyframes reveal {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+  
+  /* Floating Elements Demo */
+  .floating-demo {
+    width: 100%;
+    height: 100%;
+    background: #1a1a2e;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .floating-element {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    position: absolute;
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .element-1 {
+    top: 20%;
+    left: 20%;
+    animation-delay: 0s;
+  }
+  
+  .element-2 {
+    top: 60%;
+    right: 20%;
+    animation-delay: 1s;
+  }
+  
+  .element-3 {
+    bottom: 20%;
+    left: 50%;
+    animation-delay: 2s;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+  
+  /* Technique Cards */
+  .technique-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+  
+  .technique-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .code-example {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .code-example pre {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+    margin: 0;
+  }
+  
+  /* Tip Cards */
+  .tip-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .tip-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .tip-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+</style>
