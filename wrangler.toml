@@ -1,0 +1,42 @@
+# Cloudflare Pages Configuration
+# This file configures the build settings for Cloudflare Pages deployment
+
+# Build command
+build_command = "npm run build"
+
+# Build output directory
+build_output_directory = "dist"
+
+# Node.js version
+node_version = "18"
+
+# Environment variables (if needed)
+# [env]
+# NODE_ENV = "production"
+
+# Headers for security and performance
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+X-XSS-Protection = "1; mode=block"
+Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+for = "/_astro/*"
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache images
+[[headers]]
+for = "*.svg"
+[headers.values]
+Cache-Control = "public, max-age=31536000"
+
+# Redirects (if needed)
+# [[redirects]]
+# from = "/old-path"
+# to = "/new-path"
+# status = 301
