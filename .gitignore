@@ -1,3 +1,6 @@
+# local only files
+docs/
+
 # Dependencies
 node_modules/
 npm-debug.log*

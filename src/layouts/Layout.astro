@@ -18,13 +18,16 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
     
     <!-- SEO Meta Tags -->
     <title>{title}</title>
+    <meta name="author" content="Rich Lewis" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={Astro.url} />
+    <meta property="og:site_name" content="Stupid Web Tricks" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:creator" content="@richlewis007" />
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -125,7 +128,7 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
             </a>
           </div>
           <p class="text-gray-500 text-sm mt-6">
-            © 2025 Stupid Web Tricks. Built with Astro and deployed on Cloudflare Pages.
+            © 2025 Rich Lewis. Built with Astro and deployed on Cloudflare Pages.
           </p>
         </div>
       </div>

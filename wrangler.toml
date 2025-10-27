@@ -1,20 +1,14 @@
-# Cloudflare Pages Configuration
-# This file configures the build settings for Cloudflare Pages deployment
+# Cloudflare Pages config
 
-# Build command
 build_command = "npm run build"
-
-# Build output directory
 build_output_directory = "dist"
-
-# Node.js version
 node_version = "18"
 
-# Environment variables (if needed)
+# Environment variables (uncomment if needed)
 # [env]
 # NODE_ENV = "production"
 
-# Headers for security and performance
+# Security headers
 [[headers]]
 for = "/*"
 [headers.values]
@@ -35,7 +29,7 @@ for = "*.svg"
 [headers.values]
 Cache-Control = "public, max-age=31536000"
 
-# Redirects (if needed)
+# Redirects (uncomment if needed)
 # [[redirects]]
 # from = "/old-path"
 # to = "/new-path"

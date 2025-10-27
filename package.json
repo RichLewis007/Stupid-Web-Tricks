@@ -2,6 +2,8 @@
   "name": "stupid-web-tricks",
   "type": "module",
   "version": "0.0.1",
+  "description": "A collection of web effects and animations I've been playing around with",
+  "author": "Rich Lewis",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
