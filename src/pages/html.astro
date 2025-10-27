@@ -33,18 +33,18 @@ import Layout from '../layouts/Layout.astro';
             
             <div class="code-example">
               <h4 class="text-lg font-semibold mb-3">Example: Article Structure</h4>
-              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;article&gt;
-  &lt;header&gt;
-    &lt;h1&gt;Article Title&lt;/h1&gt;
-    &lt;time datetime="2025-01-01"&gt;January 1, 2025&lt;/time&gt;
-  &lt;/header&gt;
-  &lt;main&gt;
-    &lt;p&gt;Article content...&lt;/p&gt;
-  &lt;/main&gt;
-  &lt;footer&gt;
-    &lt;address&gt;Author: John Doe&lt;/address&gt;
-  &lt;/footer&gt;
-&lt;/article&gt;</code></pre>
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>{`<article>
+  <header>
+    <h1>Article Title</h1>
+    <time datetime="2025-01-01">January 1, 2025</time>
+  </header>
+  <main>
+    <p>Article content...</p>
+  </main>
+  <footer>
+    <address>Author: John Doe</address>
+  </footer>
+</article>`}</code></pre>
             </div>
             
             <div class="trick-benefits">
@@ -71,21 +71,21 @@ import Layout from '../layouts/Layout.astro';
             
             <div class="code-example">
               <h4 class="text-lg font-semibold mb-3">Example: Advanced Form</h4>
-              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;form&gt;
-  &lt;input type="email" 
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>{`<form>
+  <input type="email" 
          required 
          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-         title="Enter a valid email address"&gt;
+         title="Enter a valid email address">
   
-  &lt;input type="password" 
+  <input type="password" 
          minlength="8" 
          pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])"
-         title="Password must contain uppercase, lowercase, and number"&gt;
+         title="Password must contain uppercase, lowercase, and number">
   
-  &lt;input type="tel" 
+  <input type="tel" 
          pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-         placeholder="123-456-7890"&gt;
-&lt;/form&gt;</code></pre>
+         placeholder="123-456-7890">
+</form>`}</code></pre>
             </div>
             
             <div class="trick-benefits">
@@ -112,27 +112,27 @@ import Layout from '../layouts/Layout.astro';
             
             <div class="code-example">
               <h4 class="text-lg font-semibold mb-3">Essential Meta Tags</h4>
-              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;head&gt;
-  &lt;meta charset="UTF-8"&gt;
-  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-  &lt;meta name="description" content="Your page description"&gt;
-  &lt;meta name="keywords" content="keyword1, keyword2, keyword3"&gt;
-  &lt;meta name="author" content="Your Name"&gt;
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>{`<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Your page description">
+  <meta name="keywords" content="keyword1, keyword2, keyword3">
+  <meta name="author" content="Your Name">
   
-  &lt;!-- Open Graph / Facebook --&gt;
-  &lt;meta property="og:type" content="website"&gt;
-  &lt;meta property="og:url" content="https://yoursite.com/"&gt;
-  &lt;meta property="og:title" content="Your Site Title"&gt;
-  &lt;meta property="og:description" content="Your description"&gt;
-  &lt;meta property="og:image" content="https://yoursite.com/image.jpg"&gt;
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yoursite.com/">
+  <meta property="og:title" content="Your Site Title">
+  <meta property="og:description" content="Your description">
+  <meta property="og:image" content="https://yoursite.com/image.jpg">
   
-  &lt;!-- Twitter --&gt;
-  &lt;meta property="twitter:card" content="summary_large_image"&gt;
-  &lt;meta property="twitter:url" content="https://yoursite.com/"&gt;
-  &lt;meta property="twitter:title" content="Your Site Title"&gt;
-  &lt;meta property="twitter:description" content="Your description"&gt;
-  &lt;meta property="twitter:image" content="https://yoursite.com/image.jpg"&gt;
-&lt;/head&gt;</code></pre>
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://yoursite.com/">
+  <meta property="twitter:title" content="Your Site Title">
+  <meta property="twitter:description" content="Your description">
+  <meta property="twitter:image" content="https://yoursite.com/image.jpg">
+</head>`}</code></pre>
             </div>
             
             <div class="trick-benefits">
@@ -159,28 +159,28 @@ import Layout from '../layouts/Layout.astro';
             
             <div class="code-example">
               <h4 class="text-lg font-semibold mb-3">Accessibility Example</h4>
-              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;!-- Skip navigation link --&gt;
-&lt;a href="#main" class="skip-link"&gt;Skip to main content&lt;/a&gt;
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>{`<!-- Skip navigation link -->
+<a href="#main" class="skip-link">Skip to main content</a>
 
-&lt;!-- Proper heading hierarchy --&gt;
-&lt;h1&gt;Main Title&lt;/h1&gt;
-&lt;h2&gt;Section Title&lt;/h2&gt;
-&lt;h3&gt;Subsection Title&lt;/h3&gt;
+<!-- Proper heading hierarchy -->
+<h1>Main Title</h1>
+<h2>Section Title</h2>
+<h3>Subsection Title</h3>
 
-&lt;!-- Alt text for images --&gt;
-&lt;img src="image.jpg" alt="Descriptive text about the image"&gt;
+<!-- Alt text for images -->
+<img src="image.jpg" alt="Descriptive text about the image">
 
-&lt;!-- Form labels --&gt;
-&lt;label for="email"&gt;Email Address:&lt;/label&gt;
-&lt;input type="email" id="email" name="email" required&gt;
+<!-- Form labels -->
+<label for="email">Email Address:</label>
+<input type="email" id="email" name="email" required>
 
-&lt;!-- ARIA attributes --&gt;
-&lt;button aria-expanded="false" aria-controls="menu"&gt;
+<!-- ARIA attributes -->
+<button aria-expanded="false" aria-controls="menu">
   Toggle Menu
-&lt;/button&gt;
-&lt;ul id="menu" aria-hidden="true"&gt;
-  &lt;li&gt;&lt;a href="#"&gt;Menu Item&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
+</button>
+<ul id="menu" aria-hidden="true">
+  <li><a href="#">Menu Item</a></li>
+</ul>`}</code></pre>
             </div>
             
             <div class="trick-benefits">
@@ -207,25 +207,25 @@ import Layout from '../layouts/Layout.astro';
             
             <div class="code-example">
               <h4 class="text-lg font-semibold mb-3">Interactive Example</h4>
-              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;!-- Store custom data --&gt;
-&lt;div data-user-id="123" data-role="admin"&gt;
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>{`<!-- Store custom data -->
+<div data-user-id="123" data-role="admin">
   User Content
-&lt;/div&gt;
+</div>
 
-&lt;!-- Toggle functionality --&gt;
-&lt;button data-toggle="modal" data-target="#myModal"&gt;
+<!-- Toggle functionality -->
+<button data-toggle="modal" data-target="#myModal">
   Open Modal
-&lt;/button&gt;
+</button>
 
-&lt;!-- Progress tracking --&gt;
-&lt;div class="progress" data-progress="75"&gt;
-  &lt;div class="progress-bar"&gt;&lt;/div&gt;
-&lt;/div&gt;
+<!-- Progress tracking -->
+<div class="progress" data-progress="75">
+  <div class="progress-bar"></div>
+</div>
 
-&lt;!-- Tooltip data --&gt;
-&lt;span data-tooltip="This is a helpful tooltip"&gt;
+<!-- Tooltip data -->
+<span data-tooltip="This is a helpful tooltip">
   Hover me
-&lt;/span&gt;</code></pre>
+</span>`}</code></pre>
             </div>
             
             <div class="trick-benefits">
@@ -252,22 +252,22 @@ import Layout from '../layouts/Layout.astro';
             
             <div class="code-example">
               <h4 class="text-lg font-semibold mb-3">Schema.org Example</h4>
-              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>&lt;article itemscope itemtype="https://schema.org/Article"&gt;
-  &lt;header&gt;
-    &lt;h1 itemprop="headline"&gt;Article Title&lt;/h1&gt;
-    &lt;time itemprop="datePublished" datetime="2025-01-01"&gt;
+              <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code>{`<article itemscope itemtype="https://schema.org/Article">
+  <header>
+    <h1 itemprop="headline">Article Title</h1>
+    <time itemprop="datePublished" datetime="2025-01-01">
       January 1, 2025
-    &lt;/time&gt;
-  &lt;/header&gt;
+    </time>
+  </header>
   
-  &lt;div itemprop="author" itemscope itemtype="https://schema.org/Person"&gt;
-    &lt;span itemprop="name"&gt;John Doe&lt;/span&gt;
-  &lt;/div&gt;
+  <div itemprop="author" itemscope itemtype="https://schema.org/Person">
+    <span itemprop="name">John Doe</span>
+  </div>
   
-  &lt;div itemprop="articleBody"&gt;
-    &lt;p&gt;Article content...&lt;/p&gt;
-  &lt;/div&gt;
-&lt;/article&gt;</code></pre>
+  <div itemprop="articleBody">
+    <p>Article content...</p>
+  </div>
+</article>`}</code></pre>
             </div>
             
             <div class="trick-benefits">

@@ -40,15 +40,10 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>&lt;svg viewBox="0 0 200 200"&gt;
-  &lt;path id="path" d="M50,100 Q100,50 150,100" 
-        stroke="#667eea" fill="none"/&gt;
-  &lt;circle fill="#764ba2"&gt;
-    &lt;animateMotion dur="3s" repeatCount="indefinite"&gt;
-      &lt;mpath href="#path"/&gt;
-    &lt;/animateMotion&gt;
-  &lt;/circle&gt;
-&lt;/svg&gt;</code></pre>
+            <pre><code>SVG Path Animation
+- Uses animateMotion element
+- Follows curved path
+- Smooth 3-second loop</code></pre>
           </div>
         </div>
 
@@ -66,24 +61,11 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-let isDrawing = false;
-
-canvas.addEventListener('mousedown', startDrawing);
-canvas.addEventListener('mousemove', draw);
-canvas.addEventListener('mouseup', stopDrawing);
-
-function draw(e) {
-  if (!isDrawing) return;
-  
-  ctx.lineWidth = brushSize.value;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = colorPicker.value;
-  
-  ctx.lineTo(e.offsetX, e.offsetY);
-  ctx.stroke();
-}</code></pre>
+            <pre><code>Canvas Drawing Features
+- Mouse/touch drawing
+- Color picker
+- Brush size control
+- Clear functionality</code></pre>
           </div>
         </div>
 
@@ -105,14 +87,10 @@ function draw(e) {
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>&lt;path fill="#667eea"&gt;
-  &lt;animate attributeName="d" 
-           values="M100,50 L150,100 L100,150 L50,100 Z;
-                   M100,25 L175,100 L100,175 L25,100 Z;
-                   M100,50 L150,100 L100,150 L50,100 Z" 
-           dur="2s" 
-           repeatCount="indefinite"/&gt;
-&lt;/path&gt;</code></pre>
+            <pre><code>SVG Morphing
+- Shape transformation
+- Smooth transitions
+- Custom timing</code></pre>
           </div>
         </div>
 
@@ -125,26 +103,10 @@ function draw(e) {
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>class Particle {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.vx = (Math.random() - 0.5) * 2;
-    this.vy = (Math.random() - 0.5) * 2;
-    this.life = 1;
-  }
-  
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.life -= 0.01;
-  }
-  
-  draw(ctx) {
-    ctx.globalAlpha = this.life;
-    ctx.fillRect(this.x, this.y, 2, 2);
-  }
-}</code></pre>
+            <pre><code>Particle System
+- Dynamic particles
+- Physics simulation
+- Smooth animation</code></pre>
           </div>
         </div>
 
@@ -169,18 +131,11 @@ function draw(e) {
               Create stunning visual effects using SVG filters like blur, shadow, and distortion.
             </p>
             <div class="code-example">
-              <pre><code>&lt;defs&gt;
-  &lt;filter id="glow"&gt;
-    &lt;feGaussianBlur stdDeviation="3" result="coloredBlur"/&gt;
-    &lt;feMerge&gt;
-      &lt;feMergeNode in="coloredBlur"/&gt;
-      &lt;feMergeNode in="SourceGraphic"/&gt;
-    &lt;/feMerge&gt;
-  &lt;/filter&gt;
-&lt;/defs&gt;
-
-&lt;circle cx="100" cy="100" r="50" 
-        fill="#667eea" filter="url(#glow)"/&gt;</code></pre>
+              <pre><code>SVG Filter Effects
+- Gaussian blur
+- Drop shadows
+- Glow effects
+- Custom filters</code></pre>
             </div>
           </div>
         </div>
@@ -193,22 +148,11 @@ function draw(e) {
               Manipulate images with Canvas for effects like grayscale, sepia, and custom filters.
             </p>
             <div class="code-example">
-              <pre><code>function applyFilter(imageData, filterType) {
-  const data = imageData.data;
-  
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    
-    if (filterType === 'grayscale') {
-      const gray = r * 0.299 + g * 0.587 + b * 0.114;
-      data[i] = data[i + 1] = data[i + 2] = gray;
-    }
-  }
-  
-  return imageData;
-}</code></pre>
+              <pre><code>Image Processing
+- Grayscale conversion
+- Color manipulation
+- Custom filters
+- Real-time effects</code></pre>
             </div>
           </div>
         </div>
@@ -221,14 +165,11 @@ function draw(e) {
               Use clipping paths and masks to create complex visual effects and shapes.
             </p>
             <div class="code-example">
-              <pre><code>&lt;defs&gt;
-  &lt;clipPath id="circleClip"&gt;
-    &lt;circle cx="100" cy="100" r="80"/&gt;
-  &lt;/clipPath&gt;
-&lt;/defs&gt;
-
-&lt;rect x="50" y="50" width="100" height="100" 
-      fill="#667eea" clip-path="url(#circleClip)"/&gt;</code></pre>
+              <pre><code>Clipping & Masking
+- Complex shapes
+- Reveal effects
+- Creative layouts
+- Advanced masking</code></pre>
             </div>
           </div>
         </div>
@@ -241,22 +182,11 @@ function draw(e) {
               Combine Canvas with WebGL for high-performance graphics and 3D effects.
             </p>
             <div class="code-example">
-              <pre><code>const canvas = document.getElementById('canvas');
-const gl = canvas.getContext('webgl');
-
-const vertexShaderSource = `
-  attribute vec2 position;
-  void main() {
-    gl_Position = vec4(position, 0.0, 1.0);
-  }
-`;
-
-const fragmentShaderSource = `
-  precision mediump float;
-  void main() {
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-  }
-`;</code></pre>
+              <pre><code>WebGL Integration
+- 3D graphics
+- Shader programming
+- High performance
+- Advanced effects</code></pre>
             </div>
           </div>
         </div>

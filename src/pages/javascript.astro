@@ -38,7 +38,7 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>let count = 0;
+            <pre><code>{`let count = 0;
 const counter = document.getElementById('counter');
 
 function updateCounter() {
@@ -53,7 +53,7 @@ document.getElementById('increment')
   .addEventListener('click', () => {
     count++;
     updateCounter();
-  });</code></pre>
+  });`}</code></pre>
           </div>
         </div>
 
@@ -70,7 +70,7 @@ document.getElementById('increment')
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>const colorPicker = document.getElementById('colorPicker');
+            <pre><code>{`const colorPicker = document.getElementById('colorPicker');
 const colorPreview = document.getElementById('colorPreview');
 const colorValue = document.getElementById('colorValue');
 
@@ -78,7 +78,7 @@ colorPicker.addEventListener('input', (e) => {
   const color = e.target.value;
   colorPreview.style.backgroundColor = color;
   colorValue.textContent = color;
-});</code></pre>
+});`}</code></pre>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ colorPicker.addEventListener('input', (e) => {
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>function typeText(element, text, speed = 100) {
+            <pre><code>{`function typeText(element, text, speed = 100) {
   let i = 0;
   element.textContent = '';
   
@@ -104,7 +104,7 @@ colorPicker.addEventListener('input', (e) => {
       clearInterval(timer);
     }
   }, speed);
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -122,7 +122,7 @@ colorPicker.addEventListener('input', (e) => {
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>const draggable = document.getElementById('draggable');
+            <pre><code>{`const draggable = document.getElementById('draggable');
 const dropZone = document.getElementById('dropZone');
 
 draggable.addEventListener('dragstart', (e) => {
@@ -137,7 +137,7 @@ dropZone.addEventListener('drop', (e) => {
   e.preventDefault();
   const data = e.dataTransfer.getData('text/plain');
   dropZone.appendChild(document.getElementById(data));
-});</code></pre>
+});`}</code></pre>
           </div>
         </div>
 
@@ -162,12 +162,12 @@ dropZone.addEventListener('drop', (e) => {
               Modern asynchronous JavaScript patterns for handling promises elegantly.
             </p>
             <div class="code-example">
-              <pre><code>async function fetchUserData(userId) {
+              <pre><code>{`async function fetchUserData(userId) {
   try {
-    const response = await fetch(`/api/users/${userId}`);
+    const response = await fetch('/api/users/' + userId);
     const user = await response.json();
     
-    const posts = await fetch(`/api/users/${userId}/posts`);
+    const posts = await fetch('/api/users/' + userId + '/posts');
     const userPosts = await posts.json();
     
     return { user, posts: userPosts };
@@ -175,7 +175,7 @@ dropZone.addEventListener('drop', (e) => {
     console.error('Error fetching user data:', error);
     throw error;
   }
-}</code></pre>
+}`}</code></pre>
             </div>
           </div>
         </div>
@@ -188,7 +188,7 @@ dropZone.addEventListener('drop', (e) => {
               Efficient event handling for dynamic content using event delegation.
             </p>
             <div class="code-example">
-              <pre><code>document.addEventListener('click', (e) => {
+              <pre><code>{`document.addEventListener('click', (e) => {
   if (e.target.matches('.delete-btn')) {
     const item = e.target.closest('.item');
     item.remove();
@@ -198,7 +198,7 @@ dropZone.addEventListener('drop', (e) => {
     const content = e.target.nextElementSibling;
     content.classList.toggle('hidden');
   }
-});</code></pre>
+});`}</code></pre>
             </div>
           </div>
         </div>
@@ -211,7 +211,7 @@ dropZone.addEventListener('drop', (e) => {
               Efficient scroll-based animations and lazy loading with Intersection Observer.
             </p>
             <div class="code-example">
-              <pre><code>const observer = new IntersectionObserver((entries) => {
+              <pre><code>{`const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.classList.add('animate-in');
@@ -221,7 +221,7 @@ dropZone.addEventListener('drop', (e) => {
 });
 
 document.querySelectorAll('.animate-on-scroll')
-  .forEach(el => observer.observe(el));</code></pre>
+  .forEach(el => observer.observe(el));`}</code></pre>
             </div>
           </div>
         </div>
@@ -234,7 +234,7 @@ document.querySelectorAll('.animate-on-scroll')
               Offload heavy computations to background threads for better performance.
             </p>
             <div class="code-example">
-              <pre><code>// Main thread
+              <pre><code>{`// Main thread
 const worker = new Worker('worker.js');
 worker.postMessage({ data: largeDataSet });
 
@@ -248,7 +248,7 @@ self.onmessage = (e) => {
   const data = e.data.data;
   const result = processLargeData(data);
   self.postMessage(result);
-};</code></pre>
+};`}</code></pre>
             </div>
           </div>
         </div>

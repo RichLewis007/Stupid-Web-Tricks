@@ -36,13 +36,13 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>.glass-card {
+            <pre><code>{`glass-card {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 15px;
   padding: 1.5rem;
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>.animated-gradient {
+            <pre><code>{`animated-gradient {
   background: linear-gradient(-45deg, 
     #ee7752, #e73c7e, #23a6d5, #23d5ab);
   background-size: 400% 400%;
@@ -68,7 +68,7 @@ import Layout from '../layouts/Layout.astro';
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>.card-3d {
+            <pre><code>{`card-3d {
   transform-style: preserve-3d;
   transition: transform 0.6s;
 }
@@ -97,7 +97,7 @@ import Layout from '../layouts/Layout.astro';
 
 .card-content {
   transform: translateZ(50px);
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -113,7 +113,7 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>.morph-button {
+            <pre><code>{`morph-button {
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -130,7 +130,7 @@ import Layout from '../layouts/Layout.astro';
 
 .morph-button:hover .button-icon {
   transform: translateX(0);
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -143,7 +143,7 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>.text-reveal {
+            <pre><code>{`text-reveal {
   position: relative;
   overflow: hidden;
 }
@@ -163,7 +163,7 @@ import Layout from '../layouts/Layout.astro';
 @keyframes reveal {
   0% { left: -100%; }
   100% { left: 100%; }
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -178,7 +178,7 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>.floating-element {
+            <pre><code>{`floating-element {
   animation: float 3s ease-in-out infinite;
 }
 
@@ -189,7 +189,7 @@ import Layout from '../layouts/Layout.astro';
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-20px); }
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -214,7 +214,7 @@ import Layout from '../layouts/Layout.astro';
               Create complex layouts with CSS Grid and add animations for dynamic effects.
             </p>
             <div class="code-example">
-              <pre><code>.grid-container {
+              <pre><code>{`grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
@@ -224,7 +224,7 @@ import Layout from '../layouts/Layout.astro';
 @keyframes gridPulse {
   0%, 100% { gap: 1rem; }
   50% { gap: 2rem; }
-}</code></pre>
+}`}</code></pre>
             </div>
           </div>
         </div>
@@ -237,7 +237,7 @@ import Layout from '../layouts/Layout.astro';
               Use CSS variables for dynamic theming and animations.
             </p>
             <div class="code-example">
-              <pre><code>:root {
+              <pre><code>{`:root {
   --primary-color: #667eea;
   --animation-duration: 0.3s;
 }
@@ -249,7 +249,7 @@ import Layout from '../layouts/Layout.astro';
 
 .button:hover {
   --primary-color: #764ba2;
-}</code></pre>
+}`}</code></pre>
             </div>
           </div>
         </div>
@@ -262,7 +262,7 @@ import Layout from '../layouts/Layout.astro';
               Create unique shapes and reveal animations with clip-path.
             </p>
             <div class="code-example">
-              <pre><code>.clip-reveal {
+              <pre><code>{`clip-reveal {
   clip-path: circle(0% at 50% 50%);
   animation: clipReveal 1s ease-out forwards;
 }
@@ -271,7 +271,7 @@ import Layout from '../layouts/Layout.astro';
   to {
     clip-path: circle(100% at 50% 50%);
   }
-}</code></pre>
+}`}</code></pre>
             </div>
           </div>
         </div>
@@ -284,7 +284,7 @@ import Layout from '../layouts/Layout.astro';
               Create scroll-triggered animations using CSS only.
             </p>
             <div class="code-example">
-              <pre><code>.scroll-element {
+              <pre><code>{`scroll-element {
   opacity: 0;
   transform: translateY(50px);
   transition: all 0.6s ease;
@@ -293,7 +293,7 @@ import Layout from '../layouts/Layout.astro';
 .scroll-element.in-view {
   opacity: 1;
   transform: translateY(0);
-}</code></pre>
+}`}</code></pre>
             </div>
           </div>
         </div>

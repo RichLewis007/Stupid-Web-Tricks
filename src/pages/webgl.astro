@@ -33,22 +33,22 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>const canvas = document.getElementById('canvas');
+            <pre><code>{`const canvas = document.getElementById('canvas');
 const gl = canvas.getContext('webgl');
 
-const vertexShaderSource = `
+const vertexShaderSource = \`
   attribute vec2 position;
   void main() {
     gl_Position = vec4(position, 0.0, 1.0);
   }
-`;
+\`;
 
-const fragmentShaderSource = `
+const fragmentShaderSource = \`
   precision mediump float;
   void main() {
     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
   }
-`;</code></pre>
+\`;`}</code></pre>
           </div>
         </div>
 
@@ -61,7 +61,7 @@ const fragmentShaderSource = `
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>function createCube() {
+            <pre><code>{`function createCube() {
   const vertices = [
     // Front face
     -1, -1,  1,
@@ -76,7 +76,7 @@ const fragmentShaderSource = `
   ];
   
   return vertices;
-}</code></pre>
+}`}</code></pre>
           </div>
         </div>
 
@@ -89,7 +89,7 @@ const fragmentShaderSource = `
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>const fragmentShader = `
+            <pre><code>{`const fragmentShader = \`
   precision mediump float;
   uniform float time;
   uniform vec2 resolution;
@@ -103,7 +103,7 @@ const fragmentShaderSource = `
     );
     gl_FragColor = vec4(color, 1.0);
   }
-`;</code></pre>
+\`;`}</code></pre>
           </div>
         </div>
 
@@ -116,7 +116,7 @@ const fragmentShaderSource = `
             </div>
           </div>
           <div class="code-snippet">
-            <pre><code>const particleVertexShader = `
+            <pre><code>{`const particleVertexShader = \`
   attribute vec2 position;
   attribute float size;
   uniform float time;
@@ -126,7 +126,7 @@ const fragmentShaderSource = `
     gl_Position = vec4(pos, 0.0, 1.0);
     gl_PointSize = size;
   }
-`;</code></pre>
+\`;`}</code></pre>
           </div>
         </div>
 
@@ -151,7 +151,7 @@ const fragmentShaderSource = `
               Apply textures to 3D objects for realistic rendering and visual effects.
             </p>
             <div class="code-example">
-              <pre><code>function loadTexture(url) {
+              <pre><code>{`function loadTexture(url) {
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   
@@ -165,7 +165,7 @@ const fragmentShaderSource = `
   
   image.src = url;
   return texture;
-}</code></pre>
+}`}</code></pre>
             </div>
           </div>
         </div>
@@ -178,7 +178,7 @@ const fragmentShaderSource = `
               Implement Phong lighting model for realistic 3D scene illumination.
             </p>
             <div class="code-example">
-              <pre><code>const lightingVertexShader = `
+              <pre><code>{`const lightingVertexShader = \`
   attribute vec3 position;
   attribute vec3 normal;
   uniform mat4 modelViewMatrix;
@@ -193,7 +193,7 @@ const fragmentShaderSource = `
     vPosition = vec3(modelViewMatrix * vec4(position, 1.0));
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
-`;</code></pre>
+\`;`}</code></pre>
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ const fragmentShaderSource = `
               Apply screen-space effects like bloom, blur, and color grading.
             </p>
             <div class="code-example">
-              <pre><code>const postProcessFragmentShader = `
+              <pre><code>{`const postProcessFragmentShader = \`
   precision mediump float;
   uniform sampler2D texture;
   uniform vec2 resolution;
@@ -223,7 +223,7 @@ const fragmentShaderSource = `
     
     gl_FragColor = color;
   }
-`;</code></pre>
+\`;`}</code></pre>
             </div>
           </div>
         </div>
@@ -236,7 +236,7 @@ const fragmentShaderSource = `
               Render thousands of objects efficiently using instanced rendering techniques.
             </p>
             <div class="code-example">
-              <pre><code>const instancedVertexShader = `
+              <pre><code>{`const instancedVertexShader = \`
   attribute vec3 position;
   attribute vec3 instancePosition;
   attribute float instanceScale;
@@ -248,7 +248,7 @@ const fragmentShaderSource = `
     vec3 worldPosition = position * instanceScale + instancePosition;
     gl_Position = projectionMatrix * viewMatrix * vec4(worldPosition, 1.0);
   }
-`;</code></pre>
+\`;`}</code></pre>
             </div>
           </div>
         </div>
