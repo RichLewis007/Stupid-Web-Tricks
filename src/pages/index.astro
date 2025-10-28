@@ -10,13 +10,18 @@ import Layout from '../layouts/Layout.astro';
       <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
     </div>
     
-    <!-- Floating particles -->
+    <!-- Interactive Animated Background -->
     <div class="absolute inset-0">
-      <div class="particle particle-1 animate-float"></div>
-      <div class="particle particle-2 animate-float" style="animation-delay: 1s;"></div>
-      <div class="particle particle-3 animate-float" style="animation-delay: 2s;"></div>
-      <div class="particle particle-4 animate-float" style="animation-delay: 0.5s;"></div>
-      <div class="particle particle-5 animate-float" style="animation-delay: 1.5s;"></div>
+      <!-- Floating geometric shapes -->
+      <div class="floating-shape shape-1"></div>
+      <div class="floating-shape shape-2"></div>
+      <div class="floating-shape shape-3"></div>
+      <div class="floating-shape shape-4"></div>
+      <div class="floating-shape shape-5"></div>
+      <div class="floating-shape shape-6"></div>
+      
+      <!-- Interactive constellation particles -->
+      <canvas id="particleCanvas" class="absolute inset-0 w-full h-full"></canvas>
     </div>
 
     <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
@@ -274,45 +279,97 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <style>
-  /* Particle animations */
-  .particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    border-radius: 50%;
-    opacity: 0.7;
+  /* Floating geometric shapes */
+    .floating-shape {
+      position: absolute !important;
+      border-radius: 50%;
+      background: linear-gradient(45deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6));
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      animation: float-complex 8s ease-in-out infinite;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      z-index: 20 !important;
+      opacity: 0.9;
+      pointer-events: auto !important;
+    }
+
+  #particleCanvas {
+    z-index: 1 !important;
+    pointer-events: auto !important;
   }
   
-  .particle-1 {
-    top: 20%;
-    left: 20%;
-    animation-delay: 0s;
-  }
-  
-  .particle-2 {
-    top: 60%;
-    left: 80%;
-    animation-delay: 1s;
-  }
-  
-  .particle-3 {
-    top: 80%;
-    left: 40%;
-    animation-delay: 2s;
-  }
-  
-  .particle-4 {
-    top: 30%;
-    left: 70%;
-    animation-delay: 0.5s;
-  }
-  
-  .particle-5 {
-    top: 70%;
+  .shape-1 {
+    width: 80px;
+    height: 80px;
+    top: 10%;
     left: 10%;
-    animation-delay: 1.5s;
+    animation-delay: 0s;
+    background: linear-gradient(45deg, rgba(255, 0, 150, 0.6), rgba(0, 255, 255, 0.6));
   }
+  
+  .shape-2 {
+    width: 120px;
+    height: 120px;
+    top: 20%;
+    right: 15%;
+    animation-delay: 2s;
+    background: linear-gradient(45deg, rgba(255, 255, 0, 0.6), rgba(255, 0, 255, 0.6));
+  }
+  
+  .shape-3 {
+    width: 60px;
+    height: 60px;
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 4s;
+    background: linear-gradient(45deg, rgba(0, 255, 150, 0.6), rgba(150, 0, 255, 0.6));
+  }
+  
+  .shape-4 {
+    width: 100px;
+    height: 100px;
+    bottom: 30%;
+    right: 25%;
+    animation-delay: 1s;
+    background: linear-gradient(45deg, rgba(255, 100, 0, 0.6), rgba(0, 100, 255, 0.6));
+  }
+  
+  .shape-5 {
+    width: 40px;
+    height: 40px;
+    top: 50%;
+    left: 5%;
+    animation-delay: 3s;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.6));
+  }
+  
+  .shape-6 {
+    width: 90px;
+    height: 90px;
+    top: 60%;
+    right: 10%;
+    animation-delay: 5s;
+    background: linear-gradient(45deg, rgba(150, 255, 0, 0.6), rgba(255, 0, 150, 0.6));
+  }
+
+
+  /* Keyframe animations */
+  @keyframes float-complex {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg) scale(1);
+    }
+    25% {
+      transform: translateY(-20px) rotate(90deg) scale(1.1);
+    }
+    50% {
+      transform: translateY(-10px) rotate(180deg) scale(0.9);
+    }
+    75% {
+      transform: translateY(-30px) rotate(270deg) scale(1.05);
+    }
+  }
+  
 
   /* Category cards */
   .category-card {
@@ -387,8 +444,479 @@ import Layout from '../layouts/Layout.astro';
 </style>
 
 <script>
-  // Add GSAP animations on page load
+  // Interactive Constellation Particle System
+  class ConstellationSystem {
+    constructor() {
+      this.canvas = document.getElementById('particleCanvas');
+      this.ctx = this.canvas.getContext('2d');
+      this.particles = [];
+      this.mouse = { x: 0, y: 0 };
+      this.init();
+    }
+
+    init() {
+      this.resizeCanvas();
+      this.createParticles();
+      this.bindEvents();
+      this.animate();
+    }
+
+    resizeCanvas() {
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+    }
+
+    createParticles() {
+      const particleCount = Math.floor((this.canvas.width * this.canvas.height) / 12000);
+      
+      for (let i = 0; i < particleCount; i++) {
+        this.particles.push({
+          x: Math.random() * this.canvas.width,
+          y: Math.random() * this.canvas.height,
+          vx: (Math.random() - 0.5) * 0.08, // Slightly faster for visibility
+          vy: (Math.random() - 0.5) * 0.08,
+          baseVx: (Math.random() - 0.5) * 0.08, // Store base velocity for drift
+          baseVy: (Math.random() - 0.5) * 0.08,
+          size: Math.random() * 3 + 1,
+          opacity: Math.random() * 0.8 + 0.2,
+          hue: Math.random() * 360,
+          pulse: Math.random() * Math.PI * 2,
+          driftPhase: Math.random() * Math.PI * 2, // For smooth drifting motion
+          driftSpeed: Math.random() * 0.003 + 0.001 // Slightly faster drift
+        });
+      }
+    }
+
+    bindEvents() {
+      window.addEventListener('resize', () => this.resizeCanvas());
+      
+      this.canvas.addEventListener('mousemove', (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouse.x = e.clientX - rect.left;
+        this.mouse.y = e.clientY - rect.top;
+      });
+      
+      this.canvas.addEventListener('mouseleave', () => {
+        this.mouse.x = 0;
+        this.mouse.y = 0;
+      });
+      
+      // Add click interaction for constellation dots
+      this.canvas.addEventListener('click', (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        // Find the closest particle to the click
+        let closestParticle = null;
+        let closestDistance = Infinity;
+        
+        this.particles.forEach(particle => {
+          const distance = Math.sqrt(
+            Math.pow(particle.x - clickX, 2) + 
+            Math.pow(particle.y - clickY, 2)
+          );
+          
+          if (distance < closestDistance && distance < 50) { // Within 50px
+            closestDistance = distance;
+            closestParticle = particle;
+          }
+        });
+        
+        if (closestParticle) {
+          this.createConstellationClickEffect(clickX, clickY, closestParticle);
+        }
+      });
+    }
+    
+    createConstellationClickEffect(clickX, clickY, particle) {
+      // Create a ripple effect on the canvas
+      const ctx = this.canvas.getContext('2d');
+      
+      // Create ripple animation
+      let rippleRadius = 0;
+      const maxRadius = 80;
+      const rippleOpacity = 0.8;
+      
+      const animateRipple = () => {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = `hsla(${particle.hue}, 70%, 60%, ${rippleOpacity * (1 - rippleRadius / maxRadius)})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(clickX, clickY, rippleRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        
+        rippleRadius += 2;
+        
+        if (rippleRadius < maxRadius) {
+          requestAnimationFrame(animateRipple);
+        }
+      };
+      
+      animateRipple();
+      
+      // Give the clicked particle a boost
+      particle.vx += (Math.random() - 0.5) * 0.5;
+      particle.vy += (Math.random() - 0.5) * 0.5;
+      
+      // Temporarily increase the particle's size and brightness
+      const originalSize = particle.size;
+      const originalOpacity = particle.opacity;
+      
+      particle.size *= 2;
+      particle.opacity = 1;
+      
+      // Reset after a short time
+      setTimeout(() => {
+        particle.size = originalSize;
+        particle.opacity = originalOpacity;
+      }, 1000);
+      
+      // Create a small explosion of mini-particles
+      for (let i = 0; i < 8; i++) {
+        const miniParticle = {
+          x: clickX,
+          y: clickY,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          size: Math.max(Math.random() * 2 + 1, 0.5), // Ensure minimum size
+          opacity: 1,
+          hue: particle.hue + (Math.random() - 0.5) * 60,
+          life: 60, // frames to live
+          pulse: Math.random() * Math.PI * 2, // Add pulse for gradient
+          driftPhase: Math.random() * Math.PI * 2, // Add drift properties
+          driftSpeed: Math.random() * 0.003 + 0.001,
+          baseVx: (Math.random() - 0.5) * 2,
+          baseVy: (Math.random() - 0.5) * 2
+        };
+        
+        this.particles.push(miniParticle);
+      }
+    }
+    
+    updateParticles() {
+      this.particles.forEach((particle, index) => {
+        // Handle mini-particles with life spans
+        if (particle.life !== undefined) {
+          particle.life--;
+          particle.opacity = particle.life / 60;
+          
+          if (particle.life <= 0) {
+            this.particles.splice(index, 1);
+            return;
+          }
+          
+          // Mini-particles move faster and fade out
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          particle.vx *= 0.98;
+          particle.vy *= 0.98;
+          return;
+        }
+        
+        // Add gentle drifting motion
+        particle.driftPhase += particle.driftSpeed;
+        
+        // Create smooth circular drift - slightly more visible
+        const driftX = Math.cos(particle.driftPhase) * 0.008;
+        const driftY = Math.sin(particle.driftPhase) * 0.008;
+        
+        // Add some randomness to the drift - slightly more visible
+        const randomDriftX = (Math.random() - 0.5) * 0.004;
+        const randomDriftY = (Math.random() - 0.5) * 0.004;
+        
+        // Update velocity with drift
+        particle.vx += driftX + randomDriftX;
+        particle.vy += driftY + randomDriftY;
+        
+        // Gradually return to base velocity - slightly faster
+        particle.vx += (particle.baseVx - particle.vx) * 0.002;
+        particle.vy += (particle.baseVy - particle.vy) * 0.002;
+
+        // Update position
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        // Mouse interaction
+        const dx = this.mouse.x - particle.x;
+        const dy = this.mouse.y - particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 120) {
+          const force = (120 - distance) / 120;
+          particle.vx += (dx / distance) * force * 0.0002;
+          particle.vy += (dy / distance) * force * 0.0002;
+        }
+
+        // Apply gentle friction
+        particle.vx *= 0.995;
+        particle.vy *= 0.995;
+
+        // Boundary check with gentle bounce
+        if (particle.x < 0 || particle.x > this.canvas.width) {
+          particle.vx *= -0.8;
+          particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
+        }
+        if (particle.y < 0 || particle.y > this.canvas.height) {
+          particle.vy *= -0.8;
+          particle.y = Math.max(0, Math.min(this.canvas.height, particle.y));
+        }
+
+        // Update pulse
+        particle.pulse += 0.03;
+      });
+    }
+
+    drawParticles() {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Draw constellation connections
+      this.particles.forEach((particle, i) => {
+        this.particles.slice(i + 1).forEach(otherParticle => {
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 150) {
+            const opacity = (150 - distance) / 150 * 0.3;
+            this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+            this.ctx.lineWidth = 0.5;
+            this.ctx.beginPath();
+            this.ctx.moveTo(particle.x, particle.y);
+            this.ctx.lineTo(otherParticle.x, otherParticle.y);
+            this.ctx.stroke();
+          }
+        });
+      });
+
+      // Draw particles
+      this.particles.forEach(particle => {
+        const pulseSize = particle.size + Math.sin(particle.pulse) * 0.5;
+        
+        this.ctx.save();
+        this.ctx.globalAlpha = particle.opacity;
+        
+        // Create gradient with error handling
+        try {
+          const gradientRadius = Math.max(pulseSize * 3, 1); // Ensure minimum radius
+          const gradient = this.ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, gradientRadius
+          );
+          gradient.addColorStop(0, `hsl(${particle.hue}, 80%, 70%)`);
+          gradient.addColorStop(1, `hsl(${particle.hue}, 80%, 30%)`);
+          
+          this.ctx.fillStyle = gradient;
+        } catch (error) {
+          // Fallback to solid color if gradient fails
+          this.ctx.fillStyle = `hsl(${particle.hue}, 80%, 50%)`;
+        }
+        this.ctx.beginPath();
+        this.ctx.arc(particle.x, particle.y, pulseSize, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
+      });
+    }
+
+    animate() {
+      try {
+        this.updateParticles();
+        this.drawParticles();
+      } catch (error) {
+        console.warn('Animation error (continuing):', error);
+      }
+      requestAnimationFrame(() => this.animate());
+    }
+  }
+
+  // Initialize everything when DOM is loaded
   document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing constellation system...');
+
+    // Initialize constellation particle system
+    const constellationSystem = new ConstellationSystem();
+    constellationSystem.init();
+    
+    // Make it globally accessible for debugging
+    window.constellationSystem = constellationSystem;
+
+    // Add interactive hover and click effects to floating shapes
+    document.querySelectorAll('.floating-shape').forEach((shape, index) => {
+      console.log(`Setting up shape ${index + 1}`);
+      
+      shape.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.2) rotate(180deg)';
+        this.style.transition = 'transform 0.3s ease';
+      });
+      
+      shape.addEventListener('mouseleave', function() {
+        this.style.transform = '';
+        this.style.transition = 'transform 0.3s ease';
+      });
+
+      // Add click handler for pop animation
+      shape.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Shape clicked!');
+        
+        // Create pop animation
+        this.style.transform = 'scale(2) rotate(360deg)';
+        this.style.opacity = '0';
+        this.style.transition = 'all 0.4s ease-out';
+        
+        // Create explosion effect
+        createExplosionEffect(this);
+        
+        // Remove the clicked shape after animation
+        setTimeout(() => {
+          this.remove();
+          
+          // Create a new random circle
+          createNewFloatingShape();
+        }, 400);
+      });
+    });
+
+    // Function to create explosion effect
+    function createExplosionEffect(element) {
+      const rect = element.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Create explosion particles
+      for (let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'fixed';
+        particle.style.left = centerX + 'px';
+        particle.style.top = centerY + 'px';
+        particle.style.width = '6px';
+        particle.style.height = '6px';
+        particle.style.borderRadius = '50%';
+        particle.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 60%)`;
+        particle.style.pointerEvents = 'none';
+        particle.style.zIndex = '1000';
+        particle.style.transform = 'translate(-50%, -50%)';
+        
+        document.body.appendChild(particle);
+        
+        // Animate particle
+        const angle = (i / 12) * Math.PI * 2;
+        const distance = 60 + Math.random() * 40;
+        const endX = centerX + Math.cos(angle) * distance;
+        const endY = centerY + Math.sin(angle) * distance;
+        
+        particle.animate([
+          { 
+            transform: 'translate(-50%, -50%) scale(1)',
+            opacity: 1
+          },
+          { 
+            transform: `translate(${endX - centerX - 3}px, ${endY - centerY - 3}px) scale(0)`,
+            opacity: 0
+          }
+        ], {
+          duration: 800,
+          easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        }).onfinish = () => {
+          particle.remove();
+        };
+      }
+    }
+
+    // Function to create a new floating shape
+    function createNewFloatingShape() {
+      // Find the container that actually contains the floating shapes
+      const existingShapes = document.querySelectorAll('.floating-shape');
+      let container = null;
+      
+      if (existingShapes.length > 0) {
+        container = existingShapes[0].parentElement;
+      } else {
+        container = document.querySelector('.absolute.inset-0');
+      }
+      
+      if (!container) {
+        console.error('Container not found');
+        return;
+      }
+      
+      const newShape = document.createElement('div');
+      newShape.className = 'floating-shape';
+      
+      // Random properties
+      const size = Math.random() * 60 + 40; // 40-100px
+      const colors = [
+        'linear-gradient(45deg, rgba(255, 0, 150, 0.6), rgba(0, 255, 255, 0.6))',
+        'linear-gradient(45deg, rgba(255, 255, 0, 0.6), rgba(255, 0, 255, 0.6))',
+        'linear-gradient(45deg, rgba(0, 255, 150, 0.6), rgba(150, 0, 255, 0.6))',
+        'linear-gradient(45deg, rgba(255, 100, 0, 0.6), rgba(0, 100, 255, 0.6))',
+        'linear-gradient(45deg, rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.6))',
+        'linear-gradient(45deg, rgba(150, 255, 0, 0.6), rgba(255, 0, 150, 0.6))',
+        'linear-gradient(45deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6))'
+      ];
+      
+      // Apply all styles explicitly to ensure they work
+      newShape.style.position = 'absolute';
+      newShape.style.width = size + 'px';
+      newShape.style.height = size + 'px';
+      newShape.style.borderRadius = '50%';
+      newShape.style.background = colors[Math.floor(Math.random() * colors.length)];
+      newShape.style.top = Math.random() * 80 + 10 + '%'; // 10-90%
+      newShape.style.left = Math.random() * 80 + 10 + '%'; // 10-90%
+      newShape.style.animationDelay = Math.random() * 8 + 's';
+      newShape.style.cursor = 'pointer';
+      newShape.style.zIndex = '20';
+      newShape.style.pointerEvents = 'auto';
+      newShape.style.opacity = '0.9';
+      newShape.style.backdropFilter = 'blur(10px)';
+      newShape.style.border = '2px solid rgba(255, 255, 255, 0.3)';
+      newShape.style.transition = 'transform 0.3s ease';
+      
+      // Add event listeners
+      newShape.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.2) rotate(180deg)';
+        this.style.transition = 'transform 0.3s ease';
+      });
+      
+      newShape.addEventListener('mouseleave', function() {
+        this.style.transform = '';
+        this.style.transition = 'transform 0.3s ease';
+      });
+
+      newShape.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Create pop animation
+        this.style.transform = 'scale(2) rotate(360deg)';
+        this.style.opacity = '0';
+        this.style.transition = 'all 0.4s ease-out';
+        
+        // Create explosion effect
+        createExplosionEffect(this);
+        
+        // Remove the clicked shape after animation
+        setTimeout(() => {
+          this.remove();
+          
+          // Create a new random circle
+          createNewFloatingShape();
+        }, 400);
+      });
+      
+      // Insert into container
+      container.appendChild(newShape);
+      
+      // Add entrance animation
+      newShape.style.transform = 'scale(0.5)';
+      newShape.style.transition = 'all 0.5s ease-out';
+      
+      setTimeout(() => {
+        newShape.style.transform = 'scale(1)';
+      }, 50);
+    }
+
     // Animate category cards on scroll
     const observerOptions = {
       threshold: 0.1,
