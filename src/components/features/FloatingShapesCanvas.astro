@@ -1,0 +1,339 @@
+---
+// FloatingShapesCanvas.astro - Canvas-based floating shapes with physics
+---
+
+<canvas id="floatingShapesCanvas" class="absolute inset-0 w-full h-full pointer-events-auto"></canvas>
+
+<script>
+  // Canvas-based Floating Shapes Physics System
+  class FloatingShapesCanvas {
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+    shapes: any[];
+    isRunning: boolean;
+    mouse: { x: number; y: number };
+
+    constructor() {
+      this.canvas = document.getElementById('floatingShapesCanvas') as HTMLCanvasElement;
+      this.ctx = this.canvas.getContext('2d')!;
+      this.shapes = [];
+      this.isRunning = false;
+      this.mouse = { x: 0, y: 0 };
+      this.init();
+    }
+
+    init() {
+      this.resizeCanvas();
+      this.createShapes();
+      this.bindEvents();
+      this.startPhysics();
+    }
+
+    resizeCanvas() {
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+    }
+
+    createShapes() {
+      // Create 6 floating shapes with different properties
+      const shapeConfigs = [
+        { size: 80, color: 'rgba(255, 0, 150, 0.6)', x: 0.1, y: 0.1 },
+        { size: 120, color: 'rgba(255, 255, 0, 0.6)', x: 0.85, y: 0.2 },
+        { size: 60, color: 'rgba(0, 255, 150, 0.6)', x: 0.2, y: 0.8 },
+        { size: 100, color: 'rgba(255, 100, 0, 0.6)', x: 0.75, y: 0.7 },
+        { size: 40, color: 'rgba(255, 255, 255, 0.6)', x: 0.05, y: 0.5 },
+        { size: 90, color: 'rgba(150, 255, 0, 0.6)', x: 0.9, y: 0.6 }
+      ];
+
+      this.shapes = shapeConfigs.map((config, index) => ({
+        x: config.x * this.canvas.width,
+        y: config.y * this.canvas.height,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        radius: config.size / 2,
+        mass: config.size / 2,
+        color: config.color,
+        originalColor: config.color,
+        hoverColor: this.lightenColor(config.color, 0.3),
+        isHovered: false,
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.02 + 0.01,
+        id: index
+      }));
+    }
+
+    lightenColor(color: string, amount: number): string {
+      // Simple color lightening for hover effect
+      const rgba = color.match(/\d+/g);
+      if (rgba) {
+        const r = Math.min(255, parseInt(rgba[0]) + amount * 255);
+        const g = Math.min(255, parseInt(rgba[1]) + amount * 255);
+        const b = Math.min(255, parseInt(rgba[2]) + amount * 255);
+        return `rgba(${r}, ${g}, ${b}, ${rgba[3] || 0.6})`;
+      }
+      return color;
+    }
+
+    bindEvents() {
+      window.addEventListener('resize', () => this.resizeCanvas());
+      
+      this.canvas.addEventListener('mousemove', (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouse.x = e.clientX - rect.left;
+        this.mouse.y = e.clientY - rect.top;
+      });
+
+      this.canvas.addEventListener('click', (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        // Check if click is on a shape
+        this.shapes.forEach(shape => {
+          const distance = Math.sqrt(
+            Math.pow(shape.x - clickX, 2) + 
+            Math.pow(shape.y - clickY, 2)
+          );
+          
+          if (distance < shape.radius) {
+            this.explodeShape(shape);
+          }
+        });
+      });
+    }
+
+    explodeShape(shape: any) {
+      // Create explosion effect
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const distance = 60 + Math.random() * 40;
+        const particle = {
+          x: shape.x,
+          y: shape.y,
+          vx: Math.cos(angle) * (distance / 20),
+          vy: Math.sin(angle) * (distance / 20),
+          life: 60,
+          maxLife: 60,
+          color: shape.color,
+          size: 3
+        };
+        
+        // Add particle to shapes array temporarily
+        this.shapes.push(particle);
+      }
+      
+      // Remove original shape
+      this.shapes = this.shapes.filter(s => s.id !== shape.id);
+      
+      // Create new shape after explosion
+      setTimeout(() => {
+        this.createNewShape();
+      }, 1000);
+    }
+
+    createNewShape() {
+      const newShape = {
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * this.canvas.height,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        radius: Math.random() * 40 + 40,
+        mass: Math.random() * 40 + 40,
+        color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.6)`,
+        originalColor: '',
+        hoverColor: '',
+        isHovered: false,
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.02 + 0.01,
+        id: Date.now()
+      };
+      
+      newShape.originalColor = newShape.color;
+      newShape.hoverColor = this.lightenColor(newShape.color, 0.3);
+      
+      this.shapes.push(newShape);
+    }
+
+    startPhysics() {
+      if (this.isRunning) return;
+      this.isRunning = true;
+      this.physicsLoop();
+    }
+
+    physicsLoop() {
+      if (!this.isRunning) return;
+      
+      this.updatePhysics();
+      this.drawShapes();
+      requestAnimationFrame(() => this.physicsLoop());
+    }
+
+    updatePhysics() {
+      const screenWidth = this.canvas.width;
+      const screenHeight = this.canvas.height;
+
+      this.shapes.forEach((shape, index) => {
+        // Skip particles with life (explosion particles)
+        if (shape.life !== undefined) {
+          shape.life--;
+          shape.x += shape.vx;
+          shape.y += shape.vy;
+          shape.vx *= 0.98;
+          shape.vy *= 0.98;
+          
+          if (shape.life <= 0) {
+            this.shapes.splice(index, 1);
+            return;
+          }
+          return;
+        }
+
+        // Update position
+        shape.x += shape.vx;
+        shape.y += shape.vy;
+
+        // Screen edge collisions
+        if (shape.x - shape.radius <= 0) {
+          shape.x = shape.radius;
+          shape.vx = Math.abs(shape.vx);
+        }
+        if (shape.x + shape.radius >= screenWidth) {
+          shape.x = screenWidth - shape.radius;
+          shape.vx = -Math.abs(shape.vx);
+        }
+        if (shape.y - shape.radius <= 0) {
+          shape.y = shape.radius;
+          shape.vy = Math.abs(shape.vy);
+        }
+        if (shape.y + shape.radius >= screenHeight) {
+          shape.y = screenHeight - shape.radius;
+          shape.vy = -Math.abs(shape.vy);
+        }
+
+        // Shape-to-shape collisions
+        for (let otherIndex = index + 1; otherIndex < this.shapes.length; otherIndex++) {
+          const otherShape = this.shapes[otherIndex];
+          if (otherShape.life !== undefined) continue; // Skip particles
+          
+          const dx = shape.x - otherShape.x;
+          const dy = shape.y - otherShape.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const minDistance = shape.radius + otherShape.radius;
+
+          if (distance < minDistance && distance > 0) {
+            // Collision detected
+            const overlap = minDistance - distance;
+            const separationX = (dx / distance) * overlap * 0.5;
+            const separationY = (dy / distance) * overlap * 0.5;
+
+            // Separate shapes
+            shape.x += separationX;
+            shape.y += separationY;
+            otherShape.x -= separationX;
+            otherShape.y -= separationY;
+
+            // Calculate new velocities (elastic collision)
+            const relativeVelocityX = shape.vx - otherShape.vx;
+            const relativeVelocityY = shape.vy - otherShape.vy;
+            const relativeVelocityDotProduct = relativeVelocityX * dx + relativeVelocityY * dy;
+            const impulse = (2 * relativeVelocityDotProduct) / (shape.mass + otherShape.mass) / distance;
+
+            shape.vx -= impulse * otherShape.mass * dx / distance;
+            shape.vy -= impulse * otherShape.mass * dy / distance;
+            otherShape.vx += impulse * shape.mass * dx / distance;
+            otherShape.vy += impulse * shape.mass * dy / distance;
+          }
+        }
+
+        // Mouse interaction
+        const dx = this.mouse.x - shape.x;
+        const dy = this.mouse.y - shape.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 120) {
+          const force = (120 - distance) / 120;
+          shape.vx += (dx / distance) * force * 0.0002;
+          shape.vy += (dy / distance) * force * 0.0002;
+        }
+
+        // Hover detection
+        shape.isHovered = distance < shape.radius;
+
+        // Update pulse
+        shape.pulse += shape.pulseSpeed;
+      });
+    }
+
+    drawShapes() {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      this.shapes.forEach(shape => {
+        if (shape.life !== undefined) {
+          // Draw explosion particle
+          this.ctx.save();
+          this.ctx.globalAlpha = shape.life / shape.maxLife;
+          this.ctx.fillStyle = shape.color;
+          this.ctx.beginPath();
+          this.ctx.arc(shape.x, shape.y, shape.size, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
+          return;
+        }
+
+        // Draw main shape
+        this.ctx.save();
+        
+        // Pulse effect
+        const pulseSize = shape.radius + Math.sin(shape.pulse) * 2;
+        
+        // Hover effect
+        const currentColor = shape.isHovered ? shape.hoverColor : shape.originalColor;
+        
+        // Create gradient
+        const gradient = this.ctx.createRadialGradient(
+          shape.x, shape.y, 0,
+          shape.x, shape.y, pulseSize
+        );
+        
+        gradient.addColorStop(0, currentColor);
+        gradient.addColorStop(1, this.darkenColor(currentColor, 0.3));
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(shape.x, shape.y, pulseSize, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Add border
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        
+        this.ctx.restore();
+      });
+    }
+
+    darkenColor(color: string, amount: number): string {
+      const rgba = color.match(/\d+/g);
+      if (rgba) {
+        const r = Math.max(0, parseInt(rgba[0]) - amount * 255);
+        const g = Math.max(0, parseInt(rgba[1]) - amount * 255);
+        const b = Math.max(0, parseInt(rgba[2]) - amount * 255);
+        return `rgba(${r}, ${g}, ${b}, ${rgba[3] || 0.6})`;
+      }
+      return color;
+    }
+  }
+
+  // Initialize canvas-based floating shapes when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    const floatingShapesCanvas = new FloatingShapesCanvas();
+    (window as any).floatingShapesCanvas = floatingShapesCanvas;
+  });
+</script>
+
+<style>
+  #floatingShapesCanvas {
+    z-index: 20 !important;
+    pointer-events: auto !important;
+  }
+</style>

@@ -1,0 +1,757 @@
+---
+// ConstellationSystem.astro - Interactive particle constellation system
+---
+
+<canvas id="particleCanvas" class="absolute inset-0 w-full h-full"></canvas>
+
+<script>
+  // Interactive Constellation Particle System
+  class ConstellationSystem {
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+    particles: any[];
+    mouse: { x: number; y: number };
+    lastClickTime: number;
+    clickThrottle: number = 500;
+    colorWaves: any[];
+    canClick: boolean = true;
+    userInteracted: boolean;
+    autoClickIntervalId: number | null;
+
+    constructor() {
+      this.canvas = document.getElementById('particleCanvas') as HTMLCanvasElement;
+      this.ctx = this.canvas.getContext('2d')!;
+      this.particles = [];
+      this.mouse = { x: 0, y: 0 };
+      this.lastClickTime = 0;
+      this.clickThrottle = 500;
+      this.canClick = true;
+      this.colorWaves = []; // Array of active color waves
+      this.userInteracted = false;
+      this.autoClickIntervalId = null;
+      this.init();
+    }
+
+    init() {
+      this.resizeCanvas();
+      this.createParticles();
+      this.establishConnections();
+      this.bindEvents();
+      this.animate();
+    }
+
+    resizeCanvas() {
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+      
+      // Recreate particles with new count based on screen size
+      this.particles = [];
+      this.createParticles();
+      this.establishConnections();
+    }
+
+    createParticles() {
+      // Adjust particle count based on screen size
+      const screenArea = this.canvas.width * this.canvas.height;
+      let particleCount;
+      
+      if (this.canvas.width <= 768) {
+        // Mobile: fewer particles for better performance
+        particleCount = Math.floor(screenArea / 20000);
+      } else if (this.canvas.width <= 1024) {
+        // Tablet: medium particle count
+        particleCount = Math.floor(screenArea / 15000);
+      } else {
+        // Desktop: full particle count
+        particleCount = Math.floor(screenArea / 12000);
+      }
+      
+      // Ensure minimum and maximum particle counts
+      particleCount = Math.max(20, Math.min(particleCount, 300));
+      
+      console.log(`Creating ${particleCount} particles for ${this.canvas.width}x${this.canvas.height} screen`);
+      
+      // Create particles with proper boundary constraints
+      for (let i = 0; i < particleCount; i++) {
+        const baseHue = Math.random() * 360;
+        // Ensure particles stay within viewable area with margin
+        const margin = 20; // 20px margin from edges
+        const homeX = Math.random() * (this.canvas.width - 2 * margin) + margin;
+        const homeY = Math.random() * (this.canvas.height - 2 * margin) + margin;
+        
+        this.particles.push({
+          x: homeX,
+          y: homeY,
+          homeX: homeX, // Store home position
+          homeY: homeY,
+          vx: (Math.random() - 0.5) * 0.08, // Faster base velocity
+          vy: (Math.random() - 0.5) * 0.08,
+          baseVx: (Math.random() - 0.5) * 0.08, // Store base velocity for drift
+          baseVy: (Math.random() - 0.5) * 0.08,
+          size: Math.random() * 3 + 1,
+          opacity: Math.random() * 0.8 + 0.2,
+          baseOpacity: Math.random() * 0.8 + 0.2, // Store original opacity (same as opacity)
+          hue: baseHue,
+          baseHue: baseHue, // Store original hue
+          baseSaturation: Math.random() * 40 + 60, // Store original saturation (60-100%)
+          baseLightness: Math.random() * 30 + 40, // Store original lightness (40-70%)
+          pulse: Math.random() * Math.PI * 2,
+          driftPhase: Math.random() * Math.PI * 2, // For smooth drifting motion
+          driftSpeed: Math.random() * 0.0005 + 0.0003, // Faster drift speed
+          connections: [], // Array of connected particle indices
+          currentHue: baseHue, // Start with same hue as baseHue
+          waveIntensity: 0, // How much the wave affects this particle (0-1)
+          waveDecay: 0, // Decay rate for wave effect
+          constellationId: -1 // Will be set during connection establishment
+        });
+      }
+    }
+
+    establishConnections() {
+      // Reset all connections and constellation IDs
+      this.particles.forEach(particle => {
+        particle.connections = [];
+        particle.constellationId = -1;
+      });
+      
+      // Create constellations using a clustering approach
+      const connectionDistance = 100; // Base connection distance
+      const minConstellationSize = 5; // Minimum particles per constellation
+      const maxConstellationSize = 15; // Maximum particles per constellation
+      let currentConstellationId = 0;
+      const unassignedParticles = [...this.particles.map((_, index) => index)];
+      
+      while (unassignedParticles.length > 0) {
+        // Start a new constellation with a random unassigned particle
+        const startParticleIndex = unassignedParticles[Math.floor(Math.random() * unassignedParticles.length)];
+        const constellation = this.createConstellation(startParticleIndex, currentConstellationId, connectionDistance, minConstellationSize, maxConstellationSize);
+        
+        if (constellation.length >= minConstellationSize) {
+          // Valid constellation - assign IDs and create connections
+          constellation.forEach(particleIndex => {
+            this.particles[particleIndex].constellationId = currentConstellationId;
+            // Remove from unassigned list
+            const unassignedIndex = unassignedParticles.indexOf(particleIndex);
+            if (unassignedIndex > -1) {
+              unassignedParticles.splice(unassignedIndex, 1);
+            }
+          });
+          
+          // Create connections within this constellation
+          this.createConstellationConnections(constellation, connectionDistance);
+          currentConstellationId++;
+        } else {
+          // Constellation too small - add particles to unassigned for next iteration
+          // or merge with existing constellation if possible
+          this.mergeSmallConstellation(constellation, unassignedParticles, currentConstellationId);
+        }
+      }
+      
+      // Handle any remaining unassigned particles by merging them into existing constellations
+      this.mergeRemainingParticles(unassignedParticles, connectionDistance);
+      
+      console.log(`Created ${currentConstellationId} constellations`);
+    }
+    
+    createConstellation(startParticleIndex: number, constellationId: number, connectionDistance: number, minSize: number, maxSize: number): number[] {
+      const constellation = [startParticleIndex];
+      const toCheck = [startParticleIndex];
+      const checked = new Set([startParticleIndex]);
+      
+      while (toCheck.length > 0 && constellation.length < maxSize) {
+        const currentIndex = toCheck.shift()!;
+        const currentParticle = this.particles[currentIndex];
+        
+        // Find nearby particles
+        this.particles.forEach((otherParticle, otherIndex) => {
+          if (checked.has(otherIndex)) return;
+          
+          const distance = Math.sqrt(
+            Math.pow(currentParticle.x - otherParticle.x, 2) + 
+            Math.pow(currentParticle.y - otherParticle.y, 2)
+          );
+          
+          // Add some randomness to connection distance
+          const randomFactor = Math.random() * 0.4 + 0.8; // 0.8 to 1.2 multiplier
+          const effectiveDistance = connectionDistance * randomFactor;
+          
+          if (distance < effectiveDistance) {
+            // Only add if we have not hit max size yet
+            if (constellation.length < maxSize) {
+              constellation.push(otherIndex);
+              toCheck.push(otherIndex);
+              checked.add(otherIndex);
+            }
+          }
+        });
+      }
+      
+      return constellation;
+    }
+    
+    createConstellationConnections(constellation: number[], connectionDistance: number) {
+      // Create connections within the constellation
+      constellation.forEach((particleIndex, i) => {
+        const particle = this.particles[particleIndex];
+        
+        constellation.forEach((otherParticleIndex, j) => {
+          if (i !== j) {
+            const otherParticle = this.particles[otherParticleIndex];
+            const distance = Math.sqrt(
+              Math.pow(particle.x - otherParticle.x, 2) + 
+              Math.pow(particle.y - otherParticle.y, 2)
+            );
+            
+            // Connect if within distance and not already connected
+            if (distance < connectionDistance * 1.2 && !particle.connections.includes(otherParticleIndex)) {
+              particle.connections.push(otherParticleIndex);
+            }
+          }
+        });
+      });
+    }
+    
+    mergeSmallConstellation(constellation: number[], unassignedParticles: number[], constellationId: number) {
+      // Try to find a nearby existing constellation to merge with
+      if (constellation.length === 0) return;
+      
+      const startParticle = this.particles[constellation[0]];
+      let closestConstellation = -1;
+      let closestDistance = Infinity;
+      
+      // Find the closest existing constellation
+      this.particles.forEach((particle, index) => {
+        if (particle.constellationId !== -1 && particle.constellationId !== constellationId) {
+          const distance = Math.sqrt(
+            Math.pow(startParticle.x - particle.x, 2) + 
+            Math.pow(startParticle.y - particle.y, 2)
+          );
+          
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestConstellation = particle.constellationId;
+          }
+        }
+      });
+      
+      if (closestConstellation !== -1 && closestDistance < 200) {
+        // Merge with closest constellation
+        constellation.forEach(particleIndex => {
+          this.particles[particleIndex].constellationId = closestConstellation;
+          const unassignedIndex = unassignedParticles.indexOf(particleIndex);
+          if (unassignedIndex > -1) {
+            unassignedParticles.splice(unassignedIndex, 1);
+          }
+        });
+      } else {
+        // Keep as unassigned for next iteration
+        constellation.forEach(particleIndex => {
+          if (!unassignedParticles.includes(particleIndex)) {
+            unassignedParticles.push(particleIndex);
+          }
+        });
+      }
+    }
+    
+    mergeRemainingParticles(unassignedParticles: number[], connectionDistance: number) {
+      // Merge remaining unassigned particles into the nearest constellation
+      unassignedParticles.forEach(particleIndex => {
+        const particle = this.particles[particleIndex];
+        let closestConstellation = -1;
+        let closestDistance = Infinity;
+        
+        this.particles.forEach((otherParticle, otherIndex) => {
+          if (otherParticle.constellationId !== -1) {
+            const distance = Math.sqrt(
+              Math.pow(particle.x - otherParticle.x, 2) + 
+              Math.pow(particle.y - otherParticle.y, 2)
+            );
+            
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestConstellation = otherParticle.constellationId;
+            }
+          }
+        });
+        
+        if (closestConstellation !== -1) {
+          particle.constellationId = closestConstellation;
+        } else {
+          // Create a single-particle constellation if no others exist
+          particle.constellationId = 0;
+        }
+      });
+    }
+
+    bindEvents() {
+      window.addEventListener('resize', () => this.resizeCanvas());
+      
+      this.canvas.addEventListener('mousemove', (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouse.x = e.clientX - rect.left;
+        this.mouse.y = e.clientY - rect.top;
+      });
+      
+      this.canvas.addEventListener('mouseleave', () => {
+        this.mouse.x = 0;
+        this.mouse.y = 0;
+      });
+      
+      // Mark first user interaction and stop auto-clicks
+      const markInteracted = (e: Event) => {
+        // Only mark as interaction if it's a trusted user event
+        if (e.isTrusted && !this.userInteracted) {
+          this.userInteracted = true;
+          if (this.autoClickIntervalId !== null) {
+            clearInterval(this.autoClickIntervalId);
+            this.autoClickIntervalId = null;
+          }
+        }
+      };
+      document.addEventListener('click', markInteracted, { once: true, capture: true });
+      document.addEventListener('keydown', markInteracted, { once: true, capture: true });
+      document.addEventListener('touchstart', markInteracted, { once: true, capture: true });
+
+      // Add click interaction for constellation dots - works anywhere on page
+      document.addEventListener('click', (e) => {
+        // Only mark as user interaction if it's not a simulated click
+        if (!e.isTrusted) {
+          // This is a simulated click, don't mark as user interaction
+        } else {
+          // This is a real user click, mark as interaction
+          this.userInteracted = true;
+        }
+        
+        // Allow clicks with 0.5 second cooldown
+        const now = Date.now();
+        if (now - this.lastClickTime < 500) {
+          return; // Ignore clicks within 500ms of previous click
+        }
+        this.lastClickTime = now;
+        
+        // Check if click is on a button or link - if so, don't interfere
+        const target = e.target as HTMLElement;
+        if (!target) return;
+        
+        if (target.tagName === 'A' || target.tagName === 'BUTTON' || 
+            (target.classList && target.classList.contains('category-card')) ||
+            (target.parentElement && (target.parentElement.tagName === 'A' || target.parentElement.tagName === 'BUTTON'))) {
+          return;
+        }
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        // Only process clicks within canvas bounds
+        if (clickX >= 0 && clickX <= this.canvas.width && 
+            clickY >= 0 && clickY <= this.canvas.height) {
+          
+          // Find the closest particle to the click
+          let closestParticle = null;
+          let closestDistance = Infinity;
+          
+          this.particles.forEach(particle => {
+            const distance = Math.sqrt(
+              Math.pow(particle.x - clickX, 2) + 
+              Math.pow(particle.y - clickY, 2)
+            );
+            
+            if (distance < closestDistance && distance < 80) { // Increased range
+              closestDistance = distance;
+              closestParticle = particle;
+            }
+          });
+          
+          if (closestParticle) {
+            this.createConstellationClickEffect(clickX, clickY, closestParticle);
+          }
+        }
+      });
+    }
+    
+    // Start automatic clicks every 10s until the first user interaction
+    startAutoClickRoutine() {
+      // If already interacted or already running, do nothing
+      if (this.userInteracted || this.autoClickIntervalId !== null) return;
+      
+      const triggerRandomParticleClick = () => {
+        if (this.userInteracted) {
+          console.log('Auto-click stopped: user has interacted');
+          return;
+        }
+        if (!this.particles || this.particles.length === 0) {
+          console.log('Auto-click skipped: no particles available');
+          return;
+        }
+        
+        const randomIndex = Math.floor(Math.random() * this.particles.length);
+        const particle = this.particles[randomIndex];
+        if (!particle) {
+          console.log('Auto-click skipped: no particle at random index');
+          return;
+        }
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const clientX = particle.x + rect.left;
+        const clientY = particle.y + rect.top;
+        
+        console.log(`Auto-clicking particle at (${clientX}, ${clientY})`);
+        
+        // Dispatch a click at the particle's screen position
+        const evt = new MouseEvent('click', {
+          clientX,
+          clientY,
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        document.dispatchEvent(evt);
+      };
+      
+      // Fire first auto-click 10s after full load, then every 10s
+      this.autoClickIntervalId = window.setInterval(triggerRandomParticleClick, 10000);
+    }
+    
+    createConstellationClickEffect(clickX: number, clickY: number, particle: any) {
+      // Create a beautiful color wave effect
+      this.createColorWave(clickX, clickY, particle);
+    }
+    
+    createColorWave(clickX: number, clickY: number, startParticle: any) {
+      // Generate a random beautiful color for this wave
+      const waveHue = Math.random() * 360;
+      const waveSpeed = 2.0; // Much faster wave travel
+      const waveIntensity = 1.0; // Maximum intensity
+      const waveDecay = 0.01; // Slower decay - circles last exactly 1 second
+      
+      // Create the wave object
+      const wave = {
+        x: clickX,
+        y: clickY,
+        hue: waveHue,
+        intensity: waveIntensity,
+        speed: waveSpeed,
+        decay: waveDecay,
+        radius: 0,
+        maxRadius: 300, // Maximum wave radius
+        affectedParticles: new Set(), // Track which particles this wave has affected
+        startTime: Date.now()
+      };
+      
+      this.colorWaves.push(wave);
+      
+      // Start the wave from the clicked particle
+      this.propagateWave(wave, startParticle);
+    }
+    
+    propagateWave(wave: any, particle: any) {
+      // Mark this particle as affected by this wave
+      wave.affectedParticles.add(particle);
+      
+      // Apply wave effect to this particle - only brightness and size, keep original color
+      particle.waveIntensity = wave.intensity;
+      particle.waveDecay = wave.decay;
+      // Don't change currentHue - keep original color
+      
+      // Propagate to connected particles
+      particle.connections.forEach((connectionIndex: number) => {
+        const connectedParticle = this.particles[connectionIndex];
+        if (connectedParticle && !wave.affectedParticles.has(connectedParticle)) {
+          // Add a small delay for wave propagation effect
+          setTimeout(() => {
+            this.propagateWave(wave, connectedParticle);
+          }, Math.random() * 30 + 20); // Much faster propagation: 20-50ms delay
+        }
+      });
+    }
+    
+    updateColorWaves() {
+      // Update all active color waves
+      this.colorWaves = this.colorWaves.filter(wave => {
+        // Update wave properties
+        wave.radius += wave.speed;
+        wave.intensity -= wave.decay;
+        
+        // Remove wave if it's faded out or reached max radius
+        if (wave.intensity <= 0 || wave.radius >= wave.maxRadius) {
+          // Reset affected particles - but don't instantly change colors
+          wave.affectedParticles.forEach((particle: any) => {
+            particle.waveIntensity = 0;
+            particle.waveDecay = 0;
+            // Don't instantly reset currentHue - let it fade naturally
+          });
+          return false; // Remove this wave
+        }
+        
+        return true; // Keep this wave
+      });
+      
+      // Update particle wave effects
+      this.particles.forEach((particle: any) => {
+        if (particle.waveIntensity > 0) {
+          particle.waveIntensity -= particle.waveDecay;
+          if (particle.waveIntensity <= 0) {
+            particle.waveIntensity = 0;
+            particle.waveDecay = 0;
+            // Colors stay the same - no transition needed
+          }
+        }
+      });
+      
+      // Waves continue to run independently
+    }
+    
+    updateParticles() {
+      // Update color waves
+      this.updateColorWaves();
+      
+      // Limit total particles to prevent performance issues
+      const maxParticles = 200;
+      if (this.particles.length > maxParticles) {
+        // Remove oldest mini-particles first
+        this.particles = this.particles.filter(p => p.life === undefined).slice(0, maxParticles);
+      }
+      
+      this.particles.forEach((particle, index) => {
+        // Handle mini-particles with life spans
+        if (particle.life !== undefined) {
+          particle.life--;
+          particle.opacity = particle.life / 60;
+          
+          if (particle.life <= 0) {
+            this.particles.splice(index, 1);
+            return;
+          }
+          
+          // Mini-particles move faster and fade out
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          particle.vx *= 0.98;
+          particle.vy *= 0.98;
+          return;
+        }
+        
+        // Add gentle drifting motion
+        particle.driftPhase += particle.driftSpeed;
+        
+        // Create smooth circular drift - faster movement
+        const driftX = Math.cos(particle.driftPhase) * 0.0015;
+        const driftY = Math.sin(particle.driftPhase) * 0.0015;
+        
+        // Add some randomness to the drift - faster
+        const randomDriftX = (Math.random() - 0.5) * 0.0008;
+        const randomDriftY = (Math.random() - 0.5) * 0.0008;
+        
+        // Update velocity with drift
+        particle.vx += driftX + randomDriftX;
+        particle.vy += driftY + randomDriftY;
+        
+        // Gradually return to base velocity - stronger pull back to home
+        particle.vx += (particle.baseVx - particle.vx) * 0.01;
+        particle.vy += (particle.baseVy - particle.vy) * 0.01;
+
+        // Add home attraction force to prevent drifting too far
+        const homeDistance = Math.sqrt(
+          Math.pow(particle.x - particle.homeX, 2) + 
+          Math.pow(particle.y - particle.homeY, 2)
+        );
+        
+        // If particle is more than 100px from home, add attraction force
+        if (homeDistance > 100) {
+          const homeForce = (homeDistance - 100) * 0.0001; // Stronger force the further away
+          const homeDirX = (particle.homeX - particle.x) / homeDistance;
+          const homeDirY = (particle.homeY - particle.y) / homeDistance;
+          
+          particle.vx += homeDirX * homeForce;
+          particle.vy += homeDirY * homeForce;
+        }
+
+        // Update position
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        // Mouse interaction
+        const dx = this.mouse.x - particle.x;
+        const dy = this.mouse.y - particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 120) {
+          const force = (120 - distance) / 120;
+          particle.vx += (dx / distance) * force * 0.0002;
+          particle.vy += (dy / distance) * force * 0.0002;
+        }
+
+        // Apply stronger friction to prevent expansion
+        particle.vx *= 0.98;
+        particle.vy *= 0.98;
+
+        // Boundary check with gentle bounce - keep particles within viewable area with margin
+        const margin = 20;
+        if (particle.x < margin || particle.x > this.canvas.width - margin) {
+          particle.vx *= -0.8;
+          particle.x = Math.max(margin, Math.min(this.canvas.width - margin, particle.x));
+        }
+        if (particle.y < margin || particle.y > this.canvas.height - margin) {
+          particle.vy *= -0.8;
+          particle.y = Math.max(margin, Math.min(this.canvas.height - margin, particle.y));
+        }
+
+        // Update pulse
+        particle.pulse += 0.03;
+        
+        // Note: Brightness is now managed by timeouts, not decay
+      });
+    }
+
+    drawParticles() {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Draw color wave rings
+      this.colorWaves.forEach(wave => {
+        if (wave.intensity > 0) {
+          this.ctx.save();
+          this.ctx.globalAlpha = wave.intensity * 0.8; // Much more visible
+          this.ctx.strokeStyle = `hsl(${wave.hue}, 100%, 70%)`; // More saturated and brighter
+          this.ctx.lineWidth = 4; // Thicker lines
+          this.ctx.setLineDash([10, 5]); // More visible dashed pattern
+          
+          this.ctx.beginPath();
+          this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+          this.ctx.stroke();
+          
+          // Add a second, more subtle ring
+          this.ctx.globalAlpha = wave.intensity * 0.3;
+          this.ctx.strokeStyle = `hsl(${wave.hue}, 100%, 90%)`; // Very bright center
+          this.ctx.lineWidth = 8;
+          this.ctx.setLineDash([]); // Solid line for inner ring
+          
+          this.ctx.beginPath();
+          this.ctx.arc(wave.x, wave.y, wave.radius * 0.7, 0, Math.PI * 2);
+          this.ctx.stroke();
+          
+          this.ctx.restore();
+        }
+      });
+
+      // Draw constellation connections
+      this.particles.forEach((particle, index) => {
+        particle.connections.forEach((connectionIndex: number) => {
+          const connectedParticle = this.particles[connectionIndex];
+          if (connectedParticle) {
+            // Make connections more visible when particles are affected by waves
+            const waveIntensity = Math.max(particle.waveIntensity, connectedParticle.waveIntensity);
+            const connectionAlpha = 0.1 + (waveIntensity * 0.6);
+            const connectionWidth = 0.5 + (waveIntensity * 2.0);
+            
+            // Use original particle colors - no wave color changes
+            let connectionColor = 'rgba(255, 255, 255, 0.1)';
+            if (waveIntensity > 0) {
+              // Use original particle colors, just make them brighter
+              const avgHue = (particle.baseHue + connectedParticle.baseHue) / 2;
+              connectionColor = `hsla(${avgHue}, 80%, 60%, ${connectionAlpha})`;
+            }
+            
+            this.ctx.strokeStyle = connectionColor;
+            this.ctx.lineWidth = connectionWidth;
+            
+            this.ctx.beginPath();
+            this.ctx.moveTo(particle.x, particle.y);
+            this.ctx.lineTo(connectedParticle.x, connectedParticle.y);
+            this.ctx.stroke();
+          }
+        });
+      });
+
+      // Draw particles with wave effects
+      this.particles.forEach(particle => {
+        const pulseSize = particle.size + Math.sin(particle.pulse) * 0.5;
+        
+        this.ctx.save();
+        
+        // Increase opacity and size when affected by wave
+        const waveMultiplier = 1 + (particle.waveIntensity * 1.0); // Much more dramatic size increase
+        this.ctx.globalAlpha = particle.opacity * waveMultiplier;
+        
+        // Use original hue - particles keep their original colors
+        const currentHue = particle.baseHue;
+        
+        // Create gradient with wave-enhanced brightness and saturation
+        try {
+          const gradientRadius = Math.max(pulseSize * 4 * waveMultiplier, 1); // Larger gradient
+          const gradient = this.ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, gradientRadius
+          );
+          
+          // Much more dramatic color changes when affected by wave
+          if (particle.waveIntensity > 0) {
+            // Wave-affected particles: bright, saturated colors
+            const saturation = Math.min(particle.baseSaturation + 40, 100); // Increase saturation
+            const centerLightness = Math.min(particle.baseLightness + 30, 95); // Much brighter
+            const edgeLightness = Math.min(particle.baseLightness + 20, 90);
+            
+            gradient.addColorStop(0, `hsl(${currentHue}, ${saturation}%, ${centerLightness}%)`);
+            gradient.addColorStop(1, `hsl(${currentHue}, ${saturation}%, ${edgeLightness}%)`);
+          } else {
+            // Normal particles: original colors
+            gradient.addColorStop(0, `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness}%)`);
+            gradient.addColorStop(1, `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness * 0.6}%)`);
+          }
+          
+          this.ctx.fillStyle = gradient;
+        } catch (error) {
+          if (particle.waveIntensity > 0) {
+            const saturation = Math.min(particle.baseSaturation + 40, 100);
+            const lightness = Math.min(particle.baseLightness + 30, 95);
+            this.ctx.fillStyle = `hsl(${currentHue}, ${saturation}%, ${lightness}%)`;
+          } else {
+            this.ctx.fillStyle = `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness}%)`;
+          }
+        }
+        
+        this.ctx.beginPath();
+        this.ctx.arc(particle.x, particle.y, pulseSize * waveMultiplier, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
+      });
+    }
+
+    animate() {
+      try {
+        this.updateParticles();
+        this.drawParticles();
+      } catch (error) {
+        console.warn('Animation error (continuing):', error);
+      }
+      requestAnimationFrame(() => this.animate());
+    }
+  }
+
+  // Initialize constellation system when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing constellation system...');
+
+    // Initialize constellation particle system
+    const constellationSystem = new ConstellationSystem();
+    constellationSystem.init();
+    
+    // Make it globally accessible for debugging
+    (window as any).constellationSystem = constellationSystem;
+
+    // Start auto-clicks once the page fully loads
+    const startAuto = () => constellationSystem.startAutoClickRoutine();
+    if (document.readyState === 'complete') {
+      startAuto();
+    } else {
+      window.addEventListener('load', startAuto, { once: true });
+    }
+  });
+</script>
+
+<style>
+  #particleCanvas {
+    z-index: 1 !important;
+    pointer-events: none !important;
+  }
+</style>

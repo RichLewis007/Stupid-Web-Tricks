@@ -1,0 +1,111 @@
+---
+// CategoriesSection.astro - Categories grid section
+import CategoryCard from '../ui/CategoryCard.astro';
+---
+
+<section id="categories" class="py-20 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl sm:text-5xl font-bold mb-6 gradient-text">
+        Choose Your Adventure
+      </h2>
+      <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+        Dive into different categories of web tricks, from simple CSS animations to complex WebGL experiments
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- HTML Tricks Card -->
+      <CategoryCard
+        title="HTML Tricks"
+        description="Clever HTML techniques, semantic markup tricks, and accessibility hacks"
+        icon="fab fa-html5"
+        iconClass="html-icon"
+        href="/html"
+        features={[
+          "Semantic HTML patterns",
+          "Accessibility improvements", 
+          "Form validation tricks",
+          "Meta tag optimizations"
+        ]}
+      />
+
+      <!-- CSS Effects Card -->
+      <CategoryCard
+        title="CSS Effects"
+        description="Stunning animations, transitions, and visual effects using pure CSS"
+        icon="fab fa-css3-alt"
+        iconClass="css-icon"
+        href="/css"
+        features={[
+          "Advanced animations",
+          "Glass morphism",
+          "Gradient effects",
+          "3D transforms"
+        ]}
+      />
+
+      <!-- JavaScript Card -->
+      <CategoryCard
+        title="JavaScript"
+        description="Interactive features, DOM manipulation, and modern JavaScript techniques"
+        icon="fab fa-js-square"
+        iconClass="js-icon"
+        href="/javascript"
+        features={[
+          "DOM manipulation",
+          "Event handling",
+          "Async patterns",
+          "Performance tricks"
+        ]}
+      />
+
+      <!-- SVG & Canvas Card -->
+      <CategoryCard
+        title="SVG & Canvas"
+        description="Vector graphics, canvas animations, and creative visual effects"
+        icon="fas fa-vector-square"
+        iconClass="svg-icon"
+        href="/svg-canvas"
+        features={[
+          "SVG animations",
+          "Canvas drawings",
+          "Interactive graphics",
+          "Data visualizations"
+        ]}
+      />
+
+      <!-- WebGL Card -->
+      <CategoryCard
+        title="WebGL"
+        description="Advanced 3D graphics, shaders, and immersive web experiences"
+        icon="fas fa-cube"
+        iconClass="webgl-icon"
+        href="/webgl"
+        features={[
+          "3D graphics",
+          "Shader programming",
+          "Interactive 3D",
+          "Performance optimization"
+        ]}
+      />
+
+      <!-- Coming Soon Card -->
+      <div class="opacity-75">
+        <CategoryCard
+          title="More Coming"
+          description="Additional categories and tricks are being added regularly"
+          icon="fas fa-plus-circle"
+          iconClass="coming-soon-icon"
+          href="#"
+          features={[
+            "Stay tuned for updates",
+            "Follow us on GitHub",
+            "New tricks coming soon",
+            "More categories planned"
+          ]}
+        />
+      </div>
+    </div>
+  </div>
+</section>
