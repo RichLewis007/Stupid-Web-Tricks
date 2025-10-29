@@ -19,6 +19,17 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Set Fredoka as default body font */
+body {
+  font-family: 'Fredoka', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Prevent font flash for Bangers titles */
+.bangers-font {
+  font-family: 'Bangers', 'Impact', 'Arial Black', sans-serif;
+  font-display: swap;
+}
+
 body {
   background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
   min-height: 100vh;

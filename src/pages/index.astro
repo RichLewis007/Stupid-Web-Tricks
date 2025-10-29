@@ -25,10 +25,8 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up">
-        <span class="gradient-text">Stupid</span>
-        <br>
-        <span class="text-white">Web Tricks</span>
+      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up bangers-font" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3); text-transform: none; letter-spacing: 3px;">
+        <span style="color: #7661d1;">Stupid Web Tricks</span>
       </h1>
       <p class="text-xl sm:text-2xl text-gray-300 mb-8 animate-slide-up" style="animation-delay: 0.2s;">
         Discover amazing web effects, animations,<br>
@@ -492,9 +490,7 @@ import Layout from '../layouts/Layout.astro';
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
       this.lastClickTime = 0;
-      this.clickThrottle = 1000; // Maximum 1 click per second
       this.colorWaves = []; // Array of active color waves
-      this.canClick = true; // Whether user can click (tied to wave visibility)
       this.init();
     }
 
@@ -539,9 +535,13 @@ import Layout from '../layouts/Layout.astro';
       
       for (let i = 0; i < particleCount; i++) {
         const baseHue = Math.random() * 360;
+        const homeX = Math.random() * this.canvas.width;
+        const homeY = Math.random() * this.canvas.height;
         this.particles.push({
-          x: Math.random() * this.canvas.width,
-          y: Math.random() * this.canvas.height,
+          x: homeX,
+          y: homeY,
+          homeX: homeX, // Store home position
+          homeY: homeY,
           vx: (Math.random() - 0.5) * 0.08, // Faster base velocity
           vy: (Math.random() - 0.5) * 0.08,
           baseVx: (Math.random() - 0.5) * 0.08, // Store base velocity for drift
@@ -606,11 +606,12 @@ import Layout from '../layouts/Layout.astro';
       
       // Add click interaction for constellation dots - works anywhere on page
       document.addEventListener('click', (e) => {
-        // Throttle clicks based on wave visibility
-        if (!this.canClick) {
-          return; // Ignore clicks when waves are still visible
+        // Allow clicks with 0.5 second cooldown
+        const now = Date.now();
+        if (now - this.lastClickTime < 500) {
+          return; // Ignore clicks within 500ms of previous click
         }
-        this.canClick = false; // Prevent further clicks until wave disappears
+        this.lastClickTime = now;
         
         // Check if click is on a button or link - if so, don't interfere
         const target = e.target as HTMLElement;
@@ -739,10 +740,7 @@ import Layout from '../layouts/Layout.astro';
         }
       });
       
-      // Allow clicking again when all waves have disappeared
-      if (this.colorWaves.length === 0) {
-        this.canClick = true;
-      }
+      // Waves continue to run independently
     }
     
     updateParticles() {
@@ -793,6 +791,22 @@ import Layout from '../layouts/Layout.astro';
         // Gradually return to base velocity - stronger pull back to home
         particle.vx += (particle.baseVx - particle.vx) * 0.01;
         particle.vy += (particle.baseVy - particle.vy) * 0.01;
+
+        // Add home attraction force to prevent drifting too far
+        const homeDistance = Math.sqrt(
+          Math.pow(particle.x - particle.homeX, 2) + 
+          Math.pow(particle.y - particle.homeY, 2)
+        );
+        
+        // If particle is more than 100px from home, add attraction force
+        if (homeDistance > 100) {
+          const homeForce = (homeDistance - 100) * 0.0001; // Stronger force the further away
+          const homeDirX = (particle.homeX - particle.x) / homeDistance;
+          const homeDirY = (particle.homeY - particle.y) / homeDistance;
+          
+          particle.vx += homeDirX * homeForce;
+          particle.vy += homeDirY * homeForce;
+        }
 
         // Update position
         particle.x += particle.vx;
