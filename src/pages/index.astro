@@ -480,9 +480,11 @@ import Layout from '../layouts/Layout.astro';
     particles: any[];
     mouse: { x: number; y: number };
     lastClickTime: number;
-    clickThrottle: number;
+    clickThrottle: number = 500;
     colorWaves: any[];
-    canClick: boolean;
+    canClick: boolean = true;
+    userInteracted: boolean;
+    autoClickIntervalId: number | null;
 
     constructor() {
       this.canvas = document.getElementById('particleCanvas') as HTMLCanvasElement;
@@ -490,7 +492,11 @@ import Layout from '../layouts/Layout.astro';
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
       this.lastClickTime = 0;
+      this.clickThrottle = 500;
+      this.canClick = true;
       this.colorWaves = []; // Array of active color waves
+      this.userInteracted = false;
+      this.autoClickIntervalId = null;
       this.init();
     }
 
@@ -533,10 +539,14 @@ import Layout from '../layouts/Layout.astro';
       
       console.log(`Creating ${particleCount} particles for ${this.canvas.width}x${this.canvas.height} screen`);
       
+      // Create particles with proper boundary constraints
       for (let i = 0; i < particleCount; i++) {
         const baseHue = Math.random() * 360;
-        const homeX = Math.random() * this.canvas.width;
-        const homeY = Math.random() * this.canvas.height;
+        // Ensure particles stay within viewable area with margin
+        const margin = 20; // 20px margin from edges
+        const homeX = Math.random() * (this.canvas.width - 2 * margin) + margin;
+        const homeY = Math.random() * (this.canvas.height - 2 * margin) + margin;
+        
         this.particles.push({
           x: homeX,
           y: homeY,
@@ -559,34 +569,181 @@ import Layout from '../layouts/Layout.astro';
           connections: [], // Array of connected particle indices
           currentHue: baseHue, // Start with same hue as baseHue
           waveIntensity: 0, // How much the wave affects this particle (0-1)
-          waveDecay: 0 // Decay rate for wave effect
+          waveDecay: 0, // Decay rate for wave effect
+          constellationId: -1 // Will be set during connection establishment
         });
       }
     }
 
     establishConnections() {
-      // Create multiple smaller constellations by reducing connection distance
-      const connectionDistance = 80; // Much smaller distance for separate clusters
-      
-      this.particles.forEach((particle, index) => {
+      // Reset all connections and constellation IDs
+      this.particles.forEach(particle => {
         particle.connections = [];
+        particle.constellationId = -1;
+      });
+      
+      // Create constellations using a clustering approach
+      const connectionDistance = 100; // Base connection distance
+      const minConstellationSize = 5; // Minimum particles per constellation
+      let currentConstellationId = 0;
+      const unassignedParticles = [...this.particles.map((_, index) => index)];
+      
+      while (unassignedParticles.length > 0) {
+        // Start a new constellation with a random unassigned particle
+        const startParticleIndex = unassignedParticles[Math.floor(Math.random() * unassignedParticles.length)];
+        const constellation = this.createConstellation(startParticleIndex, currentConstellationId, connectionDistance, minConstellationSize);
         
+        if (constellation.length >= minConstellationSize) {
+          // Valid constellation - assign IDs and create connections
+          constellation.forEach(particleIndex => {
+            this.particles[particleIndex].constellationId = currentConstellationId;
+            // Remove from unassigned list
+            const unassignedIndex = unassignedParticles.indexOf(particleIndex);
+            if (unassignedIndex > -1) {
+              unassignedParticles.splice(unassignedIndex, 1);
+            }
+          });
+          
+          // Create connections within this constellation
+          this.createConstellationConnections(constellation, connectionDistance);
+          currentConstellationId++;
+        } else {
+          // Constellation too small - add particles to unassigned for next iteration
+          // or merge with existing constellation if possible
+          this.mergeSmallConstellation(constellation, unassignedParticles, currentConstellationId);
+        }
+      }
+      
+      // Handle any remaining unassigned particles by merging them into existing constellations
+      this.mergeRemainingParticles(unassignedParticles, connectionDistance);
+      
+      console.log(`Created ${currentConstellationId} constellations`);
+    }
+    
+    createConstellation(startParticleIndex: number, constellationId: number, connectionDistance: number, minSize: number): number[] {
+      const constellation = [startParticleIndex];
+      const toCheck = [startParticleIndex];
+      const checked = new Set([startParticleIndex]);
+      
+      while (toCheck.length > 0 && constellation.length < minSize * 2) { // Stop at 2x min size to avoid oversized constellations
+        const currentIndex = toCheck.shift()!;
+        const currentParticle = this.particles[currentIndex];
+        
+        // Find nearby particles
         this.particles.forEach((otherParticle, otherIndex) => {
-          if (index !== otherIndex) {
+          if (checked.has(otherIndex)) return;
+          
+          const distance = Math.sqrt(
+            Math.pow(currentParticle.x - otherParticle.x, 2) + 
+            Math.pow(currentParticle.y - otherParticle.y, 2)
+          );
+          
+          // Add some randomness to connection distance
+          const randomFactor = Math.random() * 0.4 + 0.8; // 0.8 to 1.2 multiplier
+          const effectiveDistance = connectionDistance * randomFactor;
+          
+          if (distance < effectiveDistance) {
+            constellation.push(otherIndex);
+            toCheck.push(otherIndex);
+            checked.add(otherIndex);
+          }
+        });
+      }
+      
+      return constellation;
+    }
+    
+    createConstellationConnections(constellation: number[], connectionDistance: number) {
+      // Create connections within the constellation
+      constellation.forEach((particleIndex, i) => {
+        const particle = this.particles[particleIndex];
+        
+        constellation.forEach((otherParticleIndex, j) => {
+          if (i !== j) {
+            const otherParticle = this.particles[otherParticleIndex];
             const distance = Math.sqrt(
               Math.pow(particle.x - otherParticle.x, 2) + 
               Math.pow(particle.y - otherParticle.y, 2)
             );
             
-            // Add some randomness to break up connections and create separate clusters
-            const randomFactor = Math.random() * 0.3 + 0.85; // 0.85 to 1.15 multiplier
-            const effectiveDistance = connectionDistance * randomFactor;
-            
-            if (distance < effectiveDistance) {
-              particle.connections.push(otherIndex);
+            // Connect if within distance and not already connected
+            if (distance < connectionDistance * 1.2 && !particle.connections.includes(otherParticleIndex)) {
+              particle.connections.push(otherParticleIndex);
             }
           }
         });
+      });
+    }
+    
+    mergeSmallConstellation(constellation: number[], unassignedParticles: number[], constellationId: number) {
+      // Try to find a nearby existing constellation to merge with
+      if (constellation.length === 0) return;
+      
+      const startParticle = this.particles[constellation[0]];
+      let closestConstellation = -1;
+      let closestDistance = Infinity;
+      
+      // Find the closest existing constellation
+      this.particles.forEach((particle, index) => {
+        if (particle.constellationId !== -1 && particle.constellationId !== constellationId) {
+          const distance = Math.sqrt(
+            Math.pow(startParticle.x - particle.x, 2) + 
+            Math.pow(startParticle.y - particle.y, 2)
+          );
+          
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestConstellation = particle.constellationId;
+          }
+        }
+      });
+      
+      if (closestConstellation !== -1 && closestDistance < 200) {
+        // Merge with closest constellation
+        constellation.forEach(particleIndex => {
+          this.particles[particleIndex].constellationId = closestConstellation;
+          const unassignedIndex = unassignedParticles.indexOf(particleIndex);
+          if (unassignedIndex > -1) {
+            unassignedParticles.splice(unassignedIndex, 1);
+          }
+        });
+      } else {
+        // Keep as unassigned for next iteration
+        constellation.forEach(particleIndex => {
+          if (!unassignedParticles.includes(particleIndex)) {
+            unassignedParticles.push(particleIndex);
+          }
+        });
+      }
+    }
+    
+    mergeRemainingParticles(unassignedParticles: number[], connectionDistance: number) {
+      // Merge remaining unassigned particles into the nearest constellation
+      unassignedParticles.forEach(particleIndex => {
+        const particle = this.particles[particleIndex];
+        let closestConstellation = -1;
+        let closestDistance = Infinity;
+        
+        this.particles.forEach((otherParticle, otherIndex) => {
+          if (otherParticle.constellationId !== -1) {
+            const distance = Math.sqrt(
+              Math.pow(particle.x - otherParticle.x, 2) + 
+              Math.pow(particle.y - otherParticle.y, 2)
+            );
+            
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestConstellation = otherParticle.constellationId;
+            }
+          }
+        });
+        
+        if (closestConstellation !== -1) {
+          particle.constellationId = closestConstellation;
+        } else {
+          // Create a single-particle constellation if no others exist
+          particle.constellationId = 0;
+        }
       });
     }
 
@@ -604,8 +761,31 @@ import Layout from '../layouts/Layout.astro';
         this.mouse.y = 0;
       });
       
+      // Mark first user interaction and stop auto-clicks
+      const markInteracted = (e: Event) => {
+        // Only mark as interaction if it's a trusted user event
+        if (e.isTrusted && !this.userInteracted) {
+          this.userInteracted = true;
+          if (this.autoClickIntervalId !== null) {
+            clearInterval(this.autoClickIntervalId);
+            this.autoClickIntervalId = null;
+          }
+        }
+      };
+      document.addEventListener('click', markInteracted, { once: true, capture: true });
+      document.addEventListener('keydown', markInteracted, { once: true, capture: true });
+      document.addEventListener('touchstart', markInteracted, { once: true, capture: true });
+
       // Add click interaction for constellation dots - works anywhere on page
       document.addEventListener('click', (e) => {
+        // Only mark as user interaction if it's not a simulated click
+        if (!e.isTrusted) {
+          // This is a simulated click, don't mark as user interaction
+        } else {
+          // This is a real user click, mark as interaction
+          this.userInteracted = true;
+        }
+        
         // Allow clicks with 0.5 second cooldown
         const now = Date.now();
         if (now - this.lastClickTime < 500) {
@@ -652,6 +832,49 @@ import Layout from '../layouts/Layout.astro';
           }
         }
       });
+    }
+    
+    // Start automatic clicks every 10s until the first user interaction
+    startAutoClickRoutine() {
+      // If already interacted or already running, do nothing
+      if (this.userInteracted || this.autoClickIntervalId !== null) return;
+      
+      const triggerRandomParticleClick = () => {
+        if (this.userInteracted) {
+          console.log('Auto-click stopped: user has interacted');
+          return;
+        }
+        if (!this.particles || this.particles.length === 0) {
+          console.log('Auto-click skipped: no particles available');
+          return;
+        }
+        
+        const randomIndex = Math.floor(Math.random() * this.particles.length);
+        const particle = this.particles[randomIndex];
+        if (!particle) {
+          console.log('Auto-click skipped: no particle at random index');
+          return;
+        }
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const clientX = particle.x + rect.left;
+        const clientY = particle.y + rect.top;
+        
+        console.log(`Auto-clicking particle at (${clientX}, ${clientY})`);
+        
+        // Dispatch a click at the particle's screen position
+        const evt = new MouseEvent('click', {
+          clientX,
+          clientY,
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        document.dispatchEvent(evt);
+      };
+      
+      // Fire first auto-click 10s after full load, then every 10s
+      this.autoClickIntervalId = window.setInterval(triggerRandomParticleClick, 10000);
     }
     
     createConstellationClickEffect(clickX: number, clickY: number, particle: any) {
@@ -827,14 +1050,15 @@ import Layout from '../layouts/Layout.astro';
         particle.vx *= 0.98;
         particle.vy *= 0.98;
 
-        // Boundary check with gentle bounce
-        if (particle.x < 0 || particle.x > this.canvas.width) {
+        // Boundary check with gentle bounce - keep particles within viewable area with margin
+        const margin = 20;
+        if (particle.x < margin || particle.x > this.canvas.width - margin) {
           particle.vx *= -0.8;
-          particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
+          particle.x = Math.max(margin, Math.min(this.canvas.width - margin, particle.x));
         }
-        if (particle.y < 0 || particle.y > this.canvas.height) {
+        if (particle.y < margin || particle.y > this.canvas.height - margin) {
           particle.vy *= -0.8;
-          particle.y = Math.max(0, Math.min(this.canvas.height, particle.y));
+          particle.y = Math.max(margin, Math.min(this.canvas.height - margin, particle.y));
         }
 
         // Update pulse
@@ -1113,6 +1337,14 @@ import Layout from '../layouts/Layout.astro';
     
     // Make it globally accessible for debugging
     (window as any).constellationSystem = constellationSystem;
+
+    // Start auto-clicks once the page fully loads
+    const startAuto = () => constellationSystem.startAutoClickRoutine();
+    if (document.readyState === 'complete') {
+      startAuto();
+    } else {
+      window.addEventListener('load', startAuto, { once: true });
+    }
 
     // Initialize floating shapes physics system
     const floatingShapesPhysics = new FloatingShapesPhysics();

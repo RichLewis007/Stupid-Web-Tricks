@@ -281,4 +281,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Project:** Stupid Web Tricks  
 **Repository:** https://github.com/richlewis007/stupid-web-tricks
 
-This project was developed over time when playing with modern web technologies. I'm sharing this in the best spirit of the internet, hoping to give you something fun to see and play with, and maybe teach you something along the way.
+This project was developed over time when playing with modern front-end web technologies. I'm sharing this in the best spirit of the internet, hoping to give you something fun to see and play with, and maybe teach you something along the way.
