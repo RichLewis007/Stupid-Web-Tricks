@@ -532,8 +532,8 @@ import Layout from '../layouts/Layout.astro';
     }
 
     establishConnections() {
-      // Find connections between nearby particles (increase distance for better connectivity)
-      const connectionDistance = 150; // Increased to connect more clusters
+      // Create multiple smaller constellations by reducing connection distance
+      const connectionDistance = 80; // Much smaller distance for separate clusters
       
       this.particles.forEach((particle, index) => {
         particle.connections = [];
@@ -545,7 +545,11 @@ import Layout from '../layouts/Layout.astro';
               Math.pow(particle.y - otherParticle.y, 2)
             );
             
-            if (distance < connectionDistance) {
+            // Add some randomness to break up connections and create separate clusters
+            const randomFactor = Math.random() * 0.3 + 0.85; // 0.85 to 1.15 multiplier
+            const effectiveDistance = connectionDistance * randomFactor;
+            
+            if (distance < effectiveDistance) {
               particle.connections.push(otherIndex);
             }
           }
