@@ -31,7 +31,9 @@ import Layout from '../layouts/Layout.astro';
         <span class="text-white">Web Tricks</span>
       </h1>
       <p class="text-xl sm:text-2xl text-gray-300 mb-8 animate-slide-up" style="animation-delay: 0.2s;">
-        Discover amazing web effects, animations, and techniques that will blow your mind
+        Discover amazing web effects, animations,<br>
+
+       and learn the techniques to create them!
       </p>
       <div class="animate-slide-up" style="animation-delay: 0.4s;">
         <a href="#categories" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">
@@ -286,12 +288,17 @@ import Layout from '../layouts/Layout.astro';
       background: linear-gradient(45deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6));
       backdrop-filter: blur(10px);
       border: 2px solid rgba(255, 255, 255, 0.3);
-      animation: float-complex 8s ease-in-out infinite;
       cursor: pointer;
-      transition: transform 0.3s ease;
       z-index: 20 !important;
       opacity: 0.9;
       pointer-events: auto !important;
+    }
+
+    @keyframes gentle-drift {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(10px, -5px); }
+      50% { transform: translate(-5px, 10px); }
+      75% { transform: translate(-10px, -5px); }
     }
 
   #particleCanvas {
@@ -369,21 +376,6 @@ import Layout from '../layouts/Layout.astro';
   }
 
 
-  /* Keyframe animations */
-  @keyframes float-complex {
-    0%, 100% {
-      transform: translateY(0px) rotate(0deg) scale(1);
-    }
-    25% {
-      transform: translateY(-20px) rotate(90deg) scale(1.1);
-    }
-    50% {
-      transform: translateY(-10px) rotate(180deg) scale(0.9);
-    }
-    75% {
-      transform: translateY(-30px) rotate(270deg) scale(1.05);
-    }
-  }
   
 
   /* Category cards */
@@ -923,6 +915,138 @@ import Layout from '../layouts/Layout.astro';
     }
   }
 
+  // Floating Shapes Physics System
+  class FloatingShapesPhysics {
+    constructor() {
+      this.shapes = [];
+      this.isRunning = false;
+      this.init();
+    }
+
+    init() {
+      // Initialize existing shapes
+      this.initializeShapes();
+      // Start the physics loop
+      this.startPhysics();
+    }
+
+    initializeShapes() {
+      const existingShapes = document.querySelectorAll('.floating-shape');
+      existingShapes.forEach((shape, index) => {
+        const rect = shape.getBoundingClientRect();
+        this.shapes.push({
+          element: shape,
+          x: rect.left,
+          y: rect.top,
+          vx: (Math.random() - 0.5) * 2, // Random velocity -1 to 1 px/frame
+          vy: (Math.random() - 0.5) * 2,
+          radius: rect.width / 2,
+          mass: rect.width / 2 // Mass proportional to size
+        });
+      });
+    }
+
+    startPhysics() {
+      if (this.isRunning) return;
+      this.isRunning = true;
+      this.physicsLoop();
+    }
+
+    physicsLoop() {
+      if (!this.isRunning) return;
+      
+      this.updatePhysics();
+      requestAnimationFrame(() => this.physicsLoop());
+    }
+
+    updatePhysics() {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+
+      this.shapes.forEach((shape, index) => {
+        // Update position
+        shape.x += shape.vx;
+        shape.y += shape.vy;
+
+        // Screen edge collisions
+        if (shape.x - shape.radius <= 0) {
+          shape.x = shape.radius;
+          shape.vx = Math.abs(shape.vx); // Bounce right
+        }
+        if (shape.x + shape.radius >= screenWidth) {
+          shape.x = screenWidth - shape.radius;
+          shape.vx = -Math.abs(shape.vx); // Bounce left
+        }
+        if (shape.y - shape.radius <= 0) {
+          shape.y = shape.radius;
+          shape.vy = Math.abs(shape.vy); // Bounce down
+        }
+        if (shape.y + shape.radius >= screenHeight) {
+          shape.y = screenHeight - shape.radius;
+          shape.vy = -Math.abs(shape.vy); // Bounce up
+        }
+
+        // Shape-to-shape collisions
+        for (let otherIndex = index + 1; otherIndex < this.shapes.length; otherIndex++) {
+          const otherShape = this.shapes[otherIndex];
+          const dx = shape.x - otherShape.x;
+          const dy = shape.y - otherShape.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const minDistance = shape.radius + otherShape.radius;
+
+          if (distance < minDistance && distance > 0) {
+            // Collision detected - calculate collision response
+            const overlap = minDistance - distance;
+            const separationX = (dx / distance) * overlap * 0.5;
+            const separationY = (dy / distance) * overlap * 0.5;
+
+            // Separate shapes
+            shape.x += separationX;
+            shape.y += separationY;
+            otherShape.x -= separationX;
+            otherShape.y -= separationY;
+
+            // Calculate new velocities (elastic collision)
+            const relativeVelocityX = shape.vx - otherShape.vx;
+            const relativeVelocityY = shape.vy - otherShape.vy;
+            const relativeVelocityDotProduct = relativeVelocityX * dx + relativeVelocityY * dy;
+            const impulse = (2 * relativeVelocityDotProduct) / (shape.mass + otherShape.mass) / distance;
+
+            shape.vx -= impulse * otherShape.mass * dx / distance;
+            shape.vy -= impulse * otherShape.mass * dy / distance;
+            otherShape.vx += impulse * shape.mass * dx / distance;
+            otherShape.vy += impulse * shape.mass * dy / distance;
+          }
+        }
+
+        // Apply position to DOM element
+        shape.element.style.left = shape.x - shape.radius + 'px';
+        shape.element.style.top = shape.y - shape.radius + 'px';
+      });
+    }
+
+    addShape(element) {
+      const rect = element.getBoundingClientRect();
+      // Convert viewport coordinates to document coordinates
+      const x = rect.left + window.scrollX + rect.width / 2;
+      const y = rect.top + window.scrollY + rect.height / 2;
+      
+      this.shapes.push({
+        element: element,
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 0.5, // Give it gentle movement immediately
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: rect.width / 2,
+        mass: rect.width / 2
+      });
+    }
+
+    removeShape(element) {
+      this.shapes = this.shapes.filter(shape => shape.element !== element);
+    }
+  }
+
   // Initialize everything when DOM is loaded
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing constellation system...');
@@ -933,6 +1057,10 @@ import Layout from '../layouts/Layout.astro';
     
     // Make it globally accessible for debugging
     window.constellationSystem = constellationSystem;
+
+    // Initialize floating shapes physics system
+    const floatingShapesPhysics = new FloatingShapesPhysics();
+    window.floatingShapesPhysics = floatingShapesPhysics;
 
     // Add interactive hover and click effects to floating shapes
     document.querySelectorAll('.floating-shape').forEach((shape, index) => {
@@ -951,6 +1079,7 @@ import Layout from '../layouts/Layout.astro';
       // Add click handler for pop animation
       shape.addEventListener('click', function(e) {
         e.preventDefault();
+        e.stopPropagation(); // Prevent click from reaching constellation system
         console.log('Shape clicked!');
         
         // Create pop animation
@@ -963,6 +1092,8 @@ import Layout from '../layouts/Layout.astro';
         
         // Remove the clicked shape after animation
         setTimeout(() => {
+          // Remove from physics system first
+          floatingShapesPhysics.removeShape(this);
           this.remove();
           
           // Create a new random circle
@@ -1038,7 +1169,8 @@ import Layout from '../layouts/Layout.astro';
       newShape.className = 'floating-shape';
       
       // Random properties
-      const size = Math.random() * 60 + 40; // 40-100px
+      const finalSize = Math.random() * 60 + 40; // 40-100px final size
+      const startSize = 5; // Start very tiny
       const colors = [
         'linear-gradient(45deg, rgba(255, 0, 150, 0.6), rgba(0, 255, 255, 0.6))',
         'linear-gradient(45deg, rgba(255, 255, 0, 0.6), rgba(255, 0, 255, 0.6))',
@@ -1049,14 +1181,19 @@ import Layout from '../layouts/Layout.astro';
         'linear-gradient(45deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6))'
       ];
       
+      // Random position within viewport
+      const spawnX = Math.random() * (window.innerWidth - finalSize);
+      const spawnY = Math.random() * (window.innerHeight - finalSize);
+      
       // Apply all styles explicitly to ensure they work
       newShape.style.position = 'absolute';
-      newShape.style.width = size + 'px';
-      newShape.style.height = size + 'px';
+      newShape.style.width = finalSize + 'px'; // Set final size immediately
+      newShape.style.height = finalSize + 'px'; // Set final size immediately
       newShape.style.borderRadius = '50%';
       newShape.style.background = colors[Math.floor(Math.random() * colors.length)];
-      newShape.style.top = Math.random() * 80 + 10 + '%'; // 10-90%
-      newShape.style.left = Math.random() * 80 + 10 + '%'; // 10-90%
+      newShape.style.top = spawnY + 'px';
+      newShape.style.left = spawnX + 'px';
+      newShape.style.transform = 'scale(0.1)'; // Start tiny (10% of final size)
       newShape.style.animationDelay = Math.random() * 8 + 's';
       newShape.style.cursor = 'pointer';
       newShape.style.zIndex = '20';
@@ -1064,7 +1201,7 @@ import Layout from '../layouts/Layout.astro';
       newShape.style.opacity = '0.9';
       newShape.style.backdropFilter = 'blur(10px)';
       newShape.style.border = '2px solid rgba(255, 255, 255, 0.3)';
-      newShape.style.transition = 'transform 0.3s ease';
+      newShape.style.transition = 'all 0.3s ease-out'; // Smooth expansion
       
       // Add event listeners
       newShape.addEventListener('mouseenter', function() {
@@ -1079,6 +1216,7 @@ import Layout from '../layouts/Layout.astro';
 
       newShape.addEventListener('click', function(e) {
         e.preventDefault();
+        e.stopPropagation(); // Prevent click from reaching constellation system
         
         // Create pop animation
         this.style.transform = 'scale(2) rotate(360deg)';
@@ -1090,6 +1228,8 @@ import Layout from '../layouts/Layout.astro';
         
         // Remove the clicked shape after animation
         setTimeout(() => {
+          // Remove from physics system first
+          floatingShapesPhysics.removeShape(this);
           this.remove();
           
           // Create a new random circle
@@ -1100,13 +1240,21 @@ import Layout from '../layouts/Layout.astro';
       // Insert into container
       container.appendChild(newShape);
       
-      // Add entrance animation
-      newShape.style.transform = 'scale(0.5)';
-      newShape.style.transition = 'all 0.5s ease-out';
+      // Set final size immediately but scale from center
+      newShape.style.width = finalSize + 'px';
+      newShape.style.height = finalSize + 'px';
+      newShape.style.transform = 'scale(0.1)'; // Start tiny (10% of final size)
       
+      // Add entrance animation - expand from center using scale
       setTimeout(() => {
-        newShape.style.transform = 'scale(1)';
-      }, 50);
+        newShape.style.transition = 'transform 0.3s ease-out';
+        newShape.style.transform = 'scale(1)'; // Expand to full size
+        
+        // Add gentle CSS animation instead of physics
+        setTimeout(() => {
+          newShape.style.animation = 'gentle-drift 8s ease-in-out infinite';
+        }, 300); // After expansion completes
+      }, 50); // Small delay to ensure DOM is ready
     }
 
     // Animate category cards on scroll
