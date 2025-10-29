@@ -417,7 +417,19 @@ import Layout from '../layouts/Layout.astro';
   
   .card-back {
     transform: rotateY(180deg);
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    backdrop-filter: blur(15px);
+  }
+  
+  /* Ensure front side is completely hidden when back is visible */
+  .category-card:hover .card-front {
+    opacity: 0;
+    visibility: hidden;
+  }
+  
+  .category-card:hover .card-back {
+    opacity: 1;
+    visibility: visible;
   }
   
   .card-icon {
@@ -453,9 +465,18 @@ import Layout from '../layouts/Layout.astro';
 <script>
   // Interactive Constellation Particle System
   class ConstellationSystem {
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+    particles: any[];
+    mouse: { x: number; y: number };
+    lastClickTime: number;
+    clickThrottle: number;
+    colorWaves: any[];
+    canClick: boolean;
+
     constructor() {
-      this.canvas = document.getElementById('particleCanvas');
-      this.ctx = this.canvas.getContext('2d');
+      this.canvas = document.getElementById('particleCanvas') as HTMLCanvasElement;
+      this.ctx = this.canvas.getContext('2d')!;
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
       this.lastClickTime = 0;
@@ -580,7 +601,9 @@ import Layout from '../layouts/Layout.astro';
         this.canClick = false; // Prevent further clicks until wave disappears
         
         // Check if click is on a button or link - if so, don't interfere
-        const target = e.target;
+        const target = e.target as HTMLElement;
+        if (!target) return;
+        
         if (target.tagName === 'A' || target.tagName === 'BUTTON' || 
             (target.classList && target.classList.contains('category-card')) ||
             (target.parentElement && (target.parentElement.tagName === 'A' || target.parentElement.tagName === 'BUTTON'))) {
@@ -618,12 +641,12 @@ import Layout from '../layouts/Layout.astro';
       });
     }
     
-    createConstellationClickEffect(clickX, clickY, particle) {
+    createConstellationClickEffect(clickX: number, clickY: number, particle: any) {
       // Create a beautiful color wave effect
       this.createColorWave(clickX, clickY, particle);
     }
     
-    createColorWave(clickX, clickY, startParticle) {
+    createColorWave(clickX: number, clickY: number, startParticle: any) {
       // Generate a random beautiful color for this wave
       const waveHue = Math.random() * 360;
       const waveSpeed = 2.0; // Much faster wave travel
@@ -650,7 +673,7 @@ import Layout from '../layouts/Layout.astro';
       this.propagateWave(wave, startParticle);
     }
     
-    propagateWave(wave, particle) {
+    propagateWave(wave: any, particle: any) {
       // Mark this particle as affected by this wave
       wave.affectedParticles.add(particle);
       
@@ -660,7 +683,7 @@ import Layout from '../layouts/Layout.astro';
       // Don't change currentHue - keep original color
       
       // Propagate to connected particles
-      particle.connections.forEach(connectionIndex => {
+      particle.connections.forEach((connectionIndex: number) => {
         const connectedParticle = this.particles[connectionIndex];
         if (connectedParticle && !wave.affectedParticles.has(connectedParticle)) {
           // Add a small delay for wave propagation effect
@@ -681,7 +704,7 @@ import Layout from '../layouts/Layout.astro';
         // Remove wave if it's faded out or reached max radius
         if (wave.intensity <= 0 || wave.radius >= wave.maxRadius) {
           // Reset affected particles - but don't instantly change colors
-          wave.affectedParticles.forEach(particle => {
+          wave.affectedParticles.forEach((particle: any) => {
             particle.waveIntensity = 0;
             particle.waveDecay = 0;
             // Don't instantly reset currentHue - let it fade naturally
@@ -693,7 +716,7 @@ import Layout from '../layouts/Layout.astro';
       });
       
       // Update particle wave effects
-      this.particles.forEach(particle => {
+      this.particles.forEach((particle: any) => {
         if (particle.waveIntensity > 0) {
           particle.waveIntensity -= particle.waveDecay;
           if (particle.waveIntensity <= 0) {
@@ -827,7 +850,7 @@ import Layout from '../layouts/Layout.astro';
 
       // Draw constellation connections
       this.particles.forEach((particle, index) => {
-        particle.connections.forEach(connectionIndex => {
+        particle.connections.forEach((connectionIndex: number) => {
           const connectedParticle = this.particles[connectionIndex];
           if (connectedParticle) {
             // Make connections more visible when particles are affected by waves
@@ -921,6 +944,9 @@ import Layout from '../layouts/Layout.astro';
 
   // Floating Shapes Physics System
   class FloatingShapesPhysics {
+    shapes: any[];
+    isRunning: boolean;
+
     constructor() {
       this.shapes = [];
       this.isRunning = false;
@@ -1029,7 +1055,7 @@ import Layout from '../layouts/Layout.astro';
       });
     }
 
-    addShape(element) {
+    addShape(element: HTMLElement) {
       const rect = element.getBoundingClientRect();
       // Convert viewport coordinates to document coordinates
       const x = rect.left + window.scrollX + rect.width / 2;
@@ -1046,7 +1072,7 @@ import Layout from '../layouts/Layout.astro';
       });
     }
 
-    removeShape(element) {
+    removeShape(element: HTMLElement) {
       this.shapes = this.shapes.filter(shape => shape.element !== element);
     }
   }
@@ -1060,14 +1086,15 @@ import Layout from '../layouts/Layout.astro';
     constellationSystem.init();
     
     // Make it globally accessible for debugging
-    window.constellationSystem = constellationSystem;
+    (window as any).constellationSystem = constellationSystem;
 
     // Initialize floating shapes physics system
     const floatingShapesPhysics = new FloatingShapesPhysics();
-    window.floatingShapesPhysics = floatingShapesPhysics;
+    (window as any).floatingShapesPhysics = floatingShapesPhysics;
 
     // Add interactive hover and click effects to floating shapes
     document.querySelectorAll('.floating-shape').forEach((shape, index) => {
+      const shapeElement = shape as HTMLElement;
       console.log(`Setting up shape ${index + 1}`);
       
       // Give each shape a random iridescent bubble color
@@ -1083,38 +1110,38 @@ import Layout from '../layouts/Layout.astro';
       ];
       
       const randomColor = iridescentColors[Math.floor(Math.random() * iridescentColors.length)];
-      shape.style.background = randomColor;
-      shape.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)';
+      shapeElement.style.background = randomColor;
+      shapeElement.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)';
       
-      shape.addEventListener('mouseenter', function() {
-        this.style.transform = 'scale(1.2) rotate(180deg)';
-        this.style.transition = 'transform 0.3s ease';
+      shapeElement.addEventListener('mouseenter', () => {
+        shapeElement.style.transform = 'scale(1.2) rotate(180deg)';
+        shapeElement.style.transition = 'transform 0.3s ease';
       });
       
-      shape.addEventListener('mouseleave', function() {
-        this.style.transform = '';
-        this.style.transition = 'transform 0.3s ease';
+      shapeElement.addEventListener('mouseleave', () => {
+        shapeElement.style.transform = '';
+        shapeElement.style.transition = 'transform 0.3s ease';
       });
 
       // Add click handler for pop animation
-      shape.addEventListener('click', function(e) {
+      shapeElement.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation(); // Prevent click from reaching constellation system
         console.log('Shape clicked!');
         
         // Create pop animation
-        this.style.transform = 'scale(2) rotate(360deg)';
-        this.style.opacity = '0';
-        this.style.transition = 'all 0.4s ease-out';
+        shapeElement.style.transform = 'scale(2) rotate(360deg)';
+        shapeElement.style.opacity = '0';
+        shapeElement.style.transition = 'all 0.4s ease-out';
         
         // Create explosion effect
-        createExplosionEffect(this);
+        createExplosionEffect(shapeElement);
         
         // Remove the clicked shape after animation
         setTimeout(() => {
           // Remove from physics system first
-          floatingShapesPhysics.removeShape(this);
-          this.remove();
+          floatingShapesPhysics.removeShape(shapeElement);
+          shapeElement.remove();
           
           // Create a new random circle
           createNewFloatingShape();
@@ -1123,7 +1150,7 @@ import Layout from '../layouts/Layout.astro';
     });
 
     // Function to create explosion effect
-    function createExplosionEffect(element) {
+    function createExplosionEffect(element: HTMLElement) {
       const rect = element.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -1226,33 +1253,33 @@ import Layout from '../layouts/Layout.astro';
       newShape.style.transition = 'all 0.3s ease-out'; // Smooth expansion
       
       // Add event listeners
-      newShape.addEventListener('mouseenter', function() {
-        this.style.transform = 'scale(1.2) rotate(180deg)';
-        this.style.transition = 'transform 0.3s ease';
+      newShape.addEventListener('mouseenter', () => {
+        newShape.style.transform = 'scale(1.2) rotate(180deg)';
+        newShape.style.transition = 'transform 0.3s ease';
       });
       
-      newShape.addEventListener('mouseleave', function() {
-        this.style.transform = '';
-        this.style.transition = 'transform 0.3s ease';
+      newShape.addEventListener('mouseleave', () => {
+        newShape.style.transform = '';
+        newShape.style.transition = 'transform 0.3s ease';
       });
 
-      newShape.addEventListener('click', function(e) {
+      newShape.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation(); // Prevent click from reaching constellation system
         
         // Create pop animation
-        this.style.transform = 'scale(2) rotate(360deg)';
-        this.style.opacity = '0';
-        this.style.transition = 'all 0.4s ease-out';
+        newShape.style.transform = 'scale(2) rotate(360deg)';
+        newShape.style.opacity = '0';
+        newShape.style.transition = 'all 0.4s ease-out';
         
         // Create explosion effect
-        createExplosionEffect(this);
+        createExplosionEffect(newShape);
         
         // Remove the clicked shape after animation
         setTimeout(() => {
           // Remove from physics system first
-          floatingShapesPhysics.removeShape(this);
-          this.remove();
+          floatingShapesPhysics.removeShape(newShape);
+          newShape.remove();
           
           // Create a new random circle
           createNewFloatingShape();
@@ -1289,8 +1316,9 @@ import Layout from '../layouts/Layout.astro';
       entries.forEach((entry, index) => {
         if (entry.isIntersecting) {
           setTimeout(() => {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
+            const target = entry.target as HTMLElement;
+            target.style.opacity = '1';
+            target.style.transform = 'translateY(0)';
           }, index * 100);
         }
       });
@@ -1298,10 +1326,11 @@ import Layout from '../layouts/Layout.astro';
 
     // Observe all category cards
     document.querySelectorAll('.category-card').forEach(card => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateY(30px)';
-      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-      observer.observe(card);
+      const cardElement = card as HTMLElement;
+      cardElement.style.opacity = '0';
+      cardElement.style.transform = 'translateY(30px)';
+      cardElement.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(cardElement);
     });
   });
 </script>
