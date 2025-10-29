@@ -296,6 +296,21 @@ import Layout from '../layouts/Layout.astro';
 
   #particleCanvas {
     z-index: 1 !important;
+    pointer-events: none !important;
+  }
+  
+  /* Make content elements allow clicks to pass through to canvas */
+  main, .hero-section, .categories-section, .features-section {
+    pointer-events: auto !important;
+  }
+  
+  /* Allow clicks to pass through text elements to canvas */
+  h1, h2, h3, p, .text-5xl, .text-6xl, .text-7xl, .text-xl, .text-2xl {
+    pointer-events: none !important;
+  }
+  
+  /* Keep buttons and links clickable */
+  a, button, .btn, .category-card {
     pointer-events: auto !important;
   }
   
@@ -451,12 +466,16 @@ import Layout from '../layouts/Layout.astro';
       this.ctx = this.canvas.getContext('2d');
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
+      this.lastClickTime = 0;
+      this.clickThrottle = 500; // Minimum 500ms between clicks
+      this.colorWaves = []; // Array of active color waves
       this.init();
     }
 
     init() {
       this.resizeCanvas();
       this.createParticles();
+      this.establishConnections();
       this.bindEvents();
       this.animate();
     }
@@ -464,27 +483,80 @@ import Layout from '../layouts/Layout.astro';
     resizeCanvas() {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
+      
+      // Recreate particles with new count based on screen size
+      this.particles = [];
+      this.createParticles();
+      this.establishConnections();
     }
 
     createParticles() {
-      const particleCount = Math.floor((this.canvas.width * this.canvas.height) / 12000);
+      // Adjust particle count based on screen size
+      const screenArea = this.canvas.width * this.canvas.height;
+      let particleCount;
+      
+      if (this.canvas.width <= 768) {
+        // Mobile: fewer particles for better performance
+        particleCount = Math.floor(screenArea / 20000);
+      } else if (this.canvas.width <= 1024) {
+        // Tablet: medium particle count
+        particleCount = Math.floor(screenArea / 15000);
+      } else {
+        // Desktop: full particle count
+        particleCount = Math.floor(screenArea / 12000);
+      }
+      
+      // Ensure minimum and maximum particle counts
+      particleCount = Math.max(20, Math.min(particleCount, 300));
+      
+      console.log(`Creating ${particleCount} particles for ${this.canvas.width}x${this.canvas.height} screen`);
       
       for (let i = 0; i < particleCount; i++) {
         this.particles.push({
           x: Math.random() * this.canvas.width,
           y: Math.random() * this.canvas.height,
-          vx: (Math.random() - 0.5) * 0.08, // Slightly faster for visibility
+          vx: (Math.random() - 0.5) * 0.08, // Faster base velocity
           vy: (Math.random() - 0.5) * 0.08,
           baseVx: (Math.random() - 0.5) * 0.08, // Store base velocity for drift
           baseVy: (Math.random() - 0.5) * 0.08,
           size: Math.random() * 3 + 1,
           opacity: Math.random() * 0.8 + 0.2,
+          baseOpacity: Math.random() * 0.8 + 0.2, // Store original opacity (same as opacity)
           hue: Math.random() * 360,
+          baseHue: Math.random() * 360, // Store original hue
+          baseSaturation: Math.random() * 40 + 60, // Store original saturation (60-100%)
+          baseLightness: Math.random() * 30 + 40, // Store original lightness (40-70%)
           pulse: Math.random() * Math.PI * 2,
           driftPhase: Math.random() * Math.PI * 2, // For smooth drifting motion
-          driftSpeed: Math.random() * 0.003 + 0.001 // Slightly faster drift
+          driftSpeed: Math.random() * 0.0005 + 0.0003, // Faster drift speed
+          connections: [], // Array of connected particle indices
+          currentHue: Math.random() * 360, // Current hue (changes with waves)
+          waveIntensity: 0, // How much the wave affects this particle (0-1)
+          waveDecay: 0 // Decay rate for wave effect
         });
       }
+    }
+
+    establishConnections() {
+      // Find connections between nearby particles (increase distance for better connectivity)
+      const connectionDistance = 150; // Increased to connect more clusters
+      
+      this.particles.forEach((particle, index) => {
+        particle.connections = [];
+        
+        this.particles.forEach((otherParticle, otherIndex) => {
+          if (index !== otherIndex) {
+            const distance = Math.sqrt(
+              Math.pow(particle.x - otherParticle.x, 2) + 
+              Math.pow(particle.y - otherParticle.y, 2)
+            );
+            
+            if (distance < connectionDistance) {
+              particle.connections.push(otherIndex);
+            }
+          }
+        });
+      });
     }
 
     bindEvents() {
@@ -501,102 +573,152 @@ import Layout from '../layouts/Layout.astro';
         this.mouse.y = 0;
       });
       
-      // Add click interaction for constellation dots
-      this.canvas.addEventListener('click', (e) => {
+      // Add click interaction for constellation dots - works anywhere on page
+      document.addEventListener('click', (e) => {
+        // Throttle clicks to prevent performance issues
+        const currentTime = Date.now();
+        if (currentTime - this.lastClickTime < this.clickThrottle) {
+          return; // Ignore clicks that are too fast
+        }
+        this.lastClickTime = currentTime;
+        
+        // Check if click is on a button or link - if so, don't interfere
+        const target = e.target;
+        if (target.tagName === 'A' || target.tagName === 'BUTTON' || 
+            (target.classList && target.classList.contains('category-card')) ||
+            (target.parentElement && (target.parentElement.tagName === 'A' || target.parentElement.tagName === 'BUTTON'))) {
+          return;
+        }
+        
         const rect = this.canvas.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
         
-        // Find the closest particle to the click
-        let closestParticle = null;
-        let closestDistance = Infinity;
-        
-        this.particles.forEach(particle => {
-          const distance = Math.sqrt(
-            Math.pow(particle.x - clickX, 2) + 
-            Math.pow(particle.y - clickY, 2)
-          );
+        // Only process clicks within canvas bounds
+        if (clickX >= 0 && clickX <= this.canvas.width && 
+            clickY >= 0 && clickY <= this.canvas.height) {
           
-          if (distance < closestDistance && distance < 50) { // Within 50px
-            closestDistance = distance;
-            closestParticle = particle;
+          // Find the closest particle to the click
+          let closestParticle = null;
+          let closestDistance = Infinity;
+          
+          this.particles.forEach(particle => {
+            const distance = Math.sqrt(
+              Math.pow(particle.x - clickX, 2) + 
+              Math.pow(particle.y - clickY, 2)
+            );
+            
+            if (distance < closestDistance && distance < 80) { // Increased range
+              closestDistance = distance;
+              closestParticle = particle;
+            }
+          });
+          
+          if (closestParticle) {
+            this.createConstellationClickEffect(clickX, clickY, closestParticle);
           }
-        });
-        
-        if (closestParticle) {
-          this.createConstellationClickEffect(clickX, clickY, closestParticle);
         }
       });
     }
     
     createConstellationClickEffect(clickX, clickY, particle) {
-      // Create a ripple effect on the canvas
-      const ctx = this.canvas.getContext('2d');
+      // Create a beautiful color wave effect
+      this.createColorWave(clickX, clickY, particle);
+    }
+    
+    createColorWave(clickX, clickY, startParticle) {
+      // Generate a random beautiful color for this wave
+      const waveHue = Math.random() * 360;
+      const waveSpeed = 0.8; // How fast the wave travels
+      const waveIntensity = 1.0; // Maximum intensity
+      const waveDecay = 0.02; // How quickly the wave fades
       
-      // Create ripple animation
-      let rippleRadius = 0;
-      const maxRadius = 80;
-      const rippleOpacity = 0.8;
-      
-      const animateRipple = () => {
-        ctx.save();
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = `hsla(${particle.hue}, 70%, 60%, ${rippleOpacity * (1 - rippleRadius / maxRadius)})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(clickX, clickY, rippleRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-        
-        rippleRadius += 2;
-        
-        if (rippleRadius < maxRadius) {
-          requestAnimationFrame(animateRipple);
-        }
+      // Create the wave object
+      const wave = {
+        x: clickX,
+        y: clickY,
+        hue: waveHue,
+        intensity: waveIntensity,
+        speed: waveSpeed,
+        decay: waveDecay,
+        radius: 0,
+        maxRadius: 300, // Maximum wave radius
+        affectedParticles: new Set(), // Track which particles this wave has affected
+        startTime: Date.now()
       };
       
-      animateRipple();
+      this.colorWaves.push(wave);
       
-      // Give the clicked particle a boost
-      particle.vx += (Math.random() - 0.5) * 0.5;
-      particle.vy += (Math.random() - 0.5) * 0.5;
+      // Start the wave from the clicked particle
+      this.propagateWave(wave, startParticle);
+    }
+    
+    propagateWave(wave, particle) {
+      // Mark this particle as affected by this wave
+      wave.affectedParticles.add(particle);
       
-      // Temporarily increase the particle's size and brightness
-      const originalSize = particle.size;
-      const originalOpacity = particle.opacity;
+      // Apply wave effect to this particle
+      particle.waveIntensity = wave.intensity;
+      particle.waveDecay = wave.decay;
+      particle.currentHue = wave.hue;
       
-      particle.size *= 2;
-      particle.opacity = 1;
-      
-      // Reset after a short time
-      setTimeout(() => {
-        particle.size = originalSize;
-        particle.opacity = originalOpacity;
-      }, 1000);
-      
-      // Create a small explosion of mini-particles
-      for (let i = 0; i < 8; i++) {
-        const miniParticle = {
-          x: clickX,
-          y: clickY,
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2,
-          size: Math.max(Math.random() * 2 + 1, 0.5), // Ensure minimum size
-          opacity: 1,
-          hue: particle.hue + (Math.random() - 0.5) * 60,
-          life: 60, // frames to live
-          pulse: Math.random() * Math.PI * 2, // Add pulse for gradient
-          driftPhase: Math.random() * Math.PI * 2, // Add drift properties
-          driftSpeed: Math.random() * 0.003 + 0.001,
-          baseVx: (Math.random() - 0.5) * 2,
-          baseVy: (Math.random() - 0.5) * 2
-        };
+      // Propagate to connected particles
+      particle.connections.forEach(connectionIndex => {
+        const connectedParticle = this.particles[connectionIndex];
+        if (connectedParticle && !wave.affectedParticles.has(connectedParticle)) {
+          // Add a small delay for wave propagation effect
+          setTimeout(() => {
+            this.propagateWave(wave, connectedParticle);
+          }, Math.random() * 100 + 50); // Random delay 50-150ms
+        }
+      });
+    }
+    
+    updateColorWaves() {
+      // Update all active color waves
+      this.colorWaves = this.colorWaves.filter(wave => {
+        // Update wave properties
+        wave.radius += wave.speed;
+        wave.intensity -= wave.decay;
         
-        this.particles.push(miniParticle);
-      }
+        // Remove wave if it's faded out or reached max radius
+        if (wave.intensity <= 0 || wave.radius >= wave.maxRadius) {
+          // Reset affected particles
+          wave.affectedParticles.forEach(particle => {
+            particle.waveIntensity = 0;
+            particle.waveDecay = 0;
+            particle.currentHue = particle.baseHue; // Return to original color
+          });
+          return false; // Remove this wave
+        }
+        
+        return true; // Keep this wave
+      });
+      
+      // Update particle wave effects
+      this.particles.forEach(particle => {
+        if (particle.waveIntensity > 0) {
+          particle.waveIntensity -= particle.waveDecay;
+          if (particle.waveIntensity <= 0) {
+            particle.waveIntensity = 0;
+            particle.waveDecay = 0;
+            particle.currentHue = particle.baseHue; // Return to original color
+          }
+        }
+      });
     }
     
     updateParticles() {
+      // Update color waves
+      this.updateColorWaves();
+      
+      // Limit total particles to prevent performance issues
+      const maxParticles = 200;
+      if (this.particles.length > maxParticles) {
+        // Remove oldest mini-particles first
+        this.particles = this.particles.filter(p => p.life === undefined).slice(0, maxParticles);
+      }
+      
       this.particles.forEach((particle, index) => {
         // Handle mini-particles with life spans
         if (particle.life !== undefined) {
@@ -619,21 +741,21 @@ import Layout from '../layouts/Layout.astro';
         // Add gentle drifting motion
         particle.driftPhase += particle.driftSpeed;
         
-        // Create smooth circular drift - slightly more visible
-        const driftX = Math.cos(particle.driftPhase) * 0.008;
-        const driftY = Math.sin(particle.driftPhase) * 0.008;
+        // Create smooth circular drift - faster movement
+        const driftX = Math.cos(particle.driftPhase) * 0.0015;
+        const driftY = Math.sin(particle.driftPhase) * 0.0015;
         
-        // Add some randomness to the drift - slightly more visible
-        const randomDriftX = (Math.random() - 0.5) * 0.004;
-        const randomDriftY = (Math.random() - 0.5) * 0.004;
+        // Add some randomness to the drift - faster
+        const randomDriftX = (Math.random() - 0.5) * 0.0008;
+        const randomDriftY = (Math.random() - 0.5) * 0.0008;
         
         // Update velocity with drift
         particle.vx += driftX + randomDriftX;
         particle.vy += driftY + randomDriftY;
         
-        // Gradually return to base velocity - slightly faster
-        particle.vx += (particle.baseVx - particle.vx) * 0.002;
-        particle.vy += (particle.baseVy - particle.vy) * 0.002;
+        // Gradually return to base velocity - stronger pull back to home
+        particle.vx += (particle.baseVx - particle.vx) * 0.01;
+        particle.vy += (particle.baseVy - particle.vy) * 0.01;
 
         // Update position
         particle.x += particle.vx;
@@ -650,9 +772,9 @@ import Layout from '../layouts/Layout.astro';
           particle.vy += (dy / distance) * force * 0.0002;
         }
 
-        // Apply gentle friction
-        particle.vx *= 0.995;
-        particle.vy *= 0.995;
+        // Apply stronger friction to prevent expansion
+        particle.vx *= 0.98;
+        particle.vy *= 0.98;
 
         // Boundary check with gentle bounce
         if (particle.x < 0 || particle.x > this.canvas.width) {
@@ -666,55 +788,89 @@ import Layout from '../layouts/Layout.astro';
 
         // Update pulse
         particle.pulse += 0.03;
+        
+        // Note: Brightness is now managed by timeouts, not decay
       });
     }
 
     drawParticles() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // Draw constellation connections
-      this.particles.forEach((particle, i) => {
-        this.particles.slice(i + 1).forEach(otherParticle => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+      // Draw color wave rings
+      this.colorWaves.forEach(wave => {
+        if (wave.intensity > 0) {
+          this.ctx.save();
+          this.ctx.globalAlpha = wave.intensity * 0.3;
+          this.ctx.strokeStyle = `hsl(${wave.hue}, 80%, 60%)`;
+          this.ctx.lineWidth = 2;
+          this.ctx.setLineDash([5, 5]);
+          
+          this.ctx.beginPath();
+          this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+      });
 
-          if (distance < 150) {
-            const opacity = (150 - distance) / 150 * 0.3;
-            this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-            this.ctx.lineWidth = 0.5;
+      // Draw constellation connections
+      this.particles.forEach((particle, index) => {
+        particle.connections.forEach(connectionIndex => {
+          const connectedParticle = this.particles[connectionIndex];
+          if (connectedParticle) {
+            // Make connections more visible when particles are affected by waves
+            const waveIntensity = Math.max(particle.waveIntensity, connectedParticle.waveIntensity);
+            const connectionAlpha = 0.1 + (waveIntensity * 0.4);
+            const connectionWidth = 0.5 + (waveIntensity * 1.5);
+            
+            this.ctx.strokeStyle = `rgba(255, 255, 255, ${connectionAlpha})`;
+            this.ctx.lineWidth = connectionWidth;
+            
             this.ctx.beginPath();
             this.ctx.moveTo(particle.x, particle.y);
-            this.ctx.lineTo(otherParticle.x, otherParticle.y);
+            this.ctx.lineTo(connectedParticle.x, connectedParticle.y);
             this.ctx.stroke();
           }
         });
       });
 
-      // Draw particles
+      // Draw particles with wave effects
       this.particles.forEach(particle => {
         const pulseSize = particle.size + Math.sin(particle.pulse) * 0.5;
         
         this.ctx.save();
-        this.ctx.globalAlpha = particle.opacity;
         
-        // Create gradient with error handling
+        // Increase opacity and size when affected by wave
+        const waveMultiplier = 1 + (particle.waveIntensity * 0.5);
+        this.ctx.globalAlpha = particle.opacity * waveMultiplier;
+        
+        // Use current hue (affected by waves) or base hue
+        const currentHue = particle.waveIntensity > 0 ? particle.currentHue : particle.baseHue;
+        
+        // Create gradient with wave-enhanced brightness
         try {
-          const gradientRadius = Math.max(pulseSize * 3, 1); // Ensure minimum radius
+          const gradientRadius = Math.max(pulseSize * 3 * waveMultiplier, 1);
           const gradient = this.ctx.createRadialGradient(
             particle.x, particle.y, 0,
             particle.x, particle.y, gradientRadius
           );
-          gradient.addColorStop(0, `hsl(${particle.hue}, 80%, 70%)`);
-          gradient.addColorStop(1, `hsl(${particle.hue}, 80%, 30%)`);
+          
+          // Enhanced brightness when affected by wave
+          const brightnessMultiplier = 1 + (particle.waveIntensity * 0.3);
+          const centerLightness = Math.min(particle.baseLightness * brightnessMultiplier, 95);
+          const edgeLightness = Math.min(particle.baseLightness * 0.6 * brightnessMultiplier, 85);
+          
+          gradient.addColorStop(0, `hsl(${currentHue}, ${particle.baseSaturation}%, ${centerLightness}%)`);
+          gradient.addColorStop(1, `hsl(${currentHue}, ${particle.baseSaturation}%, ${edgeLightness}%)`);
           
           this.ctx.fillStyle = gradient;
         } catch (error) {
-          // Fallback to solid color if gradient fails
-          this.ctx.fillStyle = `hsl(${particle.hue}, 80%, 50%)`;
+          const brightnessMultiplier = 1 + (particle.waveIntensity * 0.3);
+          const lightness = Math.min(particle.baseLightness * brightnessMultiplier, 95);
+          this.ctx.fillStyle = `hsl(${currentHue}, ${particle.baseSaturation}%, ${lightness}%)`;
         }
+        
         this.ctx.beginPath();
-        this.ctx.arc(particle.x, particle.y, pulseSize, 0, Math.PI * 2);
+        this.ctx.arc(particle.x, particle.y, pulseSize * waveMultiplier, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.restore();
       });
