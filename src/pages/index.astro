@@ -513,6 +513,7 @@ import Layout from '../layouts/Layout.astro';
       console.log(`Creating ${particleCount} particles for ${this.canvas.width}x${this.canvas.height} screen`);
       
       for (let i = 0; i < particleCount; i++) {
+        const baseHue = Math.random() * 360;
         this.particles.push({
           x: Math.random() * this.canvas.width,
           y: Math.random() * this.canvas.height,
@@ -523,15 +524,15 @@ import Layout from '../layouts/Layout.astro';
           size: Math.random() * 3 + 1,
           opacity: Math.random() * 0.8 + 0.2,
           baseOpacity: Math.random() * 0.8 + 0.2, // Store original opacity (same as opacity)
-          hue: Math.random() * 360,
-          baseHue: Math.random() * 360, // Store original hue
+          hue: baseHue,
+          baseHue: baseHue, // Store original hue
           baseSaturation: Math.random() * 40 + 60, // Store original saturation (60-100%)
           baseLightness: Math.random() * 30 + 40, // Store original lightness (40-70%)
           pulse: Math.random() * Math.PI * 2,
           driftPhase: Math.random() * Math.PI * 2, // For smooth drifting motion
           driftSpeed: Math.random() * 0.0005 + 0.0003, // Faster drift speed
           connections: [], // Array of connected particle indices
-          currentHue: Math.random() * 360, // Current hue (changes with waves)
+          currentHue: baseHue, // Start with same hue as baseHue
           waveIntensity: 0, // How much the wave affects this particle (0-1)
           waveDecay: 0 // Decay rate for wave effect
         });
@@ -657,10 +658,10 @@ import Layout from '../layouts/Layout.astro';
       // Mark this particle as affected by this wave
       wave.affectedParticles.add(particle);
       
-      // Apply wave effect to this particle
+      // Apply wave effect to this particle - only brightness and size, keep original color
       particle.waveIntensity = wave.intensity;
       particle.waveDecay = wave.decay;
-      particle.currentHue = wave.hue;
+      // Don't change currentHue - keep original color
       
       // Propagate to connected particles
       particle.connections.forEach(connectionIndex => {
@@ -683,11 +684,11 @@ import Layout from '../layouts/Layout.astro';
         
         // Remove wave if it's faded out or reached max radius
         if (wave.intensity <= 0 || wave.radius >= wave.maxRadius) {
-          // Reset affected particles
+          // Reset affected particles - but don't instantly change colors
           wave.affectedParticles.forEach(particle => {
             particle.waveIntensity = 0;
             particle.waveDecay = 0;
-            particle.currentHue = particle.baseHue; // Return to original color
+            // Don't instantly reset currentHue - let it fade naturally
           });
           return false; // Remove this wave
         }
@@ -702,7 +703,7 @@ import Layout from '../layouts/Layout.astro';
           if (particle.waveIntensity <= 0) {
             particle.waveIntensity = 0;
             particle.waveDecay = 0;
-            particle.currentHue = particle.baseHue; // Return to original color
+            // Colors stay the same - no transition needed
           }
         }
       });
@@ -838,12 +839,12 @@ import Layout from '../layouts/Layout.astro';
             const connectionAlpha = 0.1 + (waveIntensity * 0.6);
             const connectionWidth = 0.5 + (waveIntensity * 2.0);
             
-            // Use wave color if either particle is affected
+            // Use original particle colors - no wave color changes
             let connectionColor = 'rgba(255, 255, 255, 0.1)';
             if (waveIntensity > 0) {
-              // Find the wave color affecting these particles
-              const waveHue = particle.waveIntensity > 0 ? particle.currentHue : connectedParticle.currentHue;
-              connectionColor = `hsla(${waveHue}, 100%, 70%, ${connectionAlpha})`;
+              // Use original particle colors, just make them brighter
+              const avgHue = (particle.baseHue + connectedParticle.baseHue) / 2;
+              connectionColor = `hsla(${avgHue}, 80%, 60%, ${connectionAlpha})`;
             }
             
             this.ctx.strokeStyle = connectionColor;
@@ -867,8 +868,8 @@ import Layout from '../layouts/Layout.astro';
         const waveMultiplier = 1 + (particle.waveIntensity * 1.0); // Much more dramatic size increase
         this.ctx.globalAlpha = particle.opacity * waveMultiplier;
         
-        // Use current hue (affected by waves) or base hue
-        const currentHue = particle.waveIntensity > 0 ? particle.currentHue : particle.baseHue;
+        // Use original hue - particles keep their original colors
+        const currentHue = particle.baseHue;
         
         // Create gradient with wave-enhanced brightness and saturation
         try {
