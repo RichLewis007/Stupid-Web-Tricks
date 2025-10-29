@@ -409,27 +409,19 @@ import Layout from '../layouts/Layout.astro';
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   }
   
+  .card-front {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+  
   .card-back {
     transform: rotateY(180deg);
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    background: linear-gradient(135deg, rgba(102, 126, 234, 1), rgba(118, 75, 162, 1));
     backdrop-filter: blur(15px);
-  }
-  
-  /* Ensure front side is completely hidden when back is visible */
-  .category-card:hover .card-front {
-    opacity: 0;
-    visibility: hidden;
-  }
-  
-  .category-card:hover .card-back {
-    opacity: 1;
-    visibility: visible;
   }
   
   .card-icon {
