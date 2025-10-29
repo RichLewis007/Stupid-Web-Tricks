@@ -467,8 +467,9 @@ import Layout from '../layouts/Layout.astro';
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
       this.lastClickTime = 0;
-      this.clickThrottle = 500; // Minimum 500ms between clicks
+      this.clickThrottle = 1000; // Maximum 1 click per second
       this.colorWaves = []; // Array of active color waves
+      this.canClick = true; // Whether user can click (tied to wave visibility)
       this.init();
     }
 
@@ -575,12 +576,11 @@ import Layout from '../layouts/Layout.astro';
       
       // Add click interaction for constellation dots - works anywhere on page
       document.addEventListener('click', (e) => {
-        // Throttle clicks to prevent performance issues
-        const currentTime = Date.now();
-        if (currentTime - this.lastClickTime < this.clickThrottle) {
-          return; // Ignore clicks that are too fast
+        // Throttle clicks based on wave visibility
+        if (!this.canClick) {
+          return; // Ignore clicks when waves are still visible
         }
-        this.lastClickTime = currentTime;
+        this.canClick = false; // Prevent further clicks until wave disappears
         
         // Check if click is on a button or link - if so, don't interfere
         const target = e.target;
@@ -629,9 +629,9 @@ import Layout from '../layouts/Layout.astro';
     createColorWave(clickX, clickY, startParticle) {
       // Generate a random beautiful color for this wave
       const waveHue = Math.random() * 360;
-      const waveSpeed = 0.8; // How fast the wave travels
+      const waveSpeed = 2.0; // Much faster wave travel
       const waveIntensity = 1.0; // Maximum intensity
-      const waveDecay = 0.02; // How quickly the wave fades
+      const waveDecay = 0.01; // Slower decay - circles last exactly 1 second
       
       // Create the wave object
       const wave = {
@@ -669,7 +669,7 @@ import Layout from '../layouts/Layout.astro';
           // Add a small delay for wave propagation effect
           setTimeout(() => {
             this.propagateWave(wave, connectedParticle);
-          }, Math.random() * 100 + 50); // Random delay 50-150ms
+          }, Math.random() * 30 + 20); // Much faster propagation: 20-50ms delay
         }
       });
     }
@@ -706,6 +706,11 @@ import Layout from '../layouts/Layout.astro';
           }
         }
       });
+      
+      // Allow clicking again when all waves have disappeared
+      if (this.colorWaves.length === 0) {
+        this.canClick = true;
+      }
     }
     
     updateParticles() {
@@ -800,14 +805,25 @@ import Layout from '../layouts/Layout.astro';
       this.colorWaves.forEach(wave => {
         if (wave.intensity > 0) {
           this.ctx.save();
-          this.ctx.globalAlpha = wave.intensity * 0.3;
-          this.ctx.strokeStyle = `hsl(${wave.hue}, 80%, 60%)`;
-          this.ctx.lineWidth = 2;
-          this.ctx.setLineDash([5, 5]);
+          this.ctx.globalAlpha = wave.intensity * 0.8; // Much more visible
+          this.ctx.strokeStyle = `hsl(${wave.hue}, 100%, 70%)`; // More saturated and brighter
+          this.ctx.lineWidth = 4; // Thicker lines
+          this.ctx.setLineDash([10, 5]); // More visible dashed pattern
           
           this.ctx.beginPath();
           this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
           this.ctx.stroke();
+          
+          // Add a second, more subtle ring
+          this.ctx.globalAlpha = wave.intensity * 0.3;
+          this.ctx.strokeStyle = `hsl(${wave.hue}, 100%, 90%)`; // Very bright center
+          this.ctx.lineWidth = 8;
+          this.ctx.setLineDash([]); // Solid line for inner ring
+          
+          this.ctx.beginPath();
+          this.ctx.arc(wave.x, wave.y, wave.radius * 0.7, 0, Math.PI * 2);
+          this.ctx.stroke();
+          
           this.ctx.restore();
         }
       });
@@ -819,10 +835,18 @@ import Layout from '../layouts/Layout.astro';
           if (connectedParticle) {
             // Make connections more visible when particles are affected by waves
             const waveIntensity = Math.max(particle.waveIntensity, connectedParticle.waveIntensity);
-            const connectionAlpha = 0.1 + (waveIntensity * 0.4);
-            const connectionWidth = 0.5 + (waveIntensity * 1.5);
+            const connectionAlpha = 0.1 + (waveIntensity * 0.6);
+            const connectionWidth = 0.5 + (waveIntensity * 2.0);
             
-            this.ctx.strokeStyle = `rgba(255, 255, 255, ${connectionAlpha})`;
+            // Use wave color if either particle is affected
+            let connectionColor = 'rgba(255, 255, 255, 0.1)';
+            if (waveIntensity > 0) {
+              // Find the wave color affecting these particles
+              const waveHue = particle.waveIntensity > 0 ? particle.currentHue : connectedParticle.currentHue;
+              connectionColor = `hsla(${waveHue}, 100%, 70%, ${connectionAlpha})`;
+            }
+            
+            this.ctx.strokeStyle = connectionColor;
             this.ctx.lineWidth = connectionWidth;
             
             this.ctx.beginPath();
@@ -840,33 +864,44 @@ import Layout from '../layouts/Layout.astro';
         this.ctx.save();
         
         // Increase opacity and size when affected by wave
-        const waveMultiplier = 1 + (particle.waveIntensity * 0.5);
+        const waveMultiplier = 1 + (particle.waveIntensity * 1.0); // Much more dramatic size increase
         this.ctx.globalAlpha = particle.opacity * waveMultiplier;
         
         // Use current hue (affected by waves) or base hue
         const currentHue = particle.waveIntensity > 0 ? particle.currentHue : particle.baseHue;
         
-        // Create gradient with wave-enhanced brightness
+        // Create gradient with wave-enhanced brightness and saturation
         try {
-          const gradientRadius = Math.max(pulseSize * 3 * waveMultiplier, 1);
+          const gradientRadius = Math.max(pulseSize * 4 * waveMultiplier, 1); // Larger gradient
           const gradient = this.ctx.createRadialGradient(
             particle.x, particle.y, 0,
             particle.x, particle.y, gradientRadius
           );
           
-          // Enhanced brightness when affected by wave
-          const brightnessMultiplier = 1 + (particle.waveIntensity * 0.3);
-          const centerLightness = Math.min(particle.baseLightness * brightnessMultiplier, 95);
-          const edgeLightness = Math.min(particle.baseLightness * 0.6 * brightnessMultiplier, 85);
-          
-          gradient.addColorStop(0, `hsl(${currentHue}, ${particle.baseSaturation}%, ${centerLightness}%)`);
-          gradient.addColorStop(1, `hsl(${currentHue}, ${particle.baseSaturation}%, ${edgeLightness}%)`);
+          // Much more dramatic color changes when affected by wave
+          if (particle.waveIntensity > 0) {
+            // Wave-affected particles: bright, saturated colors
+            const saturation = Math.min(particle.baseSaturation + 40, 100); // Increase saturation
+            const centerLightness = Math.min(particle.baseLightness + 30, 95); // Much brighter
+            const edgeLightness = Math.min(particle.baseLightness + 20, 90);
+            
+            gradient.addColorStop(0, `hsl(${currentHue}, ${saturation}%, ${centerLightness}%)`);
+            gradient.addColorStop(1, `hsl(${currentHue}, ${saturation}%, ${edgeLightness}%)`);
+          } else {
+            // Normal particles: original colors
+            gradient.addColorStop(0, `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness}%)`);
+            gradient.addColorStop(1, `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness * 0.6}%)`);
+          }
           
           this.ctx.fillStyle = gradient;
         } catch (error) {
-          const brightnessMultiplier = 1 + (particle.waveIntensity * 0.3);
-          const lightness = Math.min(particle.baseLightness * brightnessMultiplier, 95);
-          this.ctx.fillStyle = `hsl(${currentHue}, ${particle.baseSaturation}%, ${lightness}%)`;
+          if (particle.waveIntensity > 0) {
+            const saturation = Math.min(particle.baseSaturation + 40, 100);
+            const lightness = Math.min(particle.baseLightness + 30, 95);
+            this.ctx.fillStyle = `hsl(${currentHue}, ${saturation}%, ${lightness}%)`;
+          } else {
+            this.ctx.fillStyle = `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness}%)`;
+          }
         }
         
         this.ctx.beginPath();
