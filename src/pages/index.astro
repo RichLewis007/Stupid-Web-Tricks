@@ -1070,6 +1070,22 @@ import Layout from '../layouts/Layout.astro';
     document.querySelectorAll('.floating-shape').forEach((shape, index) => {
       console.log(`Setting up shape ${index + 1}`);
       
+      // Give each shape a random iridescent bubble color
+      const iridescentColors = [
+        'linear-gradient(45deg, rgba(255, 0, 150, 0.7), rgba(0, 255, 255, 0.7), rgba(255, 255, 0, 0.7))',
+        'linear-gradient(45deg, rgba(255, 100, 200, 0.7), rgba(100, 255, 100, 0.7), rgba(200, 100, 255, 0.7))',
+        'linear-gradient(45deg, rgba(0, 200, 255, 0.7), rgba(255, 200, 0, 0.7), rgba(200, 0, 255, 0.7))',
+        'linear-gradient(45deg, rgba(255, 150, 0, 0.7), rgba(0, 150, 255, 0.7), rgba(150, 0, 255, 0.7))',
+        'linear-gradient(45deg, rgba(200, 255, 0, 0.7), rgba(255, 0, 200, 0.7), rgba(0, 200, 255, 0.7))',
+        'linear-gradient(45deg, rgba(255, 0, 255, 0.7), rgba(0, 255, 150, 0.7), rgba(255, 150, 0, 0.7))',
+        'linear-gradient(45deg, rgba(150, 0, 255, 0.7), rgba(255, 255, 0, 0.7), rgba(0, 255, 200, 0.7))',
+        'linear-gradient(45deg, rgba(0, 255, 255, 0.7), rgba(255, 0, 150, 0.7), rgba(255, 200, 0, 0.7))'
+      ];
+      
+      const randomColor = iridescentColors[Math.floor(Math.random() * iridescentColors.length)];
+      shape.style.background = randomColor;
+      shape.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)';
+      
       shape.addEventListener('mouseenter', function() {
         this.style.transform = 'scale(1.2) rotate(180deg)';
         this.style.transition = 'transform 0.3s ease';
@@ -1175,14 +1191,15 @@ import Layout from '../layouts/Layout.astro';
       // Random properties
       const finalSize = Math.random() * 60 + 40; // 40-100px final size
       const startSize = 5; // Start very tiny
-      const colors = [
-        'linear-gradient(45deg, rgba(255, 0, 150, 0.6), rgba(0, 255, 255, 0.6))',
-        'linear-gradient(45deg, rgba(255, 255, 0, 0.6), rgba(255, 0, 255, 0.6))',
-        'linear-gradient(45deg, rgba(0, 255, 150, 0.6), rgba(150, 0, 255, 0.6))',
-        'linear-gradient(45deg, rgba(255, 100, 0, 0.6), rgba(0, 100, 255, 0.6))',
-        'linear-gradient(45deg, rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.6))',
-        'linear-gradient(45deg, rgba(150, 255, 0, 0.6), rgba(255, 0, 150, 0.6))',
-        'linear-gradient(45deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6))'
+      const iridescentColors = [
+        'linear-gradient(45deg, rgba(255, 0, 150, 0.7), rgba(0, 255, 255, 0.7), rgba(255, 255, 0, 0.7))',
+        'linear-gradient(45deg, rgba(255, 100, 200, 0.7), rgba(100, 255, 100, 0.7), rgba(200, 100, 255, 0.7))',
+        'linear-gradient(45deg, rgba(0, 200, 255, 0.7), rgba(255, 200, 0, 0.7), rgba(200, 0, 255, 0.7))',
+        'linear-gradient(45deg, rgba(255, 150, 0, 0.7), rgba(0, 150, 255, 0.7), rgba(150, 0, 255, 0.7))',
+        'linear-gradient(45deg, rgba(200, 255, 0, 0.7), rgba(255, 0, 200, 0.7), rgba(0, 200, 255, 0.7))',
+        'linear-gradient(45deg, rgba(255, 0, 255, 0.7), rgba(0, 255, 150, 0.7), rgba(255, 150, 0, 0.7))',
+        'linear-gradient(45deg, rgba(150, 0, 255, 0.7), rgba(255, 255, 0, 0.7), rgba(0, 255, 200, 0.7))',
+        'linear-gradient(45deg, rgba(0, 255, 255, 0.7), rgba(255, 0, 150, 0.7), rgba(255, 200, 0, 0.7))'
       ];
       
       // Random position within viewport
@@ -1194,7 +1211,8 @@ import Layout from '../layouts/Layout.astro';
       newShape.style.width = finalSize + 'px'; // Set final size immediately
       newShape.style.height = finalSize + 'px'; // Set final size immediately
       newShape.style.borderRadius = '50%';
-      newShape.style.background = colors[Math.floor(Math.random() * colors.length)];
+      newShape.style.background = iridescentColors[Math.floor(Math.random() * iridescentColors.length)];
+      newShape.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)';
       newShape.style.top = spawnY + 'px';
       newShape.style.left = spawnX + 'px';
       newShape.style.transform = 'scale(0.1)'; // Start tiny (10% of final size)
