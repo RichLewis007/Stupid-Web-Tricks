@@ -5,75 +5,36 @@
 <canvas id="particleCanvas" class="absolute inset-0 w-full h-full"></canvas>
 
 <script>
-  // Import types (in a real project, you'd import from a types file)
-  interface Particle {
-    x: number;
-    y: number;
-    homeX: number;
-    homeY: number;
-    vx: number;
-    vy: number;
-    baseVx: number;
-    baseVy: number;
-    size: number;
-    opacity: number;
-    baseOpacity: number;
-    hue: number;
-    baseHue: number;
-    baseSaturation: number;
-    baseLightness: number;
-    pulse: number;
-    driftPhase: number;
-    driftSpeed: number;
-    connections: number[];
-    currentHue: number;
-    waveIntensity: number;
-    waveDecay: number;
-    constellationId: number;
-    life?: number;
-  }
+  import type { Particle, ColorWave, MousePosition } from '../../types/index';
 
-  interface ColorWave {
-    x: number;
-    y: number;
-    hue: number;
-    intensity: number;
-    speed: number;
-    decay: number;
-    radius: number;
-    maxRadius: number;
-    affectedParticles: Set<Particle>;
-    startTime: number;
-  }
-
-  interface MousePosition {
-    x: number;
-    y: number;
-  }
+  let globalInitCount = 0;
 
   // Interactive Constellation Particle System
   class ConstellationSystem {
-    canvas: HTMLCanvasElement;
-    ctx: CanvasRenderingContext2D;
-    particles: Particle[];
-    mouse: MousePosition;
-    lastClickTime: number;
+    canvas!: HTMLCanvasElement;
+    ctx!: CanvasRenderingContext2D;
+    particles: Particle[] = [];
+    mouse: MousePosition = { x: 0, y: 0 };
+    lastClickTime: number = 0;
     clickThrottle: number = 500;
-    colorWaves: ColorWave[];
+    colorWaves: ColorWave[] = [];
     canClick: boolean = true;
-    userInteracted: boolean;
-    autoClickIntervalId: number | null;
+    userInteracted: boolean = false;
+    autoClickIntervalId: number | null = null;
+    isRunning: boolean = true;
 
     constructor() {
+      globalInitCount++;
+      console.log('[ConstellationSystem] Constructor called', globalInitCount);
       this.canvas = document.getElementById('particleCanvas') as HTMLCanvasElement;
       if (!this.canvas) {
-        console.error('ConstellationSystem: Canvas element not found');
+        console.error('[ConstellationSystem] Canvas element not found');
         return;
       }
       
       const ctx = this.canvas.getContext('2d');
       if (!ctx) {
-        console.error('ConstellationSystem: Could not get 2D context');
+        console.error('[ConstellationSystem] Could not get 2D context');
         return;
       }
       
@@ -86,18 +47,26 @@
       this.colorWaves = []; // Array of active color waves
       this.userInteracted = false;
       this.autoClickIntervalId = null;
-      this.init();
+      try {
+        this.init();
+        console.log('[ConstellationSystem] Init completed');
+      } catch (e) {
+        console.error('[ConstellationSystem] Error during init:', e);
+      }
     }
 
     init() {
+      console.log('[ConstellationSystem] init() called');
       this.resizeCanvas();
       this.createParticles();
       this.establishConnections();
       this.bindEvents();
       this.animate();
+      console.log('[ConstellationSystem] init() finished');
     }
 
     resizeCanvas() {
+      console.log('[ConstellationSystem] resizeCanvas() called');
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
       
@@ -105,9 +74,11 @@
       this.particles = [];
       this.createParticles();
       this.establishConnections();
+      console.log('[ConstellationSystem] resizeCanvas() finished');
     }
 
     createParticles() {
+      console.log('[ConstellationSystem] createParticles() called');
       // Adjust particle count based on screen size
       const screenArea = this.canvas.width * this.canvas.height;
       let particleCount;
@@ -162,55 +133,15 @@
           constellationId: -1 // Will be set during connection establishment
         });
       }
+      console.log('[ConstellationSystem] createParticles() finished');
     }
 
     establishConnections() {
-      // Reset all connections and constellation IDs
-      this.particles.forEach(particle => {
-        particle.connections = [];
-        particle.constellationId = -1;
-      });
-      
-      // Create constellations using a clustering approach
-      const connectionDistance = 100; // Base connection distance
-      const minConstellationSize = 5; // Minimum particles per constellation
-      const maxConstellationSize = 15; // Maximum particles per constellation
-      let currentConstellationId = 0;
-      const unassignedParticles = [...this.particles.map((_, index) => index)];
-      
-      while (unassignedParticles.length > 0) {
-        // Start a new constellation with a random unassigned particle
-        const startParticleIndex = unassignedParticles[Math.floor(Math.random() * unassignedParticles.length)];
-        const constellation = this.createConstellation(startParticleIndex, currentConstellationId, connectionDistance, minConstellationSize, maxConstellationSize);
-        
-        if (constellation.length >= minConstellationSize) {
-          // Valid constellation - assign IDs and create connections
-          constellation.forEach(particleIndex => {
-            this.particles[particleIndex].constellationId = currentConstellationId;
-            // Remove from unassigned list
-            const unassignedIndex = unassignedParticles.indexOf(particleIndex);
-            if (unassignedIndex > -1) {
-              unassignedParticles.splice(unassignedIndex, 1);
-            }
-          });
-          
-          // Create connections within this constellation
-          this.createConstellationConnections(constellation, connectionDistance);
-          currentConstellationId++;
-        } else {
-          // Constellation too small - add particles to unassigned for next iteration
-          // or merge with existing constellation if possible
-          this.mergeSmallConstellation(constellation, unassignedParticles, currentConstellationId);
-        }
-      }
-      
-      // Handle any remaining unassigned particles by merging them into existing constellations
-      this.mergeRemainingParticles(unassignedParticles, connectionDistance);
-      
-      console.log(`Created ${currentConstellationId} constellations`);
+      // No-op: we now connect visually per frame, not by group.
     }
     
-    createConstellation(startParticleIndex: number, constellationId: number, connectionDistance: number, minSize: number, maxSize: number): number[] {
+    createConstellation(startParticleIndex: number, constellationId: number, connectionDistance: number, minSize: number, maxSize: number, grid: Map<string, number[]>, cellSize: number, connectionDistanceSq: number): number[] {
+      console.log('[ConstellationSystem] createConstellation() called');
       const constellation = [startParticleIndex];
       const toCheck = [startParticleIndex];
       const checked = new Set([startParticleIndex]);
@@ -218,57 +149,75 @@
       while (toCheck.length > 0 && constellation.length < maxSize) {
         const currentIndex = toCheck.shift()!;
         const currentParticle = this.particles[currentIndex];
-        
-        // Find nearby particles
-        this.particles.forEach((otherParticle, otherIndex) => {
-          if (checked.has(otherIndex)) return;
-          
-          const distance = Math.sqrt(
-            Math.pow(currentParticle.x - otherParticle.x, 2) + 
-            Math.pow(currentParticle.y - otherParticle.y, 2)
-          );
-          
-          // Add some randomness to connection distance
-          const randomFactor = Math.random() * 0.4 + 0.8; // 0.8 to 1.2 multiplier
-          const effectiveDistance = connectionDistance * randomFactor;
-          
-          if (distance < effectiveDistance) {
-            // Only add if we have not hit max size yet
-            if (constellation.length < maxSize) {
-              constellation.push(otherIndex);
-              toCheck.push(otherIndex);
-              checked.add(otherIndex);
+
+        // Search neighboring grid cells only
+        const cx = Math.floor(currentParticle.x / cellSize);
+        const cy = Math.floor(currentParticle.y / cellSize);
+        for (let gx = cx - 1; gx <= cx + 1; gx++) {
+          for (let gy = cy - 1; gy <= cy + 1; gy++) {
+            const bucket = grid.get(`${gx}:${gy}`);
+            if (!bucket) continue;
+            for (let k = 0; k < bucket.length; k++) {
+              const otherIndex = bucket[k];
+              if (checked.has(otherIndex) || otherIndex === currentIndex) continue;
+              const otherParticle = this.particles[otherIndex];
+
+              const dx = currentParticle.x - otherParticle.x;
+              const dy = currentParticle.y - otherParticle.y;
+              let distSq = dx * dx + dy * dy;
+
+              // Randomize effective radius a bit (0.8..1.2)
+              const scale = 0.8 + Math.random() * 0.4;
+              if (distSq < (connectionDistanceSq * scale * scale)) {
+                if (constellation.length < maxSize) {
+                  constellation.push(otherIndex);
+                  toCheck.push(otherIndex);
+                  checked.add(otherIndex);
+                }
+              }
+              if (constellation.length >= maxSize) break;
             }
           }
-        });
+        }
       }
-      
+      console.log('[ConstellationSystem] createConstellation() finished');
       return constellation;
     }
     
-    createConstellationConnections(constellation: number[], connectionDistance: number) {
+    createConstellationConnections(constellation: number[], connectionDistance: number, connectionDistanceSq: number, grid: Map<string, number[]>, cellSize: number) {
+      console.log('[ConstellationSystem] createConstellationConnections() called');
       // Create connections within the constellation
-      constellation.forEach((particleIndex, i) => {
+      const maxConnectionsPerParticle = 8;
+      constellation.forEach((particleIndex) => {
         const particle = this.particles[particleIndex];
-        
-        constellation.forEach((otherParticleIndex, j) => {
-          if (i !== j) {
-            const otherParticle = this.particles[otherParticleIndex];
-            const distance = Math.sqrt(
-              Math.pow(particle.x - otherParticle.x, 2) + 
-              Math.pow(particle.y - otherParticle.y, 2)
-            );
-            
-            // Connect if within distance and not already connected
-            if (distance < connectionDistance * 1.2 && !particle.connections.includes(otherParticleIndex)) {
-              particle.connections.push(otherParticleIndex);
-            }
+        const cx = Math.floor(particle.x / cellSize);
+        const cy = Math.floor(particle.y / cellSize);
+        const candidates: number[] = [];
+        for (let gx = cx - 1; gx <= cx + 1; gx++) {
+          for (let gy = cy - 1; gy <= cy + 1; gy++) {
+            const bucket = grid.get(`${gx}:${gy}`);
+            if (bucket) candidates.push(...bucket);
           }
-        });
+        }
+        for (let i = 0; i < candidates.length; i++) {
+          const otherIndex = candidates[i];
+          if (otherIndex === particleIndex) continue;
+          if (particle.connections.length >= maxConnectionsPerParticle) break;
+          const otherParticle = this.particles[otherIndex];
+          if (otherParticle.constellationId !== particle.constellationId) continue;
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < connectionDistanceSq * 1.44 && !particle.connections.includes(otherIndex)) {
+            particle.connections.push(otherIndex);
+          }
+        }
       });
+      console.log('[ConstellationSystem] createConstellationConnections() finished');
     }
     
-    mergeSmallConstellation(constellation: number[], unassignedParticles: number[], constellationId: number) {
+    mergeSmallConstellation(constellation: number[], unassignedParticles: number[], constellationId: number, constellationMembers: Map<number, Set<number>>, maxSize: number) {
+      console.log('[ConstellationSystem] mergeSmallConstellation() called');
       // Try to find a nearby existing constellation to merge with
       if (constellation.length === 0) return;
       
@@ -292,14 +241,18 @@
       });
       
       if (closestConstellation !== -1 && closestDistance < 200) {
+        const members = constellationMembers.get(closestConstellation) || new Set<number>();
+        if (members.size + constellation.length <= maxSize) {
         // Merge with closest constellation
-        constellation.forEach(particleIndex => {
-          this.particles[particleIndex].constellationId = closestConstellation;
-          const unassignedIndex = unassignedParticles.indexOf(particleIndex);
-          if (unassignedIndex > -1) {
-            unassignedParticles.splice(unassignedIndex, 1);
-          }
-        });
+          constellation.forEach(particleIndex => {
+            this.particles[particleIndex].constellationId = closestConstellation;
+            members.add(particleIndex);
+            const unassignedIndex = unassignedParticles.indexOf(particleIndex);
+            if (unassignedIndex > -1) unassignedParticles.splice(unassignedIndex, 1);
+          });
+          constellationMembers.set(closestConstellation, members);
+          return;
+        }
       } else {
         // Keep as unassigned for next iteration
         constellation.forEach(particleIndex => {
@@ -308,39 +261,56 @@
           }
         });
       }
+      console.log('[ConstellationSystem] mergeSmallConstellation() finished');
     }
     
-    mergeRemainingParticles(unassignedParticles: number[], connectionDistance: number) {
-      // Merge remaining unassigned particles into the nearest constellation
-      unassignedParticles.forEach(particleIndex => {
-        const particle = this.particles[particleIndex];
-        let closestConstellation = -1;
-        let closestDistance = Infinity;
-        
-        this.particles.forEach((otherParticle, otherIndex) => {
-          if (otherParticle.constellationId !== -1) {
-            const distance = Math.sqrt(
-              Math.pow(particle.x - otherParticle.x, 2) + 
-              Math.pow(particle.y - otherParticle.y, 2)
-            );
-            
-            if (distance < closestDistance) {
-              closestDistance = distance;
-              closestConstellation = otherParticle.constellationId;
+    // Replace the main loop in mergeRemainingParticles with a hard iteration cap
+    mergeRemainingParticles(unassignedParticles: number[], connectionDistance: number, connectionDistanceSq: number, constellationMembers: Map<number, Set<number>>, maxSize: number, grid: Map<string, number[]>, cellSize: number, nextId: () => number) {
+      // Cap to N seeds to guarantee early bailout
+      const safetyMaxSeeds = 2000;
+      const assigned = new Set<number>();
+      let seedsChecked = 0;
+      for (let idx of unassignedParticles) {
+        if (assigned.has(idx) || this.particles[idx].constellationId !== -1) continue;
+        if (++seedsChecked > safetyMaxSeeds) {
+          console.error('[ConstellationSystem] Too many constellation seeds processed; aborting to protect browser.');
+          this.showFailMessage('Too many constellations to process, aborting for safety.');
+          break;
+        }
+        const p = this.particles[idx];
+        const newId = nextId();
+        const members = new Set<number>([idx]);
+        p.constellationId = newId;
+        assigned.add(idx);
+        const cx = Math.floor(p.x / cellSize);
+        const cy = Math.floor(p.y / cellSize);
+        for (let gx = cx - 1; gx <= cx + 1; gx++) {
+          for (let gy = cy - 1; gy <= cy + 1; gy++) {
+            const bucket = grid.get(`${gx}:${gy}`);
+            if (bucket) for (let nidx of bucket) {
+              if (assigned.has(nidx) || nidx === idx) continue;
+              const np = this.particles[nidx];
+              if (np.constellationId === -1) {
+                const dx = p.x - np.x, dy = p.y - np.y;
+                if (dx*dx + dy*dy <= connectionDistanceSq) {
+                  np.constellationId = newId;
+                  members.add(nidx);
+                  assigned.add(nidx);
+                  if (members.size >= maxSize) break;
+                }
+              }
             }
           }
-        });
-        
-        if (closestConstellation !== -1) {
-          particle.constellationId = closestConstellation;
-        } else {
-          // Create a single-particle constellation if no others exist
-          particle.constellationId = 0;
+          if (members.size >= maxSize) break;
         }
-      });
+        constellationMembers.set(newId, members);
+        this.createConstellationConnections(Array.from(members), connectionDistance, connectionDistanceSq, grid, cellSize);
+      }
+      console.log('[ConstellationSystem] mergeRemainingParticles() finished');
     }
 
     bindEvents() {
+      console.log('[ConstellationSystem] bindEvents() called');
       window.addEventListener('resize', () => this.resizeCanvas());
       
       this.canvas.addEventListener('mousemove', (e) => {
@@ -425,27 +395,32 @@
           }
         }
       });
+      console.log('[ConstellationSystem] bindEvents() finished');
     }
     
     // Start automatic clicks every 10s until the first user interaction
     startAutoClickRoutine() {
+      console.log('[ConstellationSystem] startAutoClickRoutine() called');
       // If already interacted or already running, do nothing
-      if (this.userInteracted || this.autoClickIntervalId !== null) return;
+      if (this.userInteracted || this.autoClickIntervalId !== null) {
+        console.log('[ConstellationSystem] Auto-click routine skipped: user has interacted or already running.');
+        return;
+      }
       
       const triggerRandomParticleClick = () => {
         if (this.userInteracted) {
-          console.log('Auto-click stopped: user has interacted');
+          console.log('[ConstellationSystem] Auto-click stopped: user has interacted');
           return;
         }
         if (!this.particles || this.particles.length === 0) {
-          console.log('Auto-click skipped: no particles available');
+          console.log('[ConstellationSystem] Auto-click skipped: no particles available');
           return;
         }
         
         const randomIndex = Math.floor(Math.random() * this.particles.length);
         const particle = this.particles[randomIndex];
         if (!particle) {
-          console.log('Auto-click skipped: no particle at random index');
+          console.log('[ConstellationSystem] Auto-click skipped: no particle at random index');
           return;
         }
         
@@ -453,7 +428,7 @@
         const clientX = particle.x + rect.left;
         const clientY = particle.y + rect.top;
         
-        console.log(`Auto-clicking particle at (${clientX}, ${clientY})`);
+        console.log(`[ConstellationSystem] Auto-clicking particle at (${clientX}, ${clientY})`);
         
         // Dispatch a click at the particle's screen position
         const evt = new MouseEvent('click', {
@@ -468,14 +443,18 @@
       
       // Fire first auto-click 10s after full load, then every 10s
       this.autoClickIntervalId = window.setInterval(triggerRandomParticleClick, 10000);
+      console.log('[ConstellationSystem] startAutoClickRoutine() finished');
     }
     
     createConstellationClickEffect(clickX: number, clickY: number, particle: Particle) {
+      console.log('[ConstellationSystem] createConstellationClickEffect() called');
       // Create a beautiful color wave effect
       this.createColorWave(clickX, clickY, particle);
+      console.log('[ConstellationSystem] createConstellationClickEffect() finished');
     }
     
     createColorWave(clickX: number, clickY: number, startParticle: Particle) {
+      console.log('[ConstellationSystem] createColorWave() called');
       // Generate a random beautiful color for this wave
       const waveHue = Math.random() * 360;
       const waveSpeed = 2.0; // Much faster wave travel
@@ -483,7 +462,7 @@
       const waveDecay = 0.01; // Slower decay - circles last exactly 1 second
       
       // Create the wave object
-      const wave = {
+      const wave: ColorWave = {
         x: clickX,
         y: clickY,
         hue: waveHue,
@@ -492,7 +471,7 @@
         decay: waveDecay,
         radius: 0,
         maxRadius: 300, // Maximum wave radius
-        affectedParticles: new Set(), // Track which particles this wave has affected
+        affectedParticles: new Set<Particle>(), // Track which particles this wave has affected
         startTime: Date.now()
       };
       
@@ -500,9 +479,11 @@
       
       // Start the wave from the clicked particle
       this.propagateWave(wave, startParticle);
+      console.log('[ConstellationSystem] createColorWave() finished');
     }
     
     propagateWave(wave: ColorWave, particle: Particle) {
+      console.log('[ConstellationSystem] propagateWave() called');
       // Mark this particle as affected by this wave
       wave.affectedParticles.add(particle);
       
@@ -521,9 +502,11 @@
           }, Math.random() * 30 + 20); // Much faster propagation: 20-50ms delay
         }
       });
+      console.log('[ConstellationSystem] propagateWave() finished');
     }
     
     updateColorWaves() {
+      console.log('[ConstellationSystem] updateColorWaves() called');
       // Update all active color waves
       this.colorWaves = this.colorWaves.filter(wave => {
         // Update wave properties
@@ -557,9 +540,11 @@
       });
       
       // Waves continue to run independently
+      console.log('[ConstellationSystem] updateColorWaves() finished');
     }
     
     updateParticles() {
+      console.log('[ConstellationSystem] updateParticles() called');
       // Update color waves
       this.updateColorWaves();
       
@@ -659,122 +644,64 @@
         
         // Note: Brightness is now managed by timeouts, not decay
       });
+      console.log('[ConstellationSystem] updateParticles() finished');
     }
 
     drawParticles() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      // Draw color wave rings
-      this.colorWaves.forEach(wave => {
-        if (wave.intensity > 0) {
-          this.ctx.save();
-          this.ctx.globalAlpha = wave.intensity * 0.8; // Much more visible
-          this.ctx.strokeStyle = `hsl(${wave.hue}, 100%, 70%)`; // More saturated and brighter
-          this.ctx.lineWidth = 4; // Thicker lines
-          this.ctx.setLineDash([10, 5]); // More visible dashed pattern
-          
-          this.ctx.beginPath();
-          this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
-          this.ctx.stroke();
-          
-          // Add a second, more subtle ring
-          this.ctx.globalAlpha = wave.intensity * 0.3;
-          this.ctx.strokeStyle = `hsl(${wave.hue}, 100%, 90%)`; // Very bright center
-          this.ctx.lineWidth = 8;
-          this.ctx.setLineDash([]); // Solid line for inner ring
-          
-          this.ctx.beginPath();
-          this.ctx.arc(wave.x, wave.y, wave.radius * 0.7, 0, Math.PI * 2);
-          this.ctx.stroke();
-          
-          this.ctx.restore();
-        }
-      });
-
-      // Draw constellation connections
-      this.particles.forEach((particle, index) => {
-        particle.connections.forEach((connectionIndex: number) => {
-          const connectedParticle = this.particles[connectionIndex];
-          if (connectedParticle) {
-            // Make connections more visible when particles are affected by waves
-            const waveIntensity = Math.max(particle.waveIntensity, connectedParticle.waveIntensity);
-            const connectionAlpha = 0.1 + (waveIntensity * 0.6);
-            const connectionWidth = 0.5 + (waveIntensity * 2.0);
-            
-            // Use original particle colors - no wave color changes
-            let connectionColor = 'rgba(255, 255, 255, 0.1)';
-            if (waveIntensity > 0) {
-              // Use original particle colors, just make them brighter
-              const avgHue = (particle.baseHue + connectedParticle.baseHue) / 2;
-              connectionColor = `hsla(${avgHue}, 80%, 60%, ${connectionAlpha})`;
-            }
-            
-            this.ctx.strokeStyle = connectionColor;
-            this.ctx.lineWidth = connectionWidth;
-            
+      const N = this.particles.length;
+      // Draw connecting lines for all close pairs
+      const connectionDistance = 100;
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const p1 = this.particles[i], p2 = this.particles[j];
+          const dx = p1.x - p2.x, dy = p1.y - p2.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < connectionDistance * connectionDistance) {
+            this.ctx.save();
+            this.ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            this.ctx.lineWidth = 1;
             this.ctx.beginPath();
-            this.ctx.moveTo(particle.x, particle.y);
-            this.ctx.lineTo(connectedParticle.x, connectedParticle.y);
+            this.ctx.moveTo(p1.x, p1.y);
+            this.ctx.lineTo(p2.x, p2.y);
             this.ctx.stroke();
-          }
-        });
-      });
-
-      // Draw particles with wave effects
-      this.particles.forEach(particle => {
-        const pulseSize = particle.size + Math.sin(particle.pulse) * 0.5;
-        
-        this.ctx.save();
-        
-        // Increase opacity and size when affected by wave
-        const waveMultiplier = 1 + (particle.waveIntensity * 1.0); // Much more dramatic size increase
-        this.ctx.globalAlpha = particle.opacity * waveMultiplier;
-        
-        // Use original hue - particles keep their original colors
-        const currentHue = particle.baseHue;
-        
-        // Create gradient with wave-enhanced brightness and saturation
-        try {
-          const gradientRadius = Math.max(pulseSize * 4 * waveMultiplier, 1); // Larger gradient
-          const gradient = this.ctx.createRadialGradient(
-            particle.x, particle.y, 0,
-            particle.x, particle.y, gradientRadius
-          );
-          
-          // Much more dramatic color changes when affected by wave
-          if (particle.waveIntensity > 0) {
-            // Wave-affected particles: bright, saturated colors
-            const saturation = Math.min(particle.baseSaturation + 40, 100); // Increase saturation
-            const centerLightness = Math.min(particle.baseLightness + 30, 95); // Much brighter
-            const edgeLightness = Math.min(particle.baseLightness + 20, 90);
-            
-            gradient.addColorStop(0, `hsl(${currentHue}, ${saturation}%, ${centerLightness}%)`);
-            gradient.addColorStop(1, `hsl(${currentHue}, ${saturation}%, ${edgeLightness}%)`);
-          } else {
-            // Normal particles: original colors
-            gradient.addColorStop(0, `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness}%)`);
-            gradient.addColorStop(1, `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness * 0.6}%)`);
-          }
-          
-          this.ctx.fillStyle = gradient;
-        } catch (error) {
-          if (particle.waveIntensity > 0) {
-            const saturation = Math.min(particle.baseSaturation + 40, 100);
-            const lightness = Math.min(particle.baseLightness + 30, 95);
-            this.ctx.fillStyle = `hsl(${currentHue}, ${saturation}%, ${lightness}%)`;
-          } else {
-            this.ctx.fillStyle = `hsl(${currentHue}, ${particle.baseSaturation}%, ${particle.baseLightness}%)`;
+            this.ctx.restore();
           }
         }
-        
+      }
+      // Draw lines from mouse to close particles
+      if (this.mouse.x && this.mouse.y) {
+        for (let i = 0; i < N; i++) {
+          const p = this.particles[i];
+          const dx = this.mouse.x - p.x, dy = this.mouse.y - p.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < connectionDistance * connectionDistance) {
+            this.ctx.save();
+            this.ctx.strokeStyle = 'rgba(100,200,255,0.15)';
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(p.x, p.y);
+            this.ctx.lineTo(this.mouse.x, this.mouse.y);
+            this.ctx.stroke();
+            this.ctx.restore();
+          }
+        }
+      }
+      // Particles
+      for (let i = 0; i < N; i++) {
+        const p = this.particles[i];
+        this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.arc(particle.x, particle.y, pulseSize * waveMultiplier, 0, Math.PI * 2);
+        this.ctx.arc(p.x, p.y, p.size || 2, 0, Math.PI * 2);
+        this.ctx.fillStyle = `hsl(${p.baseHue || 0},70%,70%)`;
+        this.ctx.globalAlpha = 0.7;
         this.ctx.fill();
         this.ctx.restore();
-      });
+      }
     }
 
     animate() {
+      console.log('[ConstellationSystem] animate() called');
       try {
         this.updateParticles();
         this.drawParticles();
@@ -782,10 +709,12 @@
         console.warn('ConstellationSystem animation error (continuing):', error);
       }
       requestAnimationFrame(() => this.animate());
+      console.log('[ConstellationSystem] animate() finished');
     }
 
     // Cleanup method for proper memory management
     destroy() {
+      console.log('[ConstellationSystem] destroy() called');
       this.isRunning = false;
       if (this.autoClickIntervalId !== null) {
         clearInterval(this.autoClickIntervalId);
@@ -793,26 +722,57 @@
       }
       this.particles = [];
       this.colorWaves = [];
+      console.log('[ConstellationSystem] destroy() finished');
+    }
+
+    // Add a DOM message in .showFailMessage
+    showFailMessage(msg: string) {
+      try {
+        let failDiv = document.getElementById('constellationFailMsg');
+        if (!failDiv) {
+          failDiv = document.createElement('div');
+          failDiv.id = 'constellationFailMsg';
+          failDiv.style.position = 'fixed';
+          failDiv.style.top = '20px';
+          failDiv.style.left = '50%';
+          failDiv.style.transform = 'translateX(-50%)';
+          failDiv.style.background = 'rgba(0,0,0,0.95)';
+          failDiv.style.color = '#fff';
+          failDiv.style.border = '2px solid red';
+          failDiv.style.fontSize = '18px';
+          failDiv.style.padding = '16px 36px';
+          failDiv.style.borderRadius = '12px';
+          failDiv.style.zIndex = '100000';
+          document.body.appendChild(failDiv);
+        }
+        failDiv.innerText = '[Constellation Error] ' + msg;
+      } catch {}
     }
   }
 
   // Initialize constellation system when DOM is loaded
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing constellation system...');
+    console.log('DOMContentLoaded fired.');
+    try {
+      if ((window as any).constellationSystem) {
+        console.warn('[ConstellationSystem] Already initialized. Skipping.');
+        return;
+      }
+      console.log('DOM loaded, initializing constellation system...');
 
-    // Initialize constellation particle system
-    const constellationSystem = new ConstellationSystem();
-    constellationSystem.init();
-    
-    // Make it globally accessible for debugging
-    (window as any).constellationSystem = constellationSystem;
+      // Initialize constellation particle system
+      const constellationSystem = new ConstellationSystem();
+      (window as any).constellationSystem = constellationSystem;
 
-    // Start auto-clicks once the page fully loads
-    const startAuto = () => constellationSystem.startAutoClickRoutine();
-    if (document.readyState === 'complete') {
-      startAuto();
-    } else {
-      window.addEventListener('load', startAuto, { once: true });
+      // Start auto-clicks once the page fully loads
+      const startAuto = () => constellationSystem.startAutoClickRoutine && constellationSystem.startAutoClickRoutine();
+      if (document.readyState === 'complete') {
+        startAuto();
+      } else {
+        window.addEventListener('load', startAuto, { once: true });
+      }
+    } catch (e) {
+      console.error('[ConstellationSystem] Error during DOMContentLoaded:', e);
     }
   });
 </script>
