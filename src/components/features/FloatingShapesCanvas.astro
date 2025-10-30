@@ -5,17 +5,52 @@
 <canvas id="floatingShapesCanvas" class="absolute inset-0 w-full h-full pointer-events-auto"></canvas>
 
 <script>
+  // TypeScript interfaces
+  interface FloatingShape {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    radius: number;
+    mass: number;
+    color: string;
+    originalColor: string;
+    hoverColor: string;
+    isHovered: boolean;
+    pulse: number;
+    pulseSpeed: number;
+    id: number;
+    life?: number;
+    size?: number;
+  }
+
+  interface MousePosition {
+    x: number;
+    y: number;
+  }
+
   // Canvas-based Floating Shapes Physics System
   class FloatingShapesCanvas {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
-    shapes: any[];
+    shapes: FloatingShape[];
     isRunning: boolean;
-    mouse: { x: number; y: number };
+    mouse: MousePosition;
 
     constructor() {
       this.canvas = document.getElementById('floatingShapesCanvas') as HTMLCanvasElement;
-      this.ctx = this.canvas.getContext('2d')!;
+      if (!this.canvas) {
+        console.error('FloatingShapesCanvas: Canvas element not found');
+        return;
+      }
+      
+      const ctx = this.canvas.getContext('2d');
+      if (!ctx) {
+        console.error('FloatingShapesCanvas: Could not get 2D context');
+        return;
+      }
+      
+      this.ctx = ctx;
       this.shapes = [];
       this.isRunning = false;
       this.mouse = { x: 0, y: 0 };
@@ -102,7 +137,7 @@
       });
     }
 
-    explodeShape(shape: any) {
+    explodeShape(shape: FloatingShape) {
       // Create explosion effect
       for (let i = 0; i < 12; i++) {
         const angle = (i / 12) * Math.PI * 2;
@@ -166,6 +201,12 @@
       this.updatePhysics();
       this.drawShapes();
       requestAnimationFrame(() => this.physicsLoop());
+    }
+
+    // Cleanup method for proper memory management
+    destroy() {
+      this.isRunning = false;
+      this.shapes = [];
     }
 
     updatePhysics() {

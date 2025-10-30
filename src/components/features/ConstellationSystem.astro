@@ -5,22 +5,79 @@
 <canvas id="particleCanvas" class="absolute inset-0 w-full h-full"></canvas>
 
 <script>
+  // Import types (in a real project, you'd import from a types file)
+  interface Particle {
+    x: number;
+    y: number;
+    homeX: number;
+    homeY: number;
+    vx: number;
+    vy: number;
+    baseVx: number;
+    baseVy: number;
+    size: number;
+    opacity: number;
+    baseOpacity: number;
+    hue: number;
+    baseHue: number;
+    baseSaturation: number;
+    baseLightness: number;
+    pulse: number;
+    driftPhase: number;
+    driftSpeed: number;
+    connections: number[];
+    currentHue: number;
+    waveIntensity: number;
+    waveDecay: number;
+    constellationId: number;
+    life?: number;
+  }
+
+  interface ColorWave {
+    x: number;
+    y: number;
+    hue: number;
+    intensity: number;
+    speed: number;
+    decay: number;
+    radius: number;
+    maxRadius: number;
+    affectedParticles: Set<Particle>;
+    startTime: number;
+  }
+
+  interface MousePosition {
+    x: number;
+    y: number;
+  }
+
   // Interactive Constellation Particle System
   class ConstellationSystem {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
-    particles: any[];
-    mouse: { x: number; y: number };
+    particles: Particle[];
+    mouse: MousePosition;
     lastClickTime: number;
     clickThrottle: number = 500;
-    colorWaves: any[];
+    colorWaves: ColorWave[];
     canClick: boolean = true;
     userInteracted: boolean;
     autoClickIntervalId: number | null;
 
     constructor() {
       this.canvas = document.getElementById('particleCanvas') as HTMLCanvasElement;
-      this.ctx = this.canvas.getContext('2d')!;
+      if (!this.canvas) {
+        console.error('ConstellationSystem: Canvas element not found');
+        return;
+      }
+      
+      const ctx = this.canvas.getContext('2d');
+      if (!ctx) {
+        console.error('ConstellationSystem: Could not get 2D context');
+        return;
+      }
+      
+      this.ctx = ctx;
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
       this.lastClickTime = 0;
@@ -413,12 +470,12 @@
       this.autoClickIntervalId = window.setInterval(triggerRandomParticleClick, 10000);
     }
     
-    createConstellationClickEffect(clickX: number, clickY: number, particle: any) {
+    createConstellationClickEffect(clickX: number, clickY: number, particle: Particle) {
       // Create a beautiful color wave effect
       this.createColorWave(clickX, clickY, particle);
     }
     
-    createColorWave(clickX: number, clickY: number, startParticle: any) {
+    createColorWave(clickX: number, clickY: number, startParticle: Particle) {
       // Generate a random beautiful color for this wave
       const waveHue = Math.random() * 360;
       const waveSpeed = 2.0; // Much faster wave travel
@@ -445,7 +502,7 @@
       this.propagateWave(wave, startParticle);
     }
     
-    propagateWave(wave: any, particle: any) {
+    propagateWave(wave: ColorWave, particle: Particle) {
       // Mark this particle as affected by this wave
       wave.affectedParticles.add(particle);
       
@@ -722,9 +779,20 @@
         this.updateParticles();
         this.drawParticles();
       } catch (error) {
-        console.warn('Animation error (continuing):', error);
+        console.warn('ConstellationSystem animation error (continuing):', error);
       }
       requestAnimationFrame(() => this.animate());
+    }
+
+    // Cleanup method for proper memory management
+    destroy() {
+      this.isRunning = false;
+      if (this.autoClickIntervalId !== null) {
+        clearInterval(this.autoClickIntervalId);
+        this.autoClickIntervalId = null;
+      }
+      this.particles = [];
+      this.colorWaves = [];
     }
   }
 
