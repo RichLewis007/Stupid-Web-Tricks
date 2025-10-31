@@ -4,16 +4,10 @@
 
 <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
   <!-- Animated background -->
-  <div class="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+  <div class="absolute inset-0 bg-linear-to-br from-purple-900 via-blue-900 to-indigo-900">
     <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
   </div>
   
-  <!-- Interactive Animated Background -->
-  <div class="absolute inset-0">
-    <!-- Interactive constellation particles -->
-    <canvas id="particleCanvas" class="absolute inset-0 w-full h-full"></canvas>
-  </div>
-
   <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
     <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up bangers-font" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3); text-transform: none; letter-spacing: 3px;">
       <span style="color: #7661d1;">Stupid Web Tricks</span>
@@ -23,7 +17,7 @@
       and learn the techniques to create them!
     </p>
     <div class="animate-slide-up" style="animation-delay: 0.4s;">
-      <a href="#categories" class="inline-flex items-center px-8 py-4 bg-linear-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">
+      <a href="#categories" class="hero-button inline-flex items-center px-8 py-4 bg-linear-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer relative z-50">
         Explore Tricks
         <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -34,23 +28,9 @@
 </section>
 
 <style>
-  #particleCanvas {
-    z-index: 1 !important;
-    pointer-events: none !important;
-  }
-  
-  /* Make content elements allow clicks to pass through to canvas */
-  main, .hero-section, .categories-section, .features-section {
-    pointer-events: auto !important;
-  }
-  
-  /* Allow clicks to pass through text elements to canvas */
-  h1, h2, h3, p, .text-5xl, .text-6xl, .text-7xl, .text-xl, .text-2xl {
-    pointer-events: none !important;
-  }
-  
-  /* Keep buttons and links clickable */
-  a, button, .btn, .category-card {
-    pointer-events: auto !important;
+  /* Hero button styling */
+  .hero-button {
+    position: relative;
+    z-index: 50;
   }
 </style>

@@ -3,7 +3,6 @@ import Layout from '../layouts/Layout.astro';
 import HeroSection from '../components/sections/HeroSection.astro';
 import CategoriesSection from '../components/sections/CategoriesSection.astro';
 import FeaturesSection from '../components/sections/FeaturesSection.astro';
-import ConstellationSystem from '../components/features/ConstellationSystem.astro';
 import FloatingShapesCanvas from '../components/features/FloatingShapesCanvas.astro';
 import '../styles/animations.css';
 ---
@@ -20,36 +19,45 @@ import '../styles/animations.css';
 </Layout>
 
 <!-- Interactive Components -->
-<ConstellationSystem />
 <FloatingShapesCanvas />
 
 <script>
-  // Animate category cards on scroll
-  document.addEventListener('DOMContentLoaded', function() {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
+  // Animate category cards on scroll using Intersection Observer
+  function initCategoryCardAnimations() {
+    const cards = document.querySelectorAll<HTMLElement>('.category-card');
+    if (cards.length === 0) return;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry, index) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
             const target = entry.target as HTMLElement;
-            target.style.opacity = '1';
-            target.style.transform = 'translateY(0)';
-          }, index * 100);
-        }
-      });
-    }, observerOptions);
+            setTimeout(() => {
+              target.style.opacity = '1';
+              target.style.transform = 'translateY(0)';
+            }, index * 100);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      }
+    );
 
-    // Observe all category cards
-    document.querySelectorAll('.category-card').forEach(card => {
-      const cardElement = card as HTMLElement;
-      cardElement.style.opacity = '0';
-      cardElement.style.transform = 'translateY(30px)';
-      cardElement.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-      observer.observe(cardElement);
+    // Initialize card styles and observe
+    cards.forEach((card) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(30px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(card);
     });
-  });
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCategoryCardAnimations);
+  } else {
+    initCategoryCardAnimations();
+  }
 </script>

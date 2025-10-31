@@ -165,7 +165,7 @@ export class CanvasOptimizer {
   static preRenderShape(
     width: number,
     height: number,
-    renderFunction: (ctx: CanvasRenderingContext2D) => void
+    renderFunction: (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => void
   ): OffscreenCanvas {
     const canvas = this.getOffscreenCanvas(width, height);
     const ctx = this.getOffscreenContext();
