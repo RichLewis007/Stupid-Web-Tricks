@@ -1,23 +1,35 @@
 ---
-// HeroSection.astro - Main hero section with animated background
+// HeroSection.astro - Main hero section with magnetic text, particle trail, and liquid blobs
+import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
 ---
 
-<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-  <!-- Animated background -->
-  <div class="absolute inset-0 bg-linear-to-br from-purple-900 via-blue-900 to-indigo-900">
-    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+<section class="hero-section relative min-h-screen flex items-center justify-center overflow-hidden">
+  <!-- Liquid blob background -->
+  <div class="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div class="liquid-blobs absolute inset-0">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
   </div>
+
+  <!-- Floating shapes canvas -->
+  <FloatingShapesCanvas />
   
-  <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-    <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up bangers-font" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3); text-transform: none; letter-spacing: 3px;">
-      <span style="color: #7661d1;">Stupid Web Tricks</span>
+  <!-- Particle trail canvas -->
+  <canvas id="particleTrail" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+  
+  <!-- Content -->
+  <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto content-wrapper" style="isolation: isolate;">
+    <h1 class="hero-title text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up bangers-font" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(0,0,0,0.5); text-transform: none; letter-spacing: 3px;">
+      <span class="magnetic-text" data-text="Stupid Web Tricks" style="color: #7661d1 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(118, 97, 209, 0.3) !important;">Stupid Web Tricks</span>
     </h1>
     <p class="text-xl sm:text-2xl text-gray-300 mb-8 animate-slide-up" style="animation-delay: 0.2s;">
       Discover amazing web effects, animations,<br>
       and learn the techniques to create them!
     </p>
     <div class="animate-slide-up" style="animation-delay: 0.4s;">
-      <a href="#categories" class="hero-button inline-flex items-center px-8 py-4 bg-linear-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer relative z-50">
+      <a href="#categories" class="hero-button inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer relative z-50">
         Explore Tricks
         <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -27,10 +39,377 @@
   </div>
 </section>
 
+<script>
+  // Magnetic Text Effect
+  class MagneticText {
+    private elements: HTMLElement[] = [];
+    private mouseX = 0;
+    private mouseY = 0;
+    private isActive = false;
+    private animationFrame: number | null = null;
+    private mouseMoveHandler: (e: MouseEvent) => void;
+    private mouseLeaveHandler: () => void;
+
+    constructor() {
+      this.mouseMoveHandler = (e: MouseEvent) => this.handleMouseMove(e);
+      this.mouseLeaveHandler = () => this.handleMouseLeave();
+    }
+
+    init() {
+      this.elements = Array.from(document.querySelectorAll<HTMLElement>('.magnetic-text'));
+      if (this.elements.length === 0) return;
+
+      const heroSection = document.querySelector('.hero-section');
+      if (!heroSection) return;
+
+      heroSection.addEventListener('mousemove', this.mouseMoveHandler);
+      heroSection.addEventListener('mouseleave', this.mouseLeaveHandler);
+      this.animate();
+    }
+
+    handleMouseMove(e: MouseEvent) {
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
+      this.isActive = true;
+    }
+
+    handleMouseLeave() {
+      this.isActive = false;
+      this.elements.forEach(el => {
+        // Use translateZ(0) to maintain hardware acceleration layer
+        el.style.transform = 'translate3d(0, 0, 0)';
+        // Remove will-change after transition completes to restore normal rendering
+        setTimeout(() => {
+          el.style.willChange = 'auto';
+        }, 150); // After transition completes
+      });
+    }
+
+    animate() {
+      if (this.isActive) {
+        this.elements.forEach(el => {
+          const rect = el.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          
+          const deltaX = (this.mouseX - centerX) * 0.15;
+          const deltaY = (this.mouseY - centerY) * 0.15;
+          const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+          
+          if (distance < 150) {
+            const rotateX = (deltaY / 150) * 5;
+            const rotateY = (deltaX / 150) * -5;
+            el.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            el.style.willChange = 'transform';
+          } else {
+            el.style.transform = 'translate3d(0, 0, 0)';
+            // Reset will-change after transition to restore normal rendering
+            setTimeout(() => {
+              el.style.willChange = 'auto';
+            }, 150);
+          }
+        });
+      } else {
+        // When inactive, ensure will-change is reset
+        this.elements.forEach(el => {
+          el.style.willChange = 'auto';
+        });
+      }
+      
+      this.animationFrame = requestAnimationFrame(() => this.animate());
+    }
+
+    destroy() {
+      if (this.animationFrame !== null) {
+        cancelAnimationFrame(this.animationFrame);
+      }
+      const heroSection = document.querySelector('.hero-section');
+      if (heroSection) {
+        heroSection.removeEventListener('mousemove', this.mouseMoveHandler);
+        heroSection.removeEventListener('mouseleave', this.mouseLeaveHandler);
+      }
+      this.elements = [];
+    }
+  }
+
+  // Particle interface
+  interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    life: number;
+    maxLife: number;
+    size: number;
+    hue: number;
+  }
+
+  // Particle Trail Effect
+  class ParticleTrail {
+    private canvas: HTMLCanvasElement | null = null;
+    private ctx: CanvasRenderingContext2D | null = null;
+    private particles: Particle[] = [];
+    private mouseX = 0;
+    private mouseY = 0;
+    private lastMouseX = 0;
+    private lastMouseY = 0;
+    private isActive = false;
+    private animationFrame: number | null = null;
+    private mouseMoveHandler: (e: MouseEvent) => void;
+    private mouseLeaveHandler: () => void;
+    private resizeHandler: () => void;
+    private maxParticles = 50; // Limit particles to prevent memory issues
+
+    constructor() {
+      this.mouseMoveHandler = (e: MouseEvent) => this.handleMouseMove(e);
+      this.mouseLeaveHandler = () => this.handleMouseLeave();
+      this.resizeHandler = () => this.resize();
+    }
+
+    init() {
+      this.canvas = document.getElementById('particleTrail') as HTMLCanvasElement;
+      if (!this.canvas) return;
+
+      this.ctx = this.canvas.getContext('2d', { alpha: true });
+      if (!this.ctx) return;
+
+      this.resize();
+      const heroSection = document.querySelector('.hero-section');
+      if (heroSection) {
+        heroSection.addEventListener('mousemove', this.mouseMoveHandler);
+        heroSection.addEventListener('mouseleave', this.mouseLeaveHandler);
+      }
+      window.addEventListener('resize', this.resizeHandler);
+      this.animate();
+    }
+
+    resize() {
+      if (!this.canvas) return;
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+    }
+
+    handleMouseMove(e: MouseEvent) {
+      this.lastMouseX = this.mouseX;
+      this.lastMouseY = this.mouseY;
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
+      this.isActive = true;
+
+      // Create particles at mouse position
+      if (this.particles.length < this.maxParticles) {
+        const speed = Math.sqrt(
+          Math.pow(this.mouseX - this.lastMouseX, 2) + 
+          Math.pow(this.mouseY - this.lastMouseY, 2)
+        );
+        
+        for (let i = 0; i < Math.min(3, Math.floor(speed / 5)); i++) {
+          this.createParticle();
+        }
+      }
+    }
+
+    handleMouseLeave() {
+      this.isActive = false;
+    }
+
+    createParticle() {
+      if (this.particles.length >= this.maxParticles || !this.ctx) return;
+
+      this.particles.push({
+        x: this.mouseX + (Math.random() - 0.5) * 10,
+        y: this.mouseY + (Math.random() - 0.5) * 10,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        life: 60,
+        maxLife: 60,
+        size: Math.random() * 3 + 2,
+        hue: Math.random() * 60 + 180 // Blue-purple range
+      });
+    }
+
+    animate() {
+      if (!this.ctx || !this.canvas) return;
+
+      // Clear canvas with transparent background (don't use black fade)
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Update and draw particles
+      this.particles = this.particles.filter(particle => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vx *= 0.95;
+        particle.vy *= 0.95;
+        particle.life--;
+
+        if (particle.life <= 0 || !this.ctx) return false;
+
+        const alpha = particle.life / particle.maxLife;
+        this.ctx.globalAlpha = alpha;
+        this.ctx.fillStyle = `hsl(${particle.hue}, 70%, 60%)`;
+        this.ctx.beginPath();
+        this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        return true;
+      });
+
+      if (this.ctx) {
+        this.ctx.globalAlpha = 1;
+      }
+      this.animationFrame = requestAnimationFrame(() => this.animate());
+    }
+
+    destroy() {
+      if (this.animationFrame !== null) {
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+      }
+      const heroSection = document.querySelector('.hero-section');
+      if (heroSection) {
+        heroSection.removeEventListener('mousemove', this.mouseMoveHandler);
+        heroSection.removeEventListener('mouseleave', this.mouseLeaveHandler);
+      }
+      window.removeEventListener('resize', this.resizeHandler);
+      this.particles = [];
+      if (this.ctx && this.canvas) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+    }
+  }
+
+  // Initialize effects
+  let magneticText: MagneticText | null = null;
+  let particleTrail: ParticleTrail | null = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    magneticText = new MagneticText();
+    magneticText.init();
+
+    particleTrail = new ParticleTrail();
+    particleTrail.init();
+  });
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (magneticText) {
+      magneticText.destroy();
+      magneticText = null;
+    }
+    if (particleTrail) {
+      particleTrail.destroy();
+      particleTrail = null;
+    }
+  });
+</script>
+
 <style>
   /* Hero button styling */
   .hero-button {
     position: relative;
     z-index: 50;
+    will-change: transform;
+  }
+
+  /* Content wrapper - isolates text from background blobs */
+  .content-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -50px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, transparent 70%);
+    backdrop-filter: blur(1px);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* Magnetic text styling */
+  .magnetic-text {
+    display: inline-block;
+    transition: transform 0.1s ease-out;
+    will-change: transform;
+    transform-style: preserve-3d;
+    color: #7661d1 !important;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(118, 97, 209, 0.4));
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+    /* Force hardware acceleration and prevent rendering artifacts */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Remove will-change when not animating to prevent rendering artifacts */
+  .magnetic-text:not([style*="transform"]) {
+    will-change: auto;
+  }
+
+  /* Liquid blob animations */
+  .liquid-blobs {
+    filter: blur(40px);
+    opacity: 0.9;
+    z-index: 1;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    will-change: transform;
+    z-index: 1;
+  }
+
+  .blob-1 {
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.95), rgba(79, 70, 229, 0.85));
+    top: 5%;
+    left: 0%;
+    animation: blobFloat1 20s ease-in-out infinite;
+  }
+
+  .blob-2 {
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.95), rgba(59, 130, 246, 0.85));
+    bottom: 5%;
+    right: 0%;
+    animation: blobFloat2 25s ease-in-out infinite;
+  }
+
+  .blob-3 {
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.9), rgba(168, 85, 247, 0.75));
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: blobFloat3 30s ease-in-out infinite;
+  }
+
+  @keyframes blobFloat1 {
+    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    33% { transform: translate(120px, 80px) scale(1.2) rotate(120deg); }
+    66% { transform: translate(-60px, 100px) scale(0.9) rotate(240deg); }
+  }
+
+  @keyframes blobFloat2 {
+    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    33% { transform: translate(-100px, -120px) scale(1.3) rotate(120deg); }
+    66% { transform: translate(120px, -60px) scale(0.85) rotate(240deg); }
+  }
+
+  @keyframes blobFloat3 {
+    0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    33% { transform: translate(-45%, -60%) scale(1.3) rotate(120deg); }
+    66% { transform: translate(-55%, -40%) scale(0.8) rotate(240deg); }
+  }
+
+  /* Floating shapes canvas - behind particles but above background */
+  #floatingShapesCanvas {
+    z-index: 4;
+  }
+
+  /* Particle canvas - on top so particles are visible */
+  #particleTrail {
+    z-index: 5;
   }
 </style>

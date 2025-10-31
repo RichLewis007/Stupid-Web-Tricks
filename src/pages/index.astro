@@ -3,7 +3,6 @@ import Layout from '../layouts/Layout.astro';
 import HeroSection from '../components/sections/HeroSection.astro';
 import CategoriesSection from '../components/sections/CategoriesSection.astro';
 import FeaturesSection from '../components/sections/FeaturesSection.astro';
-import FloatingShapesCanvas from '../components/features/FloatingShapesCanvas.astro';
 import '../styles/animations.css';
 ---
 
@@ -18,8 +17,7 @@ import '../styles/animations.css';
   <FeaturesSection />
 </Layout>
 
-<!-- Interactive Components -->
-<FloatingShapesCanvas />
+<!-- Interactive Components (FloatingShapesCanvas is now inside HeroSection) -->
 
 <script>
   // Animate category cards on scroll using Intersection Observer
