@@ -1,17 +1,25 @@
 ---
-// HeroSection.astro - Main hero section with animated background
+import DriftingConstellations from '../features/DriftingConstellations.astro';
+import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
 ---
 
-<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-  <!-- Animated background -->
-  <div class="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+
+<section class="hero-section relative flex items-center justify-center overflow-hidden">
+  <div class="absolute inset-0 bg-linear-to-br from-purple-900 via-blue-900 to-indigo-900">
     <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
   </div>
   
-  <!-- Interactive Animated Background -->
-  <div class="absolute inset-0">
-    <!-- Interactive constellation particles -->
-    <canvas id="particleCanvas" class="absolute inset-0 w-full h-full"></canvas>
+  <!-- DriftingConstellations placed below .z-10 content -->
+  <div class="absolute inset-0 z-0">
+    <DriftingConstellations />
+  </div>
+
+  <!-- Bubbles layer above constellations, below text; non-interactive -->
+  <div class="absolute inset-0 z-0">
+    <FloatingShapesCanvas />
   </div>
 
   <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
@@ -33,23 +41,57 @@
   </div>
 </section>
 
-<style>
-  #particleCanvas {
-    z-index: 1 !important;
-    pointer-events: none !important;
+<script is:inline>
+(function() {
+  console.log('[HERO INIT] Inline click/burst script loaded');
+  try {
+    document.addEventListener('DOMContentLoaded', function(){
+      const hero = document.querySelector('.hero-section');
+      const canvas = document.getElementById('driftingConstellationsCanvas');
+      if(!hero) { console.log('[HERO] No .hero-section found'); return; }
+      if(!canvas) { console.log('[HERO] No #driftingConstellationsCanvas found'); return; }
+      hero.addEventListener('click', function(e) {
+        let t = e.target;
+        console.log('[HERO] Click on hero-section; event target:', t);
+        while (t && t !== hero) {
+          if (t.tagName === 'A' || t.tagName === 'BUTTON') { console.log('[HERO] Click hit anchor/button; skipping burst'); return; }
+          if (t.classList && (t.classList.contains('btn') || t.classList.contains('category-card'))) { console.log('[HERO] Click hit .btn/.category-card; skipping burst'); return; }
+          t = t.parentNode;
+        }
+        // Toggle pause on constellation animation
+        if (window.toggleConstellationPause) {
+          window.toggleConstellationPause();
+        }
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left);
+        const y = (e.clientY - rect.top);
+        console.log('[HERO] BG click, creating burst at', x, y, typeof window.createDriftBurst);
+        if (window.createDriftBurst) window.createDriftBurst(x, y);
+      }, false);
+    });
+  } catch(e) {
+    console.error('[HERO ERROR]', e);
   }
-  
-  /* Make content elements allow clicks to pass through to canvas */
+})();
+</script>
+
+<style>
+  html, body { margin: 0; padding: 0; box-sizing: border-box; overflow-x: hidden; }
+  .hero-section {
+    height: calc(100svh - 64px);
+    min-height: calc(100svh - 64px);
+    max-height: calc(100svh - 64px);
+  }
+  #driftingConstellationsCanvas {
+    pointer-events: none !important;
+    z-index: 2 !important;
+  }
   main, .hero-section, .categories-section, .features-section {
     pointer-events: auto !important;
   }
-  
-  /* Allow clicks to pass through text elements to canvas */
   h1, h2, h3, p, .text-5xl, .text-6xl, .text-7xl, .text-xl, .text-2xl {
     pointer-events: none !important;
   }
-  
-  /* Keep buttons and links clickable */
   a, button, .btn, .category-card {
     pointer-events: auto !important;
   }

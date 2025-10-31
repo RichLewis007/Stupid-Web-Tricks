@@ -1,380 +1,291 @@
 ---
-// FloatingShapesCanvas.astro - Canvas-based floating shapes with physics
+// FloatingShapesCanvas.astro - consistent 'sun-above' highlight for all bubbles, moves slowly/very slightly
 ---
-
-<canvas id="floatingShapesCanvas" class="absolute inset-0 w-full h-full pointer-events-auto"></canvas>
-
+<canvas id="floatingShapesCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
 <script>
-  // TypeScript interfaces
-  interface FloatingShape {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    radius: number;
-    mass: number;
-    color: string;
-    originalColor: string;
-    hoverColor: string;
-    isHovered: boolean;
-    pulse: number;
-    pulseSpeed: number;
-    id: number;
-    life?: number;
-    size?: number;
+class FloatingShapesCanvas {
+  constructor() {
+    this.canvas = document.getElementById('floatingShapesCanvas');
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+    this.shapes = [];
+    this.droplets = [];
+    this.rings = [];
+    this.mouse = {x:0, y:0};
+    this.isRunning = false;
+    this.onHeroClick = (e) => this.handleHeroClick(e);
+    // Perf guards
+    this.MAX_DROPLETS = 160;
+    this.MAX_RINGS = 10;
+    this.POP_COOLDOWN_MS = 140;
+    this.lastPopAt = 0;
+    this.init();
   }
-
-  interface MousePosition {
-    x: number;
-    y: number;
+  init() {
+    this.resizeCanvas();
+    this.createShapes();
+    this.bindEvents();
+    this.startPhysics();
   }
-
-  // Canvas-based Floating Shapes Physics System
-  class FloatingShapesCanvas {
-    canvas: HTMLCanvasElement;
-    ctx: CanvasRenderingContext2D;
-    shapes: FloatingShape[];
-    isRunning: boolean;
-    mouse: MousePosition;
-
-    constructor() {
-      this.canvas = document.getElementById('floatingShapesCanvas') as HTMLCanvasElement;
-      if (!this.canvas) {
-        console.error('FloatingShapesCanvas: Canvas element not found');
+  resizeCanvas() {
+    const parent = this.canvas.parentElement || document.body;
+    const rect = parent.getBoundingClientRect();
+    this.canvas.width = Math.max(1, Math.floor(rect.width));
+    this.canvas.height = Math.max(1, Math.floor(rect.height));
+  }
+  createShapes() {
+    const configs = [
+      { size: 110, x: 0.13, y: 0.17 },
+      { size: 170, x: 0.85, y: 0.2 },
+      { size: 120, x: 0.2, y: 0.8 },
+      { size: 150, x: 0.75, y: 0.7 },
+      { size: 90, x: 0.33, y: 0.45 },
+      { size: 140, x: 0.7, y: 0.59 }
+    ];
+    this.shapes = configs.map((c, i) => this.makeBubble(
+      c.x * this.canvas.width,
+      c.y * this.canvas.height,
+      c.size/2,
+      i
+    ));
+  }
+  bindEvents() {
+    this.resizeHandler = () => this.resizeCanvas();
+    window.addEventListener('resize', this.resizeHandler);
+    const hero = document.querySelector('.hero-section');
+    if (hero) hero.addEventListener('click', this.onHeroClick, true);
+  }
+  cleanup() {
+    this.isRunning = false;
+    if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
+    const hero = document.querySelector('.hero-section');
+    if (hero) hero.removeEventListener('click', this.onHeroClick, true);
+    this.shapes = [];
+    this.droplets = [];
+    this.rings = [];
+  }
+  startPhysics() { if(this.isRunning) return; this.isRunning = true; this.physicsLoop(); }
+  physicsLoop() {
+    if (!this.isRunning) return;
+    this.updatePhysics();
+    this.drawShapes();
+    requestAnimationFrame(() => this.physicsLoop());
+  }
+  makeBubble(x, y, radius, id) {
+    return {
+      x,
+      y,
+      vx: (Math.random()-0.5)*1.2,
+      vy: (Math.random()-0.5)*1.2,
+      radius,
+      pulse: Math.random()*Math.PI*2,
+      pulseSpeed: 0.005 + Math.random()*0.007,
+      iridescenceSeed: Math.random(),
+      id,
+      state: 'normal', // 'normal' | 'popping'
+      popLife: 0
+    };
+  }
+  spawnRandomBubble() {
+    const w = this.canvas.width, h = this.canvas.height;
+    const r = (Math.random()*60 + 50); // radius 50-110
+    const x = Math.random()*(w - 2*r) + r;
+    const y = Math.random()*(h - 2*r) + r;
+    const id = Math.floor(Math.random()*100000);
+    // Cap total bubbles to prevent unbounded growth
+    if (this.shapes.length < 12) {
+      this.shapes.push(this.makeBubble(x, y, r, id));
+    }
+  }
+  handleHeroClick(e) {
+    const now = performance.now();
+    if (now - this.lastPopAt < this.POP_COOLDOWN_MS) return;
+    // Ignore interactive UI clicks
+    let t = e.target;
+    const hero = document.querySelector('.hero-section');
+    while (t && t !== hero) {
+      if (t.tagName === 'A' || t.tagName === 'BUTTON') return; // don't interfere
+      if (t.classList && (t.classList.contains('btn') || t.classList.contains('category-card'))) return;
+      t = t.parentNode;
+    }
+    const rect = this.canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left);
+    const y = (e.clientY - rect.top);
+    // Find topmost bubble under click
+    for (let i = this.shapes.length - 1; i >= 0; --i) {
+      const b = this.shapes[i];
+      const dx = x - b.x, dy = y - b.y;
+      if (dx*dx + dy*dy <= b.radius*b.radius && b.state === 'normal') {
+        this.lastPopAt = now;
+        this.popBubble(i);
+        // Prevent background starburst if we popped a bubble
+        e.stopPropagation();
+        e.preventDefault();
         return;
       }
-      
-      const ctx = this.canvas.getContext('2d');
-      if (!ctx) {
-        console.error('FloatingShapesCanvas: Could not get 2D context');
-        return;
-      }
-      
-      this.ctx = ctx;
-      this.shapes = [];
-      this.isRunning = false;
-      this.mouse = { x: 0, y: 0 };
-      this.init();
-    }
-
-    init() {
-      this.resizeCanvas();
-      this.createShapes();
-      this.bindEvents();
-      this.startPhysics();
-    }
-
-    resizeCanvas() {
-      this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
-    }
-
-    createShapes() {
-      // Create 6 floating shapes with different properties
-      const shapeConfigs = [
-        { size: 80, color: 'rgba(255, 0, 150, 0.6)', x: 0.1, y: 0.1 },
-        { size: 120, color: 'rgba(255, 255, 0, 0.6)', x: 0.85, y: 0.2 },
-        { size: 60, color: 'rgba(0, 255, 150, 0.6)', x: 0.2, y: 0.8 },
-        { size: 100, color: 'rgba(255, 100, 0, 0.6)', x: 0.75, y: 0.7 },
-        { size: 40, color: 'rgba(255, 255, 255, 0.6)', x: 0.05, y: 0.5 },
-        { size: 90, color: 'rgba(150, 255, 0, 0.6)', x: 0.9, y: 0.6 }
-      ];
-
-      this.shapes = shapeConfigs.map((config, index) => ({
-        x: config.x * this.canvas.width,
-        y: config.y * this.canvas.height,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        radius: config.size / 2,
-        mass: config.size / 2,
-        color: config.color,
-        originalColor: config.color,
-        hoverColor: this.lightenColor(config.color, 0.3),
-        isHovered: false,
-        pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.02 + 0.01,
-        id: index
-      }));
-    }
-
-    lightenColor(color: string, amount: number): string {
-      // Simple color lightening for hover effect
-      const rgba = color.match(/\d+/g);
-      if (rgba) {
-        const r = Math.min(255, parseInt(rgba[0]) + amount * 255);
-        const g = Math.min(255, parseInt(rgba[1]) + amount * 255);
-        const b = Math.min(255, parseInt(rgba[2]) + amount * 255);
-        return `rgba(${r}, ${g}, ${b}, ${rgba[3] || 0.6})`;
-      }
-      return color;
-    }
-
-    bindEvents() {
-      window.addEventListener('resize', () => this.resizeCanvas());
-      
-      this.canvas.addEventListener('mousemove', (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        this.mouse.x = e.clientX - rect.left;
-        this.mouse.y = e.clientY - rect.top;
-      });
-
-      this.canvas.addEventListener('click', (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
-        
-        // Check if click is on a shape
-        this.shapes.forEach(shape => {
-          const distance = Math.sqrt(
-            Math.pow(shape.x - clickX, 2) + 
-            Math.pow(shape.y - clickY, 2)
-          );
-          
-          if (distance < shape.radius) {
-            this.explodeShape(shape);
-          }
-        });
-      });
-    }
-
-    explodeShape(shape: FloatingShape) {
-      // Create explosion effect
-      for (let i = 0; i < 12; i++) {
-        const angle = (i / 12) * Math.PI * 2;
-        const distance = 60 + Math.random() * 40;
-        const particle = {
-          x: shape.x,
-          y: shape.y,
-          vx: Math.cos(angle) * (distance / 20),
-          vy: Math.sin(angle) * (distance / 20),
-          life: 60,
-          maxLife: 60,
-          color: shape.color,
-          size: 3
-        };
-        
-        // Add particle to shapes array temporarily
-        this.shapes.push(particle);
-      }
-      
-      // Remove original shape
-      this.shapes = this.shapes.filter(s => s.id !== shape.id);
-      
-      // Create new shape after explosion
-      setTimeout(() => {
-        this.createNewShape();
-      }, 1000);
-    }
-
-    createNewShape() {
-      const newShape = {
-        x: Math.random() * this.canvas.width,
-        y: Math.random() * this.canvas.height,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        radius: Math.random() * 40 + 40,
-        mass: Math.random() * 40 + 40,
-        color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.6)`,
-        originalColor: '',
-        hoverColor: '',
-        isHovered: false,
-        pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.02 + 0.01,
-        id: Date.now()
-      };
-      
-      newShape.originalColor = newShape.color;
-      newShape.hoverColor = this.lightenColor(newShape.color, 0.3);
-      
-      this.shapes.push(newShape);
-    }
-
-    startPhysics() {
-      if (this.isRunning) return;
-      this.isRunning = true;
-      this.physicsLoop();
-    }
-
-    physicsLoop() {
-      if (!this.isRunning) return;
-      
-      this.updatePhysics();
-      this.drawShapes();
-      requestAnimationFrame(() => this.physicsLoop());
-    }
-
-    // Cleanup method for proper memory management
-    destroy() {
-      this.isRunning = false;
-      this.shapes = [];
-    }
-
-    updatePhysics() {
-      const screenWidth = this.canvas.width;
-      const screenHeight = this.canvas.height;
-
-      this.shapes.forEach((shape, index) => {
-        // Skip particles with life (explosion particles)
-        if (shape.life !== undefined) {
-          shape.life--;
-          shape.x += shape.vx;
-          shape.y += shape.vy;
-          shape.vx *= 0.98;
-          shape.vy *= 0.98;
-          
-          if (shape.life <= 0) {
-            this.shapes.splice(index, 1);
-            return;
-          }
-          return;
-        }
-
-        // Update position
-        shape.x += shape.vx;
-        shape.y += shape.vy;
-
-        // Screen edge collisions
-        if (shape.x - shape.radius <= 0) {
-          shape.x = shape.radius;
-          shape.vx = Math.abs(shape.vx);
-        }
-        if (shape.x + shape.radius >= screenWidth) {
-          shape.x = screenWidth - shape.radius;
-          shape.vx = -Math.abs(shape.vx);
-        }
-        if (shape.y - shape.radius <= 0) {
-          shape.y = shape.radius;
-          shape.vy = Math.abs(shape.vy);
-        }
-        if (shape.y + shape.radius >= screenHeight) {
-          shape.y = screenHeight - shape.radius;
-          shape.vy = -Math.abs(shape.vy);
-        }
-
-        // Shape-to-shape collisions
-        for (let otherIndex = index + 1; otherIndex < this.shapes.length; otherIndex++) {
-          const otherShape = this.shapes[otherIndex];
-          if (otherShape.life !== undefined) continue; // Skip particles
-          
-          const dx = shape.x - otherShape.x;
-          const dy = shape.y - otherShape.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const minDistance = shape.radius + otherShape.radius;
-
-          if (distance < minDistance && distance > 0) {
-            // Collision detected
-            const overlap = minDistance - distance;
-            const separationX = (dx / distance) * overlap * 0.5;
-            const separationY = (dy / distance) * overlap * 0.5;
-
-            // Separate shapes
-            shape.x += separationX;
-            shape.y += separationY;
-            otherShape.x -= separationX;
-            otherShape.y -= separationY;
-
-            // Calculate new velocities (elastic collision)
-            const relativeVelocityX = shape.vx - otherShape.vx;
-            const relativeVelocityY = shape.vy - otherShape.vy;
-            const relativeVelocityDotProduct = relativeVelocityX * dx + relativeVelocityY * dy;
-            const impulse = (2 * relativeVelocityDotProduct) / (shape.mass + otherShape.mass) / distance;
-
-            shape.vx -= impulse * otherShape.mass * dx / distance;
-            shape.vy -= impulse * otherShape.mass * dy / distance;
-            otherShape.vx += impulse * shape.mass * dx / distance;
-            otherShape.vy += impulse * shape.mass * dy / distance;
-          }
-        }
-
-        // Mouse interaction
-        const dx = this.mouse.x - shape.x;
-        const dy = this.mouse.y - shape.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 120) {
-          const force = (120 - distance) / 120;
-          shape.vx += (dx / distance) * force * 0.0002;
-          shape.vy += (dy / distance) * force * 0.0002;
-        }
-
-        // Hover detection
-        shape.isHovered = distance < shape.radius;
-
-        // Update pulse
-        shape.pulse += shape.pulseSpeed;
-      });
-    }
-
-    drawShapes() {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      this.shapes.forEach(shape => {
-        if (shape.life !== undefined) {
-          // Draw explosion particle
-          this.ctx.save();
-          this.ctx.globalAlpha = shape.life / shape.maxLife;
-          this.ctx.fillStyle = shape.color;
-          this.ctx.beginPath();
-          this.ctx.arc(shape.x, shape.y, shape.size, 0, Math.PI * 2);
-          this.ctx.fill();
-          this.ctx.restore();
-          return;
-        }
-
-        // Draw main shape
-        this.ctx.save();
-        
-        // Pulse effect
-        const pulseSize = shape.radius + Math.sin(shape.pulse) * 2;
-        
-        // Hover effect
-        const currentColor = shape.isHovered ? shape.hoverColor : shape.originalColor;
-        
-        // Create gradient
-        const gradient = this.ctx.createRadialGradient(
-          shape.x, shape.y, 0,
-          shape.x, shape.y, pulseSize
-        );
-        
-        gradient.addColorStop(0, currentColor);
-        gradient.addColorStop(1, this.darkenColor(currentColor, 0.3));
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.beginPath();
-        this.ctx.arc(shape.x, shape.y, pulseSize, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Add border
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        this.ctx.restore();
-      });
-    }
-
-    darkenColor(color: string, amount: number): string {
-      const rgba = color.match(/\d+/g);
-      if (rgba) {
-        const r = Math.max(0, parseInt(rgba[0]) - amount * 255);
-        const g = Math.max(0, parseInt(rgba[1]) - amount * 255);
-        const b = Math.max(0, parseInt(rgba[2]) - amount * 255);
-        return `rgba(${r}, ${g}, ${b}, ${rgba[3] || 0.6})`;
-      }
-      return color;
     }
   }
-
-  // Initialize canvas-based floating shapes when DOM is loaded
-  document.addEventListener('DOMContentLoaded', function() {
-    const floatingShapesCanvas = new FloatingShapesCanvas();
-    (window as any).floatingShapesCanvas = floatingShapesCanvas;
-  });
+  popBubble(index) {
+    const b = this.shapes[index];
+    if (!b) return;
+    b.state = 'popping';
+    b.popLife = 1.0; // normalized 0..1
+    // Create shockwave ring
+    this.rings.push({ x: b.x, y: b.y, r: b.radius*0.8, life: 0.9 });
+    if (this.rings.length > this.MAX_RINGS) this.rings.splice(0, this.rings.length - this.MAX_RINGS);
+    // Create droplets
+    const n = Math.floor(8 + Math.random()*8);
+    for (let i=0;i<n;i++){
+      const a = Math.random()*Math.PI*2;
+      const s = 1.2 + Math.random()*2.6;
+      this.droplets.push({
+        x: b.x + Math.cos(a)*b.radius*0.2,
+        y: b.y + Math.sin(a)*b.radius*0.2,
+        vx: Math.cos(a)*s,
+        vy: Math.sin(a)*s - (Math.random()*0.45),
+        size: 1.0 + Math.random()*2.0,
+        life: 0.9
+      });
+    }
+    if (this.droplets.length > this.MAX_DROPLETS) this.droplets.splice(0, this.droplets.length - this.MAX_DROPLETS);
+  }
+  updatePhysics() {
+    const w=this.canvas.width,h=this.canvas.height;
+    for (let i=this.shapes.length-1; i>=0; --i) {
+      const sh = this.shapes[i];
+      if (sh.state === 'normal') {
+        sh.x+=sh.vx; sh.y+=sh.vy;
+        if(sh.x-sh.radius<0){sh.x=sh.radius;sh.vx=Math.abs(sh.vx);} 
+        if(sh.x+sh.radius>w){sh.x=w-sh.radius;sh.vx=-Math.abs(sh.vx);} 
+        if(sh.y-sh.radius<0){sh.y=sh.radius;sh.vy=Math.abs(sh.vy);} 
+        if(sh.y+sh.radius>h){sh.y=h-sh.radius;sh.vy=-Math.abs(sh.vy);} 
+        sh.pulse+=sh.pulseSpeed;
+      } else if (sh.state === 'popping') {
+        sh.popLife -= 0.08; // pop duration ~12 frames
+        sh.radius *= 0.82; // shrink
+        sh.vx *= 0.9; sh.vy *= 0.9;
+        if (sh.popLife <= 0 || sh.radius < 4) {
+          // Remove and spawn a new one elsewhere
+          this.shapes.splice(i,1);
+          this.spawnRandomBubble();
+        }
+      }
+    }
+    // droplets physics
+    for (let i=this.droplets.length-1; i>=0; --i) {
+      const d = this.droplets[i];
+      d.x += d.vx; d.y += d.vy;
+      d.vy += 0.05; // mild gravity
+      d.vx *= 0.995; d.vy *= 0.995;
+      d.life -= 0.05;
+      if (d.life <= 0) this.droplets.splice(i,1);
+    }
+    // shockwave rings
+    for (let i=this.rings.length-1; i>=0; --i) {
+      const r = this.rings[i];
+      r.r += 3.0;
+      r.life -= 0.06;
+      if (r.life <= 0) this.rings.splice(i,1);
+    }
+  }
+  drawShapes() {
+    // Use getImageData/putImageData is faster, but clearRect is fine if we're careful
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const globalTime = performance.now()/1000;
+    // Shared 'sun-above' highlight: angle locked near top, moves very slowly from slightly left to right top
+    const baseAngle = -Math.PI/1.35; // ~-1.31 (about -75deg, top slightly left)
+    const animateDelta = Math.cos(globalTime*0.07)*0.1; // subtle drift
+    const globalLightAngle = baseAngle + animateDelta;
+    const globalLightElev = 0.12; // always just above
+    this.shapes.forEach((bubble, i) => {
+      const { x, y, radius, pulse, iridescenceSeed } = bubble;
+      const angle = pulse + iridescenceSeed*Math.PI;
+      // Soap film gradient - create and reuse within frame, but let GC handle cleanup
+      const grad = this.ctx.createRadialGradient(x, y, radius*0.14, x, y, radius);
+      const t = angle + globalTime*0.5;
+      grad.addColorStop(0.0, 'rgba(255,255,255,0.21)');
+      grad.addColorStop(0.18, `rgba(${182+40*Math.sin(t)},${210+28*Math.cos(t+1)},${250},0.10)`); // blue inner
+      grad.addColorStop(0.38, `rgba(${210},${234+16*Math.sin(t*1.6)},${199+55*Math.cos(t*1.23)},0.11)`); // green
+      grad.addColorStop(0.57, `rgba(${255},${196+45*Math.sin(t*1.2)},${120+120*Math.abs(Math.sin(t*0.95))},0.12)`); // yellow
+      grad.addColorStop(0.76, `rgba(${248+18*Math.abs(Math.sin(t*0.83))},${168+62*Math.cos(t*1.4)},${225},0.15)`); // pink
+      grad.addColorStop(0.91, `rgba(255,255,255,0.12)`);
+      grad.addColorStop(1,    'rgba(255,255,255,0.22)');
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+      this.ctx.closePath();
+      this.ctx.fillStyle = grad;
+      this.ctx.globalAlpha = 0.75;
+      this.ctx.shadowColor = "rgba(255,255,255,0.17)";
+      this.ctx.shadowBlur = Math.ceil(radius*0.19);
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1;
+      this.ctx.lineWidth = 1.05;
+      this.ctx.strokeStyle = `rgba(255,255,255,0.15)`;
+      this.ctx.stroke();
+      this.ctx.restore();
+      // Sun-above reflection (same for all, near top, moves only very slowly)
+      this.ctx.save();
+      const reflR = radius*0.23;
+      const spotX = x + Math.cos(globalLightAngle)*radius*0.73;
+      const spotY = y - Math.abs(Math.sin(globalLightAngle-globalLightElev))*radius*0.57;
+      const reflection = this.ctx.createRadialGradient(spotX, spotY, 1, spotX, spotY, reflR);
+      reflection.addColorStop(0,"rgba(255,255,255,0.33)");
+       reflection.addColorStop(0.26,"rgba(255,255,255,0.12)");
+       reflection.addColorStop(0.74,"rgba(255,255,255,0.03)");
+       reflection.addColorStop(1,"rgba(255,255,255,0)");
+       this.ctx.beginPath();
+       this.ctx.arc(spotX, spotY, reflR, 0, 2*Math.PI);
+       this.ctx.fillStyle=reflection;
+       this.ctx.globalAlpha = 0.53;
+       this.ctx.globalCompositeOperation='lighter';
+       this.ctx.fill();
+       this.ctx.globalCompositeOperation='source-over';
+       this.ctx.restore();
+       // Inner film shimmer
+       this.ctx.save();
+       const coreT = globalTime*0.18+angle*0.37;
+       const coreGrad = this.ctx.createRadialGradient(x-radius*0.15, y-radius*0.11, 1, x, y, radius*0.53);
+       coreGrad.addColorStop(0,"rgba(255,255,255,0.19)");
+       coreGrad.addColorStop(0.45,`rgba(${235+16*Math.sin(coreT*1)},${240+11*Math.sin(coreT)},${255},0.07)`);
+       coreGrad.addColorStop(0.9,`rgba(255,255,255,0.01)`);
+       this.ctx.beginPath();
+       this.ctx.arc(x, y, radius*0.62, 0, Math.PI*2);
+       this.ctx.fillStyle=coreGrad;
+       this.ctx.globalAlpha = 0.64;
+       this.ctx.fill();
+      this.ctx.restore();
+    });
+     // Draw shockwave rings
+     this.rings.forEach(r => {
+       this.ctx.save();
+       this.ctx.beginPath();
+       this.ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+       this.ctx.strokeStyle = `rgba(255,255,255,${0.22*r.life})`;
+       this.ctx.lineWidth = 1.2;
+       this.ctx.stroke();
+       this.ctx.restore();
+     });
+     // Draw droplets
+     this.droplets.forEach(d => {
+       this.ctx.save();
+       this.ctx.beginPath();
+       this.ctx.arc(d.x, d.y, d.size, 0, Math.PI*2);
+       this.ctx.fillStyle = `rgba(255,255,255,${0.6*Math.max(0,d.life)})`;
+       this.ctx.fill();
+       this.ctx.restore();
+     });
+   }
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const instance = new FloatingShapesCanvas();
+  // Cleanup on page unload/navigation
+  window.addEventListener('beforeunload', () => instance.cleanup());
+  document.addEventListener('astro:before-preparation', () => instance.cleanup());
+});
 </script>
-
 <style>
-  #floatingShapesCanvas {
-    z-index: 20 !important;
-    pointer-events: auto !important;
-  }
+#floatingShapesCanvas {
+  pointer-events: none !important;
+}
 </style>
