@@ -147,91 +147,169 @@
         return { ra: nra, dec: dec, origRa: ra };
       });
       
-      // Check if line crosses wrap boundary - maintain continuity by preserving relative positions
-      // Track cumulative offset to keep points on same "side" of wrap boundary
-      let cumulativeOffset = 0;
+      // Maintain continuity by tracking relative angular distances between consecutive points
+      // Start from first point and adjust each subsequent point to maintain original relative distances
       for (let i = 1; i < normalizedLine.length; i++) {
         let prevOrig = line[i-1][0];
         let currOrig = line[i][0];
-        let prev = normalizedLine[i-1];
-        let curr = normalizedLine[i];
+        let prevAdjusted = normalizedLine[i-1].ra;
         
-        // Calculate original difference
+        // Calculate shortest angular distance in original coordinates
         let origDiff = currOrig - prevOrig;
-        // Calculate normalized difference  
-        let normDiff = curr.ra - prev.ra;
+        // Normalize to [-180, 180] range (shortest path)
+        while (origDiff > 180) origDiff -= 360;
+        while (origDiff < -180) origDiff += 360;
         
-        // If original points were close (< 180°) but normalized are far (> 180°), we crossed wrap
-        // Adjust to maintain original relative position by matching the sign of origDiff
-        if (Math.abs(origDiff) < 180 && Math.abs(normDiff) > 180) {
-          // The points are close in original space but far after normalization
-          // Adjust offset to preserve the original direction of movement
-          if (origDiff > 0) {
-            // Was moving forward - normalize went wrong direction, bring it back forward
-            cumulativeOffset -= 360;
-          } else if (origDiff < 0) {
-            // Was moving backward - normalize went wrong direction, bring it back backward
-            cumulativeOffset += 360;
+        // Expected adjusted RA should be prevAdjusted + origDiff
+        let expectedRA = prevAdjusted + origDiff;
+        
+        // Current normalized RA
+        let currNormalized = normalizedLine[i].ra;
+        
+        // Find which 360° offset of currNormalized is closest to expectedRA
+        let bestRA = currNormalized;
+        let minDist = Math.abs(currNormalized - expectedRA);
+        for (let offset = -360; offset <= 360; offset += 360) {
+          let candidate = currNormalized + offset;
+          let dist = Math.abs(candidate - expectedRA);
+          if (dist < minDist) {
+            minDist = dist;
+            bestRA = candidate;
           }
         }
-        // Apply cumulative offset to current point
-        curr.ra += cumulativeOffset;
+        
+        // Update to the best adjusted RA
+        normalizedLine[i].ra = bestRA;
       }
       
-      // Now calculate positions using adjusted coordinates
-      // We need to handle the case where adjusted coordinates might be outside 0-360 range
+      // Draw line using adjusted coordinates that maintain continuity
       octx.beginPath();
+      let prevX = null;
       normalizedLine.forEach((pt, i) => {
-        // Use the adjusted RA for positioning, but ensure it maps correctly to bbox
-        let x, y;
-        
-        // Calculate position - adjusted RA may be outside 0-360 to maintain continuity
-        // Map it to canvas space relative to bbox.minX
+        // pt.ra maintains relative positions but may be outside 0-360 range
+        // Find the 360° offset that gives best canvas positioning
         let adjustedRA = pt.ra;
         
-        // For positioning, bring adjustedRA into a reasonable range for mapping to bbox
-        // while preserving relative positions within the line
-        if (adjustedRA < bbox.minX - 180) {
-          while (adjustedRA < bbox.minX - 180) adjustedRA += 360;
-        } else if (adjustedRA > bbox.maxX + 180) {
-          while (adjustedRA > bbox.maxX + 180) adjustedRA -= 360;
+        // Try different 360° offsets to find best position
+        let bestRA = adjustedRA;
+        let bestX = null;
+        let minPenalty = Infinity;
+        
+        for (let offset = -720; offset <= 720; offset += 360) {
+          let candidateRA = adjustedRA + offset;
+          let candidateX = padding + (candidateRA - bbox.minX) * scale;
+          let penalty = 0;
+          
+          // Penalty for being far from canvas center
+          penalty += Math.abs(candidateX - (width / 2)) * 0.1;
+          
+          // If not first point, strong penalty for being far from previous point
+          if (prevX !== null) {
+            let distFromPrev = Math.abs(candidateX - prevX);
+            if (distFromPrev > width) {
+              penalty += (distFromPrev - width) * 10; // Heavy penalty for very long segments
+            } else {
+              penalty += distFromPrev * 0.3; // Prefer staying close to previous point
+            }
+          }
+          
+          if (penalty < minPenalty) {
+            minPenalty = penalty;
+            bestRA = candidateRA;
+            bestX = candidateX;
+          }
         }
         
-        x = padding + (adjustedRA - bbox.minX) * scale;
+        let x = bestX !== null ? bestX : padding + (bestRA - bbox.minX) * scale;
+        let y = padding + (bbox.maxY - pt.dec) * scale;
         
-        y = padding + (bbox.maxY - pt.dec) * scale;
-        if (i === 0) octx.moveTo(x, y); else octx.lineTo(x, y);
+        // Clamp to prevent extremely long lines
+        if (prevX !== null && Math.abs(x - prevX) > width * 1.5) {
+          // Segment too long, clamp it
+          x = prevX + Math.sign(x - prevX) * width * 1.5;
+        }
+        
+        if (i === 0) {
+          octx.moveTo(x, y);
+        } else {
+          octx.lineTo(x, y);
+        }
+        prevX = x;
       });
       octx.stroke();
     });
     octx.restore();
     // Simple stars at constellation points - no database lookup needed
+    // Use same coordinate adjustments as lines to ensure stars align with line endpoints
     const used = new Set();
-    orig.forEach(line => line.forEach(([ra, dec]) => {
-      // Normalize RA using the same helper function
-      let nra = normalizeRA(ra);
-      const key = nra + ',' + dec;
-      if (used.has(key)) return; used.add(key);
-      let x = padding + (nra - bbox.minX) * scale;
-      // Handle wrapping case for stars too
-      if (x < padding && nra < bbox.minX && (bbox.maxX - bbox.minX) > 180) {
-        x = padding + (nra + 360 - bbox.minX) * scale;
+    orig.forEach((line, lineIdx) => {
+      // Apply same normalization as used for lines
+      let normalizedLine = line.map(([ra, dec]) => {
+        let nra = normalizeRA(ra);
+        return { ra: nra, dec: dec, origRa: ra };
+      });
+      
+      // Apply same continuity adjustments as lines
+      for (let i = 1; i < normalizedLine.length; i++) {
+        let prevOrigStar = line[i-1][0];
+        let currOrigStar = line[i][0];
+        let prevAdjustedStar = normalizedLine[i-1].ra;
+        let origDiff = currOrigStar - prevOrigStar;
+        while (origDiff > 180) origDiff -= 360;
+        while (origDiff < -180) origDiff += 360;
+        let expectedRA = prevAdjustedStar + origDiff;
+        let currNormalized = normalizedLine[i].ra;
+        let bestRA = currNormalized;
+        let minDist = Math.abs(currNormalized - expectedRA);
+        for (let offset = -360; offset <= 360; offset += 360) {
+          let candidate = currNormalized + offset;
+          let dist = Math.abs(candidate - expectedRA);
+          if (dist < minDist) {
+            minDist = dist;
+            bestRA = candidate;
+          }
+        }
+        normalizedLine[i].ra = bestRA;
       }
-      const y = padding + (bbox.maxY - dec) * scale;
-      // Simple white dot, size varies slightly for visual interest
-      const size = 2.5 + Math.random() * 1.5;
-      octx.save();
-      octx.beginPath();
-      octx.arc(x, y, size, 0, Math.PI * 2);
-      octx.fillStyle = '#fff';
-      octx.globalAlpha = 0.75 + Math.random() * 0.25;
-      octx.shadowColor = '#fff';
-      octx.shadowBlur = 6;
-      octx.fill();
-      octx.globalAlpha = 1;
-      octx.shadowBlur = 0;
-      octx.restore();
-    }));
+      
+      // Draw stars at adjusted positions
+      normalizedLine.forEach((pt) => {
+        const key = pt.ra.toFixed(2) + ',' + pt.dec.toFixed(2);
+        if (used.has(key)) return; used.add(key);
+        
+        // Use same positioning logic as lines
+        let adjustedRA = pt.ra;
+        let bestRA = adjustedRA;
+        let bestX = null;
+        let minPenalty = Infinity;
+        for (let offset = -720; offset <= 720; offset += 360) {
+          let candidateRA = adjustedRA + offset;
+          let candidateX = padding + (candidateRA - bbox.minX) * scale;
+          let penalty = Math.abs(candidateX - (width / 2)) * 0.1;
+          if (penalty < minPenalty) {
+            minPenalty = penalty;
+            bestRA = candidateRA;
+            bestX = candidateX;
+          }
+        }
+        let x = bestX !== null ? bestX : padding + (bestRA - bbox.minX) * scale;
+        const y = padding + (bbox.maxY - pt.dec) * scale;
+        
+        // Simple white dot, size varies slightly for visual interest
+        const size = 2.5 + Math.random() * 1.5;
+        octx.save();
+        octx.beginPath();
+        octx.arc(x, y, size, 0, Math.PI * 2);
+        octx.fillStyle = '#fff';
+        octx.globalAlpha = 0.75 + Math.random() * 0.25;
+        octx.shadowColor = '#fff';
+        octx.shadowBlur = 6;
+        octx.fill();
+        octx.globalAlpha = 1;
+        octx.shadowBlur = 0;
+        octx.restore();
+      });
+    });
     return { canvas: off, drawW: width, drawH: height };
   }
   function drawLabel(text, x, y, slotWidth) {
