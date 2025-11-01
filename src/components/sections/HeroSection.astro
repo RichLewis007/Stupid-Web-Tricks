@@ -22,7 +22,9 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
   <!-- Content -->
   <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto content-wrapper" style="isolation: isolate;">
     <h1 class="hero-title text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up bangers-font" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(0,0,0,0.5); text-transform: none; letter-spacing: 3px;">
-      <span class="magnetic-text" data-text="Stupid Web Tricks" style="color: #7661d1 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(118, 97, 209, 0.3) !important;">Stupid Web Tricks</span>
+      <span class="magnetic-text" data-text="Stupid Web Tricks" style="color: #7661d1 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(118, 97, 209, 0.3) !important;">
+        <span class="word word-stupid">Stupid</span> <span class="word word-web">Web</span> <span class="word word-tricks">Tricks</span>
+      </span>
     </h1>
     <p class="text-xl sm:text-2xl text-gray-300 mb-8 animate-slide-up" style="animation-delay: 0.2s;">
       Discover amazing web effects, animations,<br>
@@ -46,6 +48,9 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     private mouseX = 0;
     private mouseY = 0;
     private isActive = false;
+    private lastMouseMoveTime = 0;
+    private idleTimeout: number | null = null;
+    private isGlowing = false;
     private animationFrame: number | null = null;
     private mouseMoveHandler: (e: MouseEvent) => void;
     private mouseLeaveHandler: () => void;
@@ -71,10 +76,44 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
       this.isActive = true;
+      const previousMouseMoveTime = this.lastMouseMoveTime;
+      this.lastMouseMoveTime = Date.now();
+      
+      // Cancel any pending glow animation trigger (but don't interrupt ongoing sequences)
+      if (this.idleTimeout !== null) {
+        clearTimeout(this.idleTimeout);
+        this.idleTimeout = null;
+      }
+      
+      // Only set up new glow trigger if not currently glowing (let ongoing sequences complete)
+      if (!this.isGlowing) {
+        // Set timeout to trigger glow sequence when mouse stops moving (pauses)
+        // This will fire after mouse hasn't moved for 400ms
+        this.idleTimeout = window.setTimeout(() => {
+          // Check if mouse is still active and sequence isn't already running
+          if (!this.isActive || this.isGlowing) return; // Don't trigger if mouse left or sequence already started
+          const timeSinceLastMove = Date.now() - this.lastMouseMoveTime;
+          if (timeSinceLastMove >= 350) {
+            // Wait for transform transition to complete, then trigger glow
+            setTimeout(() => {
+              // Double-check mouse is still active, hasn't moved, and sequence isn't running
+              if (!this.isActive || this.isGlowing) return; // Don't trigger if mouse left or sequence already started
+              const finalCheck = Date.now() - this.lastMouseMoveTime;
+              if (finalCheck >= 400) {
+                this.triggerGlowSequence();
+              }
+            }, 150);
+          }
+        }, 400); // 400ms after last mouse movement
+      }
     }
 
     handleMouseLeave() {
       this.isActive = false;
+      if (this.idleTimeout !== null) {
+        clearTimeout(this.idleTimeout);
+        this.idleTimeout = null;
+      }
       this.elements.forEach(el => {
         // Use translateZ(0) to maintain hardware acceleration layer
         el.style.transform = 'translate3d(0, 0, 0)';
@@ -83,6 +122,74 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
           el.style.willChange = 'auto';
         }, 150); // After transition completes
       });
+    }
+
+    removeAllGlows() {
+      const words = document.querySelectorAll('.word-stupid, .word-web, .word-tricks');
+      words.forEach(word => word.classList.remove('glow'));
+      this.isGlowing = false;
+    }
+
+    triggerGlowSequence() {
+      if (this.isGlowing) return;
+      this.isGlowing = true;
+
+      const wordStupid = document.querySelector('.word-stupid');
+      const wordWeb = document.querySelector('.word-web');
+      const wordTricks = document.querySelector('.word-tricks');
+
+      // Glow STUPID, then fade completely before starting WEB
+      if (wordStupid) {
+        wordStupid.classList.add('glow');
+        
+        // Wait for STUPID to complete glow and fade (300ms animation + small buffer)
+        setTimeout(() => {
+          wordStupid.classList.remove('glow');
+          
+          // Start WEB glow after STUPID has fully finished
+          setTimeout(() => {
+            if (wordWeb) {
+              wordWeb.classList.add('glow');
+              
+              // Wait for WEB to complete glow and fade
+              setTimeout(() => {
+                wordWeb.classList.remove('glow');
+                
+                // Start TRICKS glow after WEB has fully finished
+                setTimeout(() => {
+                  if (wordTricks) {
+                    wordTricks.classList.add('glow');
+                    
+                    // Wait for TRICKS to complete glow and fade, then add 500ms delay before allowing next trigger
+                    setTimeout(() => {
+                      wordTricks.classList.remove('glow');
+                      // Wait 500ms after sequence completes before allowing it to be triggered again
+                      setTimeout(() => {
+                        this.isGlowing = false;
+                      }, 500);
+                    }, 300); // Animation duration
+                  } else {
+                    // If TRICKS word not found, still add 500ms delay
+                    setTimeout(() => {
+                      this.isGlowing = false;
+                    }, 500);
+                  }
+                }, 50); // Small buffer between words
+              }, 300); // Animation duration
+            } else {
+              // If WEB word not found, add 500ms delay
+              setTimeout(() => {
+                this.isGlowing = false;
+              }, 500);
+            }
+          }, 50); // Small buffer between words
+        }, 300); // Animation duration (matches CSS animation)
+      } else {
+        // If STUPID word not found, add 500ms delay
+        setTimeout(() => {
+          this.isGlowing = false;
+        }, 500);
+      }
     }
 
     animate() {
@@ -100,20 +207,17 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
             const rotateX = (deltaY / 150) * 5;
             const rotateY = (deltaX / 150) * -5;
             el.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-            el.style.willChange = 'transform';
           } else {
             el.style.transform = 'translate3d(0, 0, 0)';
-            // Reset will-change after transition to restore normal rendering
-            setTimeout(() => {
-              el.style.willChange = 'auto';
-            }, 150);
           }
         });
       } else {
-        // When inactive, ensure will-change is reset
-        this.elements.forEach(el => {
-          el.style.willChange = 'auto';
-        });
+        // When inactive, check if we should trigger glow after transform settles
+        const timeSinceLastMove = Date.now() - this.lastMouseMoveTime;
+        if (timeSinceLastMove >= 350 && !this.isGlowing && this.lastMouseMoveTime > 0) {
+          this.triggerGlowSequence();
+          this.lastMouseMoveTime = 0; // Reset to prevent retriggering
+        }
       }
       
       this.animationFrame = requestAnimationFrame(() => this.animate());
@@ -331,16 +435,35 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     color: #7661d1 !important;
     filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(118, 97, 209, 0.4));
     -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
-    /* Force hardware acceleration and prevent rendering artifacts */
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
   
-  /* Remove will-change when not animating to prevent rendering artifacts */
-  .magnetic-text:not([style*="transform"]) {
-    will-change: auto;
+  /* Smooth transition only when actively transforming */
+  .magnetic-text[style*="rotate"] {
+    transition: transform 0.08s ease-out;
+  }
+
+  /* Word styling */
+  .word {
+    display: inline-block;
+    transition: text-shadow 0.5s ease-in-out;
+  }
+
+  /* Glow animation for words - white glow flash effect */
+  .word.glow {
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 60px rgba(255, 255, 255, 0.5)) !important;
+    animation: flashGlow 0.3s ease-in-out;
+  }
+
+  @keyframes flashGlow {
+    0% {
+      filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(118, 97, 209, 0.4)) !important;
+    }
+    50% {
+      filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(255, 255, 255, 1)) drop-shadow(0 0 50px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 70px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 90px rgba(255, 255, 255, 0.6)) !important;
+    }
+    100% {
+      filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(118, 97, 209, 0.4)) !important;
+    }
   }
 
   /* Liquid blob animations */
@@ -378,7 +501,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
   .blob-3 {
     width: 700px;
     height: 700px;
-    background: radial-gradient(circle, rgba(147, 51, 234, 0.9), rgba(168, 85, 247, 0.75));
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.75));
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
