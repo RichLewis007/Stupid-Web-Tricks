@@ -131,7 +131,8 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     }
 
     triggerGlowSequence() {
-      if (this.isGlowing) return;
+      // Don't trigger if already glowing or if mouse is not active (text returning to center)
+      if (this.isGlowing || !this.isActive) return;
       this.isGlowing = true;
 
       const wordStupid = document.querySelector('.word-stupid');
