@@ -23,6 +23,12 @@
     id: number;
     life?: number;
     size?: number;
+    wobblePhase?: number; // For wobbly edge animation
+    wobbleSpeed?: number; // Speed of wobble animation
+    distortionSeed?: number; // Random seed for shape distortion
+    reflectionAngle?: number; // Angle for reflection highlight
+    isPopping?: boolean; // Track if bubble is in pop animation
+    popPhase?: number; // Pop animation phase (0-1)
   }
 
   interface MousePosition {
@@ -42,6 +48,8 @@
     mouseMoveHandler: (e: MouseEvent) => void;
     clickHandler: (e: MouseEvent) => void;
     initialized: boolean = false;
+    pendingTimeouts: number[] = []; // Track setTimeout IDs for cleanup
+    isDestroyed: boolean = false; // Flag to prevent operations after destroy
 
     constructor() {
       this.canvas = document.getElementById('floatingShapesCanvas') as HTMLCanvasElement;
@@ -98,47 +106,91 @@
         this.resizeCanvas();
       }
       
-      // Create 6 floating bubbles with iridescent colors
-      const iridescentColors = [
-        // Shape 1: 80px - pink/cyan/yellow gradient
-        ['rgba(255, 0, 150, 0.7)', 'rgba(0, 255, 255, 0.7)', 'rgba(255, 255, 0, 0.7)'],
-        // Shape 2: 120px - pink/green/purple gradient
-        ['rgba(255, 100, 200, 0.7)', 'rgba(100, 255, 100, 0.7)', 'rgba(200, 100, 255, 0.7)'],
-        // Shape 3: 60px - blue/yellow/purple gradient
-        ['rgba(0, 200, 255, 0.7)', 'rgba(255, 200, 0, 0.7)', 'rgba(200, 0, 255, 0.7)'],
-        // Shape 4: 100px - orange/blue/purple gradient
-        ['rgba(255, 150, 0, 0.7)', 'rgba(0, 150, 255, 0.7)', 'rgba(150, 0, 255, 0.7)'],
-        // Shape 5: 40px - yellow/pink/cyan gradient
-        ['rgba(200, 255, 0, 0.7)', 'rgba(255, 0, 200, 0.7)', 'rgba(0, 200, 255, 0.7)'],
-        // Shape 6: 90px - magenta/green/orange gradient
-        ['rgba(255, 0, 255, 0.7)', 'rgba(0, 255, 150, 0.7)', 'rgba(255, 150, 0, 0.7)']
+      // Create 6 floating bubbles with realistic soap bubble colors (pale, iridescent)
+      const soapBubbleColors = [
+        // Shape 1: 80px - pale pink/blue/cyan (very subtle)
+        ['rgba(255, 230, 250, 0.15)', 'rgba(230, 250, 255, 0.18)', 'rgba(240, 255, 255, 0.12)'],
+        // Shape 2: 120px - pale purple/blue/green
+        ['rgba(240, 230, 255, 0.16)', 'rgba(230, 240, 255, 0.17)', 'rgba(230, 255, 250, 0.14)'],
+        // Shape 3: 60px - pale blue/cyan/pink
+        ['rgba(230, 245, 255, 0.17)', 'rgba(240, 255, 255, 0.16)', 'rgba(255, 240, 250, 0.15)'],
+        // Shape 4: 100px - pale green/blue/purple
+        ['rgba(235, 255, 240, 0.15)', 'rgba(230, 245, 255, 0.17)', 'rgba(245, 235, 255, 0.16)'],
+        // Shape 5: 40px - pale yellow/pink/blue
+        ['rgba(255, 250, 235, 0.14)', 'rgba(255, 235, 245, 0.16)', 'rgba(235, 245, 255, 0.15)'],
+        // Shape 6: 90px - pale cyan/purple/pink
+        ['rgba(235, 255, 255, 0.16)', 'rgba(245, 235, 255, 0.15)', 'rgba(255, 235, 250, 0.17)']
       ];
 
       const shapeConfigs = [
-        { size: 80, colors: iridescentColors[0], x: 0.1, y: 0.1 },
-        { size: 120, colors: iridescentColors[1], x: 0.85, y: 0.2 },
-        { size: 60, colors: iridescentColors[2], x: 0.2, y: 0.8 },
-        { size: 100, colors: iridescentColors[3], x: 0.75, y: 0.7 },
-        { size: 40, colors: iridescentColors[4], x: 0.05, y: 0.5 },
-        { size: 90, colors: iridescentColors[5], x: 0.9, y: 0.6 }
+        { size: 80, colors: soapBubbleColors[0] },
+        { size: 120, colors: soapBubbleColors[1] },
+        { size: 60, colors: soapBubbleColors[2] },
+        { size: 100, colors: soapBubbleColors[3] },
+        { size: 40, colors: soapBubbleColors[4] },
+        { size: 90, colors: soapBubbleColors[5] }
       ];
 
-      this.shapes = shapeConfigs.map((config, index) => ({
-        x: config.x * Math.max(this.canvas.width, window.innerWidth),
-        y: config.y * Math.max(this.canvas.height, window.innerHeight),
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        radius: config.size / 2,
-        mass: config.size / 2,
-        color: config.colors[0], // Primary color for explosion particles
-        colors: config.colors, // Array of gradient colors
-        originalColor: config.colors[0],
-        hoverColor: this.lightenColor(config.colors[0], 0.3),
-        isHovered: false,
-        pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.02 + 0.01,
-        id: index
-      }));
+      this.shapes = shapeConfigs.map((config, index) => {
+        const radius = config.size / 2;
+        
+        // Find a safe position away from text and button
+        let x: number, y: number;
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        do {
+          x = Math.random() * this.canvas.width;
+          y = Math.random() * this.canvas.height;
+          attempts++;
+        } while (!this.isPositionSafe(x, y, radius) && attempts < maxAttempts);
+        
+        // If we couldn't find a safe position, place at edges
+        if (attempts >= maxAttempts) {
+          const corner = Math.floor(Math.random() * 4);
+          switch (corner) {
+            case 0: // Top-left
+              x = radius + 20;
+              y = radius + 20;
+              break;
+            case 1: // Top-right
+              x = this.canvas.width - radius - 20;
+              y = radius + 20;
+              break;
+            case 2: // Bottom-left
+              x = radius + 20;
+              y = this.canvas.height - radius - 20;
+              break;
+            case 3: // Bottom-right
+              x = this.canvas.width - radius - 20;
+              y = this.canvas.height - radius - 20;
+              break;
+          }
+        }
+        
+        return {
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          radius: radius,
+          mass: radius,
+          color: config.colors[0], // Primary color for explosion particles
+          colors: config.colors, // Array of gradient colors
+          originalColor: config.colors[0],
+          hoverColor: this.lightenColor(config.colors[0], 0.3),
+          isHovered: false,
+          pulse: Math.random() * Math.PI * 2,
+          pulseSpeed: Math.random() * 0.02 + 0.01,
+          id: index,
+          wobblePhase: Math.random() * Math.PI * 2,
+          wobbleSpeed: Math.random() * 0.03 + 0.02,
+          distortionSeed: Math.random() * 1000,
+          reflectionAngle: Math.random() * Math.PI * 2,
+          isPopping: false,
+          popPhase: 0
+        };
+      });
     }
 
     lightenColor(color: string, amount: number): string {
@@ -177,8 +229,8 @@
       }
       
       // Check if click is on a shape
-      this.shapes.forEach(shape => {
-        if (shape.life !== undefined) return; // Skip explosion particles
+      for (const shape of this.shapes) {
+        if (shape.life !== undefined) continue; // Skip explosion particles
         
         const distance = Math.sqrt(
           Math.pow(shape.x - clickX, 2) + 
@@ -188,8 +240,9 @@
         if (distance < shape.radius) {
           e.preventDefault();
           this.explodeShape(shape);
+          break; // Only pop one bubble per click
         }
-      });
+      }
     }
 
     bindEvents() {
@@ -235,44 +288,143 @@
       this.shapes = this.shapes.filter(s => s.id !== shape.id);
       
       // Create new shape after explosion
-      setTimeout(() => {
-        this.createNewShape();
+      const timeoutId = setTimeout(() => {
+        if (!this.isDestroyed) {
+          this.createNewShape();
+        }
       }, 1000);
+      this.pendingTimeouts.push(timeoutId);
+    }
+
+    // Check if a position is safe (away from text and button)
+    isPositionSafe(x: number, y: number, radius: number): boolean {
+      const canvasRect = this.canvas.getBoundingClientRect();
+      const minDistance = radius + 20; // Add 20px buffer to avoid immediate collision
+      
+      // Check distance from magnetic text
+      let magneticText = document.querySelector('.magnetic-text');
+      if (magneticText) {
+        const rect = magneticText.getBoundingClientRect();
+        const textLeft = rect.left - canvasRect.left;
+        const textRight = rect.right - canvasRect.left;
+        const textTop = rect.top - canvasRect.top;
+        const textBottom = rect.bottom - canvasRect.top;
+        const textCenterX = (textLeft + textRight) / 2;
+        const textCenterY = (textTop + textBottom) / 2;
+        
+        const distanceToText = Math.sqrt(
+          Math.pow(x - textCenterX, 2) + Math.pow(y - textCenterY, 2)
+        );
+        
+        // Check if bubble would be too close to text (using expanded bounding box)
+        const expandedTextWidth = (textRight - textLeft) / 2 + minDistance;
+        const expandedTextHeight = (textBottom - textTop) / 2 + minDistance;
+        
+        if (distanceToText < Math.max(expandedTextWidth, expandedTextHeight)) {
+          return false;
+        }
+      }
+      
+      // Check distance from hero button
+      let heroButton = document.querySelector('.hero-button');
+      if (heroButton) {
+        const rect = heroButton.getBoundingClientRect();
+        const buttonLeft = rect.left - canvasRect.left;
+        const buttonRight = rect.right - canvasRect.left;
+        const buttonTop = rect.top - canvasRect.top;
+        const buttonBottom = rect.bottom - canvasRect.top;
+        const buttonCenterX = (buttonLeft + buttonRight) / 2;
+        const buttonCenterY = (buttonTop + buttonBottom) / 2;
+        
+        const distanceToButton = Math.sqrt(
+          Math.pow(x - buttonCenterX, 2) + Math.pow(y - buttonCenterY, 2)
+        );
+        
+        // Check if bubble would be too close to button (using expanded bounding box)
+        const expandedButtonWidth = (buttonRight - buttonLeft) / 2 + minDistance;
+        const expandedButtonHeight = (buttonBottom - buttonTop) / 2 + minDistance;
+        
+        if (distanceToButton < Math.max(expandedButtonWidth, expandedButtonHeight)) {
+          return false;
+        }
+      }
+      
+      return true;
     }
 
     createNewShape() {
-      // Random iridescent color set
-      const iridescentColorSets = [
-        ['rgba(255, 0, 150, 0.7)', 'rgba(0, 255, 255, 0.7)', 'rgba(255, 255, 0, 0.7)'],
-        ['rgba(255, 100, 200, 0.7)', 'rgba(100, 255, 100, 0.7)', 'rgba(200, 100, 255, 0.7)'],
-        ['rgba(0, 200, 255, 0.7)', 'rgba(255, 200, 0, 0.7)', 'rgba(200, 0, 255, 0.7)'],
-        ['rgba(255, 150, 0, 0.7)', 'rgba(0, 150, 255, 0.7)', 'rgba(150, 0, 255, 0.7)'],
-        ['rgba(200, 255, 0, 0.7)', 'rgba(255, 0, 200, 0.7)', 'rgba(0, 200, 255, 0.7)'],
-        ['rgba(255, 0, 255, 0.7)', 'rgba(0, 255, 150, 0.7)', 'rgba(255, 150, 0, 0.7)'],
-        ['rgba(150, 0, 255, 0.7)', 'rgba(255, 255, 0, 0.7)', 'rgba(0, 255, 200, 0.7)'],
-        ['rgba(0, 255, 255, 0.7)', 'rgba(255, 0, 150, 0.7)', 'rgba(255, 200, 0, 0.7)']
+      // Random realistic soap bubble color set (very pale, translucent)
+      const soapBubbleColorSets = [
+        ['rgba(255, 230, 250, 0.15)', 'rgba(230, 250, 255, 0.18)', 'rgba(240, 255, 255, 0.12)'],
+        ['rgba(240, 230, 255, 0.16)', 'rgba(230, 240, 255, 0.17)', 'rgba(230, 255, 250, 0.14)'],
+        ['rgba(230, 245, 255, 0.17)', 'rgba(240, 255, 255, 0.16)', 'rgba(255, 240, 250, 0.15)'],
+        ['rgba(235, 255, 240, 0.15)', 'rgba(230, 245, 255, 0.17)', 'rgba(245, 235, 255, 0.16)'],
+        ['rgba(255, 250, 235, 0.14)', 'rgba(255, 235, 245, 0.16)', 'rgba(235, 245, 255, 0.15)'],
+        ['rgba(235, 255, 255, 0.16)', 'rgba(245, 235, 255, 0.15)', 'rgba(255, 235, 250, 0.17)']
       ];
       
-      const randomColors = iridescentColorSets[Math.floor(Math.random() * iridescentColorSets.length)];
+      const randomColors = soapBubbleColorSets[Math.floor(Math.random() * soapBubbleColorSets.length)];
+      
+      // Determine bubble size first
+      const radius = Math.random() * 40 + 40;
+      
+      // Find a safe position away from text and button
+      let x: number, y: number;
+      let attempts = 0;
+      const maxAttempts = 50; // Prevent infinite loop
+      
+      do {
+        x = Math.random() * this.canvas.width;
+        y = Math.random() * this.canvas.height;
+        attempts++;
+      } while (!this.isPositionSafe(x, y, radius) && attempts < maxAttempts);
+      
+      // If we couldn't find a safe position after many attempts, place it at the edges
+      if (attempts >= maxAttempts) {
+        // Place at one of the corners or edges, avoiding center where text/button likely are
+        const corner = Math.floor(Math.random() * 4);
+        switch (corner) {
+          case 0: // Top-left
+            x = radius + 20;
+            y = radius + 20;
+            break;
+          case 1: // Top-right
+            x = this.canvas.width - radius - 20;
+            y = radius + 20;
+            break;
+          case 2: // Bottom-left
+            x = radius + 20;
+            y = this.canvas.height - radius - 20;
+            break;
+          case 3: // Bottom-right
+            x = this.canvas.width - radius - 20;
+            y = this.canvas.height - radius - 20;
+            break;
+        }
+      }
       
       const newShape = {
-        x: Math.random() * this.canvas.width,
-        y: Math.random() * this.canvas.height,
+        x: x,
+        y: y,
         vx: (Math.random() - 0.5) * 2,
         vy: (Math.random() - 0.5) * 2,
-        radius: Math.random() * 40 + 40,
-        mass: Math.random() * 40 + 40,
+        radius: radius,
+        mass: radius,
         color: randomColors[0],
         colors: randomColors,
         originalColor: randomColors[0],
-        hoverColor: '',
+        hoverColor: this.lightenColor(randomColors[0], 0.3),
         isHovered: false,
         pulse: Math.random() * Math.PI * 2,
         pulseSpeed: Math.random() * 0.02 + 0.01,
-        id: Date.now()
+        id: Date.now(),
+        wobblePhase: Math.random() * Math.PI * 2,
+        wobbleSpeed: Math.random() * 0.03 + 0.02,
+        distortionSeed: Math.random() * 1000,
+        reflectionAngle: Math.random() * Math.PI * 2,
+        isPopping: false,
+        popPhase: 0
       };
-      
-      newShape.hoverColor = this.lightenColor(newShape.color, 0.3);
       
       this.shapes.push(newShape);
     }
@@ -295,6 +447,8 @@
     destroy() {
       if (!this.initialized) return;
       
+      // Mark as destroyed to prevent operations
+      this.isDestroyed = true;
       this.isRunning = false;
       
       // Cancel animation frame
@@ -302,6 +456,10 @@
         cancelAnimationFrame(this.animationFrameId);
         this.animationFrameId = null;
       }
+      
+      // Clear all pending timeouts
+      this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+      this.pendingTimeouts = [];
       
       // Remove event listeners
       if (this.unbindEvents) {
@@ -317,11 +475,91 @@
       }
     }
 
+    // Check collision with interactive elements (text and buttons) - precise collision
+    checkCollisionWithElements(shape: FloatingShape): boolean {
+      const canvasRect = this.canvas.getBoundingClientRect();
+      
+      // Check collision with magnetic text - check if bubble edge touches text
+      // Cache these queries - they're called every frame for every bubble!
+      let magneticText = document.querySelector('.magnetic-text');
+      if (magneticText) {
+        const rect = magneticText.getBoundingClientRect();
+        const textLeft = rect.left - canvasRect.left;
+        const textRight = rect.right - canvasRect.left;
+        const textTop = rect.top - canvasRect.top;
+        const textBottom = rect.bottom - canvasRect.top;
+        
+        // Check if bubble edge (not center) intersects with text bounding box
+        const bubbleLeft = shape.x - shape.radius;
+        const bubbleRight = shape.x + shape.radius;
+        const bubbleTop = shape.y - shape.radius;
+        const bubbleBottom = shape.y + shape.radius;
+        
+        // Check for actual overlap (bubble edge touching text edge)
+        if (bubbleRight > textLeft && bubbleLeft < textRight && 
+            bubbleBottom > textTop && bubbleTop < textBottom) {
+          // Additional check: ensure bubble is actually close enough to touch
+          const closestX = Math.max(textLeft, Math.min(shape.x, textRight));
+          const closestY = Math.max(textTop, Math.min(shape.y, textBottom));
+          const distance = Math.sqrt(
+            Math.pow(shape.x - closestX, 2) + Math.pow(shape.y - closestY, 2)
+          );
+          if (distance <= shape.radius + 2) { // Allow 2px tolerance for smooth popping
+            return true;
+          }
+        }
+      }
+      
+      // Check collision with hero button - precise collision
+      // Cache this query too
+      let heroButton = document.querySelector('.hero-button');
+      if (heroButton) {
+        const rect = heroButton.getBoundingClientRect();
+        const buttonLeft = rect.left - canvasRect.left;
+        const buttonRight = rect.right - canvasRect.left;
+        const buttonTop = rect.top - canvasRect.top;
+        const buttonBottom = rect.bottom - canvasRect.top;
+        
+        const bubbleLeft = shape.x - shape.radius;
+        const bubbleRight = shape.x + shape.radius;
+        const bubbleTop = shape.y - shape.radius;
+        const bubbleBottom = shape.y + shape.radius;
+        
+        // Check for actual overlap
+        if (bubbleRight > buttonLeft && bubbleLeft < buttonRight && 
+            bubbleBottom > buttonTop && bubbleTop < buttonBottom) {
+          // Additional check: ensure bubble is actually close enough to touch
+          const closestX = Math.max(buttonLeft, Math.min(shape.x, buttonRight));
+          const closestY = Math.max(buttonTop, Math.min(shape.y, buttonBottom));
+          const distance = Math.sqrt(
+            Math.pow(shape.x - closestX, 2) + Math.pow(shape.y - closestY, 2)
+          );
+          if (distance <= shape.radius + 2) { // Allow 2px tolerance for smooth popping
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    }
+    
+    // Check collision with mouse pointer
+    checkCollisionWithMouse(shape: FloatingShape): boolean {
+      const dx = this.mouse.x - shape.x;
+      const dy = this.mouse.y - shape.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      // Bubble pops immediately when mouse pointer touches its edge
+      return distance <= shape.radius;
+    }
+
     updatePhysics() {
       const screenWidth = this.canvas.width;
       const screenHeight = this.canvas.height;
 
-      this.shapes.forEach((shape, index) => {
+      // Iterate in reverse to avoid index issues when splicing
+      for (let i = this.shapes.length - 1; i >= 0; i--) {
+        const shape = this.shapes[i];
+        const index = i;
         // Skip particles with life (explosion particles)
         if (shape.life !== undefined) {
           shape.life--;
@@ -332,158 +570,239 @@
           
           if (shape.life <= 0) {
             this.shapes.splice(index, 1);
-            return;
+            continue;
           }
-          return;
+          continue;
+        }
+
+        // Handle pop animation - pop immediately without shrinking
+        if (shape.isPopping) {
+          shape.popPhase = (shape.popPhase || 0) + 0.15; // Faster pop animation
+          if (shape.popPhase >= 1) {
+            // Pop complete - explode the bubble
+            this.explodeShape(shape);
+            continue; // Skip rest of processing for this shape
+          }
+        }
+
+        // Check collision with mouse pointer
+        if (!shape.isPopping && this.checkCollisionWithMouse(shape)) {
+          shape.isPopping = true;
+          shape.popPhase = 0;
+        }
+
+        // Check collision with interactive elements (text/button)
+        if (!shape.isPopping && this.checkCollisionWithElements(shape)) {
+          shape.isPopping = true;
+          shape.popPhase = 0;
+        }
+
+        // Update wobble phase for wobbly edges
+        if (shape.wobblePhase !== undefined && shape.wobbleSpeed !== undefined) {
+          shape.wobblePhase += shape.wobbleSpeed;
+        }
+
+        // Reflection position based on vertical position (light from above)
+        const normalizedY = shape.y / this.canvas.height;
+        if (shape.reflectionAngle !== undefined) {
+          shape.reflectionAngle = normalizedY * 0.3 - 0.15;
         }
 
         // Update position
         shape.x += shape.vx;
         shape.y += shape.vy;
 
-        // Screen edge collisions
-        if (shape.x - shape.radius <= 0) {
-          shape.x = shape.radius;
-          shape.vx = Math.abs(shape.vx);
-        }
-        if (shape.x + shape.radius >= screenWidth) {
-          shape.x = screenWidth - shape.radius;
-          shape.vx = -Math.abs(shape.vx);
-        }
-        if (shape.y - shape.radius <= 0) {
-          shape.y = shape.radius;
-          shape.vy = Math.abs(shape.vy);
-        }
-        if (shape.y + shape.radius >= screenHeight) {
-          shape.y = screenHeight - shape.radius;
-          shape.vy = -Math.abs(shape.vy);
+        // Check if bubble has drifted completely off-screen
+        const isFullyOffScreen = 
+          (shape.x + shape.radius < 0) || 
+          (shape.x - shape.radius > screenWidth) ||
+          (shape.y + shape.radius < 0) || 
+          (shape.y - shape.radius > screenHeight);
+
+        if (isFullyOffScreen) {
+          // Remove bubble and recreate at random location
+          this.shapes.splice(index, 1);
+          this.createNewShape();
+          continue; // Continue to next shape
         }
 
-        // Shape-to-shape collisions
-        for (let otherIndex = index + 1; otherIndex < this.shapes.length; otherIndex++) {
-          const otherShape = this.shapes[otherIndex];
-          if (otherShape.life !== undefined) continue; // Skip particles
-          
-          const dx = shape.x - otherShape.x;
-          const dy = shape.y - otherShape.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const minDistance = shape.radius + otherShape.radius;
-
-          if (distance < minDistance && distance > 0) {
-            // Collision detected
-            const overlap = minDistance - distance;
-            const separationX = (dx / distance) * overlap * 0.5;
-            const separationY = (dy / distance) * overlap * 0.5;
-
-            // Separate shapes
-            shape.x += separationX;
-            shape.y += separationY;
-            otherShape.x -= separationX;
-            otherShape.y -= separationY;
-
-            // Calculate new velocities (elastic collision)
-            const relativeVelocityX = shape.vx - otherShape.vx;
-            const relativeVelocityY = shape.vy - otherShape.vy;
-            const relativeVelocityDotProduct = relativeVelocityX * dx + relativeVelocityY * dy;
-            const impulse = (2 * relativeVelocityDotProduct) / (shape.mass + otherShape.mass) / distance;
-
-            shape.vx -= impulse * otherShape.mass * dx / distance;
-            shape.vy -= impulse * otherShape.mass * dy / distance;
-            otherShape.vx += impulse * shape.mass * dx / distance;
-            otherShape.vy += impulse * shape.mass * dy / distance;
-          }
-        }
-
-        // Mouse interaction
+        // Gentle mouse interaction (attraction, but don't pop)
         const dx = this.mouse.x - shape.x;
         const dy = this.mouse.y - shape.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < 120) {
+        if (distance < 120 && distance > shape.radius + 5) {
           const force = (120 - distance) / 120;
           shape.vx += (dx / distance) * force * 0.0002;
           shape.vy += (dy / distance) * force * 0.0002;
         }
 
-        // Hover detection
+        // Hover detection for visual feedback
         shape.isHovered = distance < shape.radius;
 
         // Update pulse
         shape.pulse += shape.pulseSpeed;
-      });
+      }
+    }
+
+    // Generate perfectly spherical bubble
+    generateWobblyPath(shape: FloatingShape): Path2D {
+      const path = new Path2D();
+      const baseRadius = shape.radius;
+      const pulseSize = baseRadius + Math.sin(shape.pulse) * 0.5;
+      
+      // Draw a perfect circle
+      path.arc(shape.x, shape.y, pulseSize, 0, Math.PI * 2);
+      path.closePath();
+      return path;
     }
 
     drawShapes() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      this.shapes.forEach(shape => {
+      // Draw all shapes
+      for (const shape of this.shapes) {
         if (shape.life !== undefined) {
-        // Draw explosion particle
-        this.ctx.save();
-        this.ctx.globalAlpha = shape.life / 60;
-        this.ctx.fillStyle = shape.color;
-        this.ctx.beginPath();
-        this.ctx.arc(shape.x, shape.y, shape.size || 3, 0, Math.PI * 2);
+          // Draw explosion particle
+          this.ctx.save();
+          this.ctx.globalAlpha = shape.life / 60;
+          this.ctx.fillStyle = shape.color;
+          this.ctx.beginPath();
+          this.ctx.arc(shape.x, shape.y, shape.size || 3, 0, Math.PI * 2);
           this.ctx.fill();
           this.ctx.restore();
-          return;
+          continue; // Continue to next shape, don't exit function
         }
 
-        // Draw main shape with iridescent gradient
+        // Skip rendering if popping is complete (will be removed next frame)
+        if (shape.isPopping && (shape.popPhase || 0) >= 1) {
+          continue; // Skip this shape, continue to next
+        }
+
         this.ctx.save();
         
-        // Pulse effect
-        const pulseSize = shape.radius + Math.sin(shape.pulse) * 2;
+        // Generate wobbly path for irregular soap bubble shape
+        const bubblePath = this.generateWobblyPath(shape);
         
-        // Create iridescent radial gradient using the colors array
-        const gradient = this.ctx.createRadialGradient(
-          shape.x - pulseSize * 0.3, shape.y - pulseSize * 0.3, 0,
-          shape.x, shape.y, pulseSize
-        );
+        // Calculate current size (don't reduce during pop)
+        const baseRadius = shape.radius;
+        const pulseSize = baseRadius + Math.sin(shape.pulse) * 0.5;
         
-        // Use iridescent colors if available, otherwise fallback to single color
+        // Apply fade-out during pop animation
+        const popPhase = shape.isPopping ? (shape.popPhase || 0) : 0;
+        const bubbleAlpha = 1 - popPhase;
+        
+        // Create realistic soap bubble - very pale, translucent with iridescent edges
+        // First, draw the main bubble body (very pale and translucent)
         if (shape.colors && shape.colors.length >= 3) {
-          gradient.addColorStop(0, shape.colors[0]); // Center color
-          gradient.addColorStop(0.5, shape.colors[1]); // Mid color
-          gradient.addColorStop(1, shape.colors[2]); // Edge color
-        } else {
-          const currentColor = shape.isHovered ? shape.hoverColor : shape.originalColor;
-          gradient.addColorStop(0, currentColor);
-          gradient.addColorStop(1, this.darkenColor(currentColor, 0.3));
+          const mainGradient = this.ctx.createRadialGradient(
+            shape.x - pulseSize * 0.35, shape.y - pulseSize * 0.35, 0,
+            shape.x, shape.y, pulseSize
+          );
+          // Soap bubbles are mostly transparent with slight color tints at edges
+          // Apply fade during pop
+          mainGradient.addColorStop(0, `rgba(255, 255, 255, ${0.02 * bubbleAlpha})`);
+          mainGradient.addColorStop(0.7, this.adjustAlpha(shape.colors[0], bubbleAlpha));
+          mainGradient.addColorStop(0.85, this.adjustAlpha(shape.colors[1], bubbleAlpha));
+          mainGradient.addColorStop(1, this.adjustAlpha(shape.colors[2], bubbleAlpha));
+          
+          this.ctx.fillStyle = mainGradient;
+          this.ctx.fill(bubblePath);
         }
         
-        // Draw main bubble
-        this.ctx.fillStyle = gradient;
-        this.ctx.beginPath();
-        this.ctx.arc(shape.x, shape.y, pulseSize, 0, Math.PI * 2);
-        this.ctx.fill();
+        // Add realistic soap bubble reflections (light from above, fixed orientation)
+        // Reflection position varies slightly based on bubble's vertical position
+        const reflectionOffset = shape.reflectionAngle || 0; // Small offset based on vertical position
         
-        // Add inner highlight for bubble effect
-        const highlightGradient = this.ctx.createRadialGradient(
-          shape.x - pulseSize * 0.3, shape.y - pulseSize * 0.3, 0,
-          shape.x - pulseSize * 0.3, shape.y - pulseSize * 0.3, pulseSize * 0.6
+        // Primary reflection - large bright white spot at top (light from above)
+        // Fade reflection during pop
+        const reflectionX = shape.x + reflectionOffset * pulseSize * 0.2;
+        const reflectionY = shape.y - pulseSize * 0.3 + reflectionOffset * pulseSize * 0.1;
+        const primaryReflection = this.ctx.createRadialGradient(
+          reflectionX, reflectionY, 0,
+          reflectionX, reflectionY, pulseSize * 0.4
         );
-        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        this.ctx.fillStyle = highlightGradient;
-        this.ctx.fill();
+        primaryReflection.addColorStop(0, `rgba(255, 255, 255, ${0.95 * bubbleAlpha})`);
+        primaryReflection.addColorStop(0.25, `rgba(255, 255, 255, ${0.7 * bubbleAlpha})`);
+        primaryReflection.addColorStop(0.5, `rgba(255, 255, 255, ${0.3 * bubbleAlpha})`);
+        primaryReflection.addColorStop(0.75, `rgba(255, 255, 255, ${0.1 * bubbleAlpha})`);
+        primaryReflection.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        this.ctx.fillStyle = primaryReflection;
+        this.ctx.fill(bubblePath);
         
-        // Add border
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.arc(shape.x, shape.y, pulseSize, 0, Math.PI * 2);
-        this.ctx.stroke();
+        // Secondary reflection - smaller highlight slightly below primary
+        // Fade reflection during pop
+        const secondaryX = shape.x + reflectionOffset * pulseSize * 0.15;
+        const secondaryY = shape.y - pulseSize * 0.15 + reflectionOffset * pulseSize * 0.08;
+        const secondaryReflection = this.ctx.createRadialGradient(
+          secondaryX, secondaryY, 0,
+          secondaryX, secondaryY, pulseSize * 0.25
+        );
+        secondaryReflection.addColorStop(0, `rgba(255, 255, 255, ${0.6 * bubbleAlpha})`);
+        secondaryReflection.addColorStop(0.5, `rgba(255, 255, 255, ${0.2 * bubbleAlpha})`);
+        secondaryReflection.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        this.ctx.fillStyle = secondaryReflection;
+        this.ctx.fill(bubblePath);
         
-        // Add glow/shadow effect
-        this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = shape.colors ? shape.colors[0] : shape.color;
-        this.ctx.beginPath();
-        this.ctx.arc(shape.x, shape.y, pulseSize, 0, Math.PI * 2);
-        this.ctx.stroke();
+        // Soft gradient border instead of hard white border
+        // Create border as a very soft outer glow that fades gradually
+        // Fade border during pop
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = `rgba(255, 255, 255, ${0.35 * bubbleAlpha})`;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.25 * bubbleAlpha})`;
+        this.ctx.lineWidth = 0.5;
+        this.ctx.stroke(bubblePath);
+        
+        // Reset shadow before additional drawing
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowColor = 'transparent';
+        
+        // Additional very subtle inner edge for soft depth
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * bubbleAlpha})`;
+        this.ctx.lineWidth = 0.3;
+        this.ctx.stroke(bubblePath);
+        
+        // If popping, add realistic burst effect with droplets
+        if (shape.isPopping && popPhase > 0) {
+          // Add small droplets/particles bursting outward
+          // Draw droplets that start visible and fade as they expand
+          const particleCount = Math.floor(popPhase * 15);
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / 15) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+            const dist = pulseSize * (0.3 + popPhase * 1.2);
+            const px = shape.x + Math.cos(angle) * dist;
+            const py = shape.y + Math.sin(angle) * dist;
+            const particleSize = 2 + Math.random() * 3;
+            
+            // Droplets are most visible at mid-pop, fade out as they get further
+            const distanceFactor = Math.min(1, dist / (pulseSize * 1.5));
+            const particleAlpha = (1 - distanceFactor * 0.7) * (1 - popPhase * 0.3);
+            
+            const particleColor = shape.colors ? shape.colors[i % shape.colors.length] : shape.color;
+            this.ctx.fillStyle = this.adjustAlpha(particleColor, particleAlpha);
+            this.ctx.beginPath();
+            this.ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
         
         this.ctx.restore();
-      });
+      }
+    }
+
+    adjustAlpha(color: string, alpha: number): string {
+      // Match rgba values - format is rgba(r, g, b, a) where a is 0-1
+      const match = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+      if (match) {
+        const r = match[1];
+        const g = match[2];
+        const b = match[3];
+        const originalAlpha = parseFloat(match[4]);
+        return `rgba(${r}, ${g}, ${b}, ${originalAlpha * alpha})`;
+      }
+      return color;
     }
 
     darkenColor(color: string, amount: number): string {

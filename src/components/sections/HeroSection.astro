@@ -3,7 +3,7 @@
 import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
 ---
 
-<section class="hero-section relative min-h-screen flex items-center justify-center overflow-hidden">
+<section class="hero-section relative h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
   <!-- Liquid blob background -->
   <div class="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
     <div class="liquid-blobs absolute inset-0">
@@ -54,6 +54,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     private animationFrame: number | null = null;
     private mouseMoveHandler: (e: MouseEvent) => void;
     private mouseLeaveHandler: () => void;
+    private isDestroyed: boolean = false; // Flag to prevent timeout execution after destroy
 
     constructor() {
       this.mouseMoveHandler = (e: MouseEvent) => this.handleMouseMove(e);
@@ -97,7 +98,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
             // Wait for transform transition to complete, then trigger glow
             setTimeout(() => {
               // Double-check mouse is still active, hasn't moved, and sequence isn't running
-              if (!this.isActive || this.isGlowing) return; // Don't trigger if mouse left or sequence already started
+              if (this.isDestroyed || !this.isActive || this.isGlowing) return; // Don't trigger if destroyed, mouse left, or sequence already started
               const finalCheck = Date.now() - this.lastMouseMoveTime;
               if (finalCheck >= 400) {
                 this.triggerGlowSequence();
@@ -119,60 +120,69 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
         el.style.transform = 'translate3d(0, 0, 0)';
         // Remove will-change after transition completes to restore normal rendering
         setTimeout(() => {
-          el.style.willChange = 'auto';
+          if (!this.isDestroyed) {
+            el.style.willChange = 'auto';
+          }
         }, 150); // After transition completes
       });
     }
 
-    removeAllGlows() {
+    removeAllJiggles() {
       const words = document.querySelectorAll('.word-stupid, .word-web, .word-tricks');
-      words.forEach(word => word.classList.remove('glow'));
+      words.forEach(word => word.classList.remove('jiggle'));
       this.isGlowing = false;
     }
 
-    triggerGlowSequence() {
-      // Don't trigger if already glowing or if mouse is not active (text returning to center)
-      if (this.isGlowing || !this.isActive) return;
+    triggerGlowSequence(force = false) {
+      // Don't trigger if already jiggling or destroyed
+      if (this.isGlowing || this.isDestroyed) return;
+      // Don't trigger if mouse is not active (unless forced, e.g., on page load)
+      if (!force && !this.isActive) return;
       this.isGlowing = true;
 
       const wordStupid = document.querySelector('.word-stupid');
       const wordWeb = document.querySelector('.word-web');
       const wordTricks = document.querySelector('.word-tricks');
 
-      // Glow STUPID, then fade completely before starting WEB
+      // Jiggle STUPID, then stop completely before starting WEB
       if (wordStupid) {
-        wordStupid.classList.add('glow');
+        wordStupid.classList.add('jiggle');
         
-        // Wait for STUPID to complete glow and fade (300ms animation + small buffer)
+        // Wait for STUPID to complete jiggle (300ms animation)
         setTimeout(() => {
-          wordStupid.classList.remove('glow');
+          if (this.isDestroyed) return;
+          wordStupid.classList.remove('jiggle');
           
-          // Start WEB glow after STUPID has fully finished
+          // Start WEB jiggle after STUPID has fully finished
           setTimeout(() => {
+            if (this.isDestroyed) return;
             if (wordWeb) {
-              wordWeb.classList.add('glow');
+              wordWeb.classList.add('jiggle');
               
-              // Wait for WEB to complete glow and fade
+              // Wait for WEB to complete jiggle
               setTimeout(() => {
-                wordWeb.classList.remove('glow');
+                if (this.isDestroyed) return;
+                wordWeb.classList.remove('jiggle');
                 
-                // Start TRICKS glow after WEB has fully finished
+                // Start TRICKS jiggle after WEB has fully finished
                 setTimeout(() => {
+                  if (this.isDestroyed) return;
                   if (wordTricks) {
-                    wordTricks.classList.add('glow');
+                    wordTricks.classList.add('jiggle');
                     
-                    // Wait for TRICKS to complete glow and fade, then add 500ms delay before allowing next trigger
+                    // Wait for TRICKS to complete jiggle, then add 500ms delay before allowing next trigger
                     setTimeout(() => {
-                      wordTricks.classList.remove('glow');
+                      if (this.isDestroyed) return;
+                      wordTricks.classList.remove('jiggle');
                       // Wait 500ms after sequence completes before allowing it to be triggered again
                       setTimeout(() => {
-                        this.isGlowing = false;
+                        if (!this.isDestroyed) this.isGlowing = false;
                       }, 500);
                     }, 300); // Animation duration
                   } else {
                     // If TRICKS word not found, still add 500ms delay
                     setTimeout(() => {
-                      this.isGlowing = false;
+                      if (!this.isDestroyed) this.isGlowing = false;
                     }, 500);
                   }
                 }, 50); // Small buffer between words
@@ -180,7 +190,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
             } else {
               // If WEB word not found, add 500ms delay
               setTimeout(() => {
-                this.isGlowing = false;
+                if (!this.isDestroyed) this.isGlowing = false;
               }, 500);
             }
           }, 50); // Small buffer between words
@@ -188,7 +198,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
       } else {
         // If STUPID word not found, add 500ms delay
         setTimeout(() => {
-          this.isGlowing = false;
+          if (!this.isDestroyed) this.isGlowing = false;
         }, 500);
       }
     }
@@ -225,19 +235,33 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     }
 
     destroy() {
+      // Mark as destroyed to prevent timeout execution
+      this.isDestroyed = true;
+      
+      // Cancel animation frame
       if (this.animationFrame !== null) {
         cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
       }
+      
+      // Cancel idle timeout
+      if (this.idleTimeout !== null) {
+        clearTimeout(this.idleTimeout);
+        this.idleTimeout = null;
+      }
+      
+      // Remove event listeners
       const heroSection = document.querySelector('.hero-section');
       if (heroSection) {
         heroSection.removeEventListener('mousemove', this.mouseMoveHandler);
         heroSection.removeEventListener('mouseleave', this.mouseLeaveHandler);
       }
+      
       this.elements = [];
     }
   }
 
-  // Particle interface
+  // Particle interface - now represents tiny soap bubbles
   interface Particle {
     x: number;
     y: number;
@@ -245,8 +269,10 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     vy: number;
     life: number;
     maxLife: number;
-    size: number;
-    hue: number;
+    radius: number; // Size/radius of the bubble
+    colors: string[]; // Iridescent colors for the bubble
+    reflectionAngle: number; // For reflection positioning
+    pulse: number; // Subtle pulse animation
   }
 
   // Particle Trail Effect
@@ -321,40 +347,95 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     createParticle() {
       if (this.particles.length >= this.maxParticles || !this.ctx) return;
 
+      // Use same soap bubble color sets as big bubbles
+      const soapBubbleColorSets = [
+        ['rgba(255, 230, 250, 0.15)', 'rgba(230, 250, 255, 0.18)', 'rgba(240, 255, 255, 0.12)'],
+        ['rgba(240, 230, 255, 0.16)', 'rgba(230, 240, 255, 0.17)', 'rgba(230, 255, 250, 0.14)'],
+        ['rgba(230, 245, 255, 0.17)', 'rgba(240, 255, 255, 0.16)', 'rgba(255, 240, 250, 0.15)'],
+        ['rgba(235, 255, 240, 0.15)', 'rgba(230, 245, 255, 0.17)', 'rgba(245, 235, 255, 0.16)'],
+        ['rgba(255, 250, 235, 0.14)', 'rgba(255, 235, 245, 0.16)', 'rgba(235, 245, 255, 0.15)'],
+        ['rgba(235, 255, 255, 0.16)', 'rgba(245, 235, 255, 0.15)', 'rgba(255, 235, 250, 0.17)']
+      ];
+
+      const randomColors = soapBubbleColorSets[Math.floor(Math.random() * soapBubbleColorSets.length)];
+
       this.particles.push({
         x: this.mouseX + (Math.random() - 0.5) * 10,
         y: this.mouseY + (Math.random() - 0.5) * 10,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        life: 60,
-        maxLife: 60,
-        size: Math.random() * 3 + 2,
-        hue: Math.random() * 60 + 180 // Blue-purple range
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5,
+        life: 80, // Longer life for tiny bubbles
+        maxLife: 80,
+        radius: Math.random() * 4 + 3, // Tiny bubbles: 3-7px radius
+        colors: randomColors,
+        reflectionAngle: Math.random() * 0.3 - 0.15, // Small reflection offset
+        pulse: Math.random() * Math.PI * 2 // Random pulse phase
       });
     }
 
     animate() {
       if (!this.ctx || !this.canvas) return;
 
-      // Clear canvas with transparent background (don't use black fade)
+      // Clear canvas with transparent background
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // Update and draw particles
+      // Update and draw tiny bubbles
       this.particles = this.particles.filter(particle => {
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vx *= 0.95;
-        particle.vy *= 0.95;
+        particle.vx *= 0.96;
+        particle.vy *= 0.96;
         particle.life--;
+        particle.pulse += 0.05; // Subtle pulse animation
 
         if (particle.life <= 0 || !this.ctx) return false;
 
         const alpha = particle.life / particle.maxLife;
-        this.ctx.globalAlpha = alpha;
-        this.ctx.fillStyle = `hsl(${particle.hue}, 70%, 60%)`;
-        this.ctx.beginPath();
-        this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        this.ctx.fill();
+        const pulseSize = particle.radius + Math.sin(particle.pulse) * 0.3;
+        
+        this.ctx.save();
+        
+        // Create bubble path (perfect circle)
+        const bubblePath = new Path2D();
+        bubblePath.arc(particle.x, particle.y, pulseSize, 0, Math.PI * 2);
+        bubblePath.closePath();
+        
+        // Draw main bubble body with iridescent gradient
+        if (particle.colors && particle.colors.length >= 3) {
+          const mainGradient = this.ctx.createRadialGradient(
+            particle.x - pulseSize * 0.35, particle.y - pulseSize * 0.35, 0,
+            particle.x, particle.y, pulseSize
+          );
+          mainGradient.addColorStop(0, `rgba(255, 255, 255, ${0.02 * alpha})`);
+          mainGradient.addColorStop(0.7, this.adjustAlpha(particle.colors[0], alpha));
+          mainGradient.addColorStop(0.85, this.adjustAlpha(particle.colors[1], alpha));
+          mainGradient.addColorStop(1, this.adjustAlpha(particle.colors[2], alpha));
+          
+          this.ctx.fillStyle = mainGradient;
+          this.ctx.fill(bubblePath);
+        }
+        
+        // Skip reflections - too prominent for tiny bubbles
+        
+        // Soft border/outline
+        this.ctx.shadowBlur = 5;
+        this.ctx.shadowColor = `rgba(255, 255, 255, ${0.35 * alpha})`;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.25 * alpha})`;
+        this.ctx.lineWidth = 0.3;
+        this.ctx.stroke(bubblePath);
+        
+        // Reset shadow
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowColor = 'transparent';
+        
+        // Subtle inner edge
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * alpha})`;
+        this.ctx.lineWidth = 0.2;
+        this.ctx.stroke(bubblePath);
+        
+        this.ctx.restore();
 
         return true;
       });
@@ -363,6 +444,20 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
         this.ctx.globalAlpha = 1;
       }
       this.animationFrame = requestAnimationFrame(() => this.animate());
+    }
+
+    // Helper to adjust alpha in rgba color strings
+    adjustAlpha(color: string, alpha: number): string {
+      // Match rgba values - format is rgba(r, g, b, a) where a is 0-1
+      const match = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+      if (match) {
+        const r = match[1];
+        const g = match[2];
+        const b = match[3];
+        const originalAlpha = parseFloat(match[4]);
+        return `rgba(${r}, ${g}, ${b}, ${originalAlpha * alpha})`;
+      }
+      return color;
     }
 
     destroy() {
@@ -393,6 +488,13 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
 
     particleTrail = new ParticleTrail();
     particleTrail.init();
+
+    // Trigger initial jiggle sequence on page load
+    setTimeout(() => {
+      if (magneticText) {
+        magneticText.triggerGlowSequence(true); // force = true to bypass isActive check
+      }
+    }, 500); // Small delay to ensure page is fully loaded
   });
 
   // Cleanup on page unload
@@ -449,21 +551,41 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     transition: text-shadow 0.5s ease-in-out;
   }
 
-  /* Glow animation for words - white glow flash effect */
-  .word.glow {
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 60px rgba(255, 255, 255, 0.5)) !important;
-    animation: flashGlow 0.3s ease-in-out;
+  /* Jiggle animation for words */
+  .word.jiggle {
+    animation: jiggle 0.3s ease-in-out;
   }
 
-  @keyframes flashGlow {
-    0% {
-      filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(118, 97, 209, 0.4)) !important;
+  @keyframes jiggle {
+    0%, 100% {
+      transform: translateX(0) translateY(0) rotate(0deg);
+    }
+    10% {
+      transform: translateX(-2px) translateY(-1px) rotate(-1deg);
+    }
+    20% {
+      transform: translateX(2px) translateY(1px) rotate(1deg);
+    }
+    30% {
+      transform: translateX(-1px) translateY(1px) rotate(-0.5deg);
+    }
+    40% {
+      transform: translateX(1px) translateY(-1px) rotate(0.5deg);
     }
     50% {
-      filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(255, 255, 255, 1)) drop-shadow(0 0 50px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 70px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 90px rgba(255, 255, 255, 0.6)) !important;
+      transform: translateX(-1px) translateY(-1px) rotate(-0.5deg);
     }
-    100% {
-      filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(118, 97, 209, 0.4)) !important;
+    60% {
+      transform: translateX(1px) translateY(1px) rotate(0.5deg);
+    }
+    70% {
+      transform: translateX(-1px) translateY(0px) rotate(-0.3deg);
+    }
+    80% {
+      transform: translateX(1px) translateY(0px) rotate(0.3deg);
+    }
+    90% {
+      transform: translateX(0px) translateY(0px) rotate(0deg);
     }
   }
 
