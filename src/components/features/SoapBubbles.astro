@@ -1,0 +1,797 @@
+---
+// SoapBubbles.astro - Standalone reusable soap bubble animation component
+// 
+// Props:
+//   - containerSelector: CSS selector for the container element (default: 'body')
+//   - canvasId: Unique ID for the canvas element (default: 'soapBubblesCanvas')
+//   - bubbleCount: Number of bubbles to create (default: 6)
+//   - minRadius: Minimum bubble radius in pixels (default: 20)
+//   - maxRadius: Maximum bubble radius in pixels (default: 60)
+//   - collisionSelectors: Array of CSS selectors for elements that bubbles should pop on collision (default: [])
+//   - enableMousePop: Whether bubbles should pop when mouse touches them (default: true)
+//   - enableMouseInteraction: Whether bubbles should be attracted to mouse (default: true)
+//   - zIndex: CSS z-index for the canvas (default: 3)
+//   - pointerEvents: CSS pointer-events value (default: 'none')
+//
+interface Props {
+  containerSelector?: string;
+  canvasId?: string;
+  bubbleCount?: number;
+  minRadius?: number;
+  maxRadius?: number;
+  collisionSelectors?: string[];
+  enableMousePop?: boolean;
+  enableMouseInteraction?: boolean;
+  zIndex?: number;
+  pointerEvents?: string;
+}
+
+const {
+  containerSelector = 'body',
+  canvasId = 'soapBubblesCanvas',
+  bubbleCount = 6,
+  minRadius = 20,
+  maxRadius = 60,
+  collisionSelectors = [],
+  enableMousePop = true,
+  enableMouseInteraction = true,
+  zIndex = 3,
+  pointerEvents = 'none'
+} = Astro.props;
+---
+
+<canvas 
+  id={canvasId} 
+  class="soap-bubbles-canvas"
+  style={`z-index: ${zIndex}; pointer-events: ${pointerEvents};`}
+></canvas>
+
+<script define:vars={{ containerSelector, canvasId, bubbleCount, minRadius, maxRadius, enableMousePop, enableMouseInteraction, collisionSelectorsJson: JSON.stringify(collisionSelectors) }}>
+  // Parse collisionSelectors from JSON string
+  const collisionSelectorsArray = JSON.parse(collisionSelectorsJson || '[]');
+  
+  // Note: Using plain JavaScript instead of TypeScript interfaces
+  // The types are defined as JSDoc comments for documentation
+
+  // Standalone Soap Bubbles Animation System
+  class SoapBubbles {
+    constructor(config) {
+      this.config = config;
+      this.canvas = document.getElementById(config.canvasId);
+      if (!this.canvas) {
+        console.warn(`SoapBubbles: Canvas element with id "${config.canvasId}" not found`);
+        return;
+      }
+      
+      const ctx = this.canvas.getContext('2d');
+      if (!ctx) {
+        console.warn('SoapBubbles: Could not get 2D context');
+        return;
+      }
+      
+      this.ctx = ctx;
+      this.shapes = [];
+      this.isRunning = false;
+      this.mouse = { x: 0, y: 0 };
+      this.pendingTimeouts = [];
+      this.isDestroyed = false;
+      this.animationFrameId = null;
+      
+      // Bind handlers to preserve context
+      this.resizeHandler = () => this.resizeCanvas();
+      this.mouseMoveHandler = (e) => this.handleMouseMove(e);
+      this.clickHandler = (e) => this.handleClick(e);
+      
+      this.initialized = true;
+      this.init();
+    }
+
+    init() {
+      this.resizeCanvas();
+      this.createShapes();
+      this.bindEvents();
+      this.startPhysics();
+    }
+
+    resizeCanvas() {
+      this.container = document.querySelector(this.config.containerSelector);
+      if (this.container) {
+        const rect = this.container.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+        
+        // Ensure canvas is positioned correctly relative to container
+        const canvasRect = this.canvas.getBoundingClientRect();
+        const containerRect = this.container.getBoundingClientRect();
+        if (canvasRect.left !== containerRect.left || canvasRect.top !== containerRect.top) {
+          // Canvas might need to be repositioned - ensure it's inside the container
+          this.canvas.style.position = 'absolute';
+          this.canvas.style.top = '0';
+          this.canvas.style.left = '0';
+        }
+      } else {
+        console.warn(`SoapBubbles: Container "${this.config.containerSelector}" not found, using window size`);
+        // Fallback to window size
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+    }
+
+    // Default soap bubble color sets (pale, iridescent)
+    getDefaultColorSets() {
+      return [
+        ['rgba(255, 230, 250, 0.15)', 'rgba(230, 250, 255, 0.18)', 'rgba(240, 255, 255, 0.12)'],
+        ['rgba(240, 230, 255, 0.16)', 'rgba(230, 240, 255, 0.17)', 'rgba(230, 255, 250, 0.14)'],
+        ['rgba(230, 245, 255, 0.17)', 'rgba(240, 255, 255, 0.16)', 'rgba(255, 240, 250, 0.15)'],
+        ['rgba(235, 255, 240, 0.15)', 'rgba(230, 245, 255, 0.17)', 'rgba(245, 235, 255, 0.16)'],
+        ['rgba(255, 250, 235, 0.14)', 'rgba(255, 235, 245, 0.16)', 'rgba(235, 245, 255, 0.15)'],
+        ['rgba(235, 255, 255, 0.16)', 'rgba(245, 235, 255, 0.15)', 'rgba(255, 235, 250, 0.17)']
+      ];
+    }
+
+    createShapes() {
+      if (this.canvas.width === 0 || this.canvas.height === 0) {
+        this.resizeCanvas();
+      }
+      
+      // Double-check canvas has valid dimensions
+      if (this.canvas.width === 0 || this.canvas.height === 0) {
+        console.warn('SoapBubbles: Canvas has zero dimensions, cannot create shapes');
+        return;
+      }
+      
+      const colorSets = this.getDefaultColorSets();
+      
+      for (let i = 0; i < this.config.bubbleCount; i++) {
+        const radius = Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
+        const colors = colorSets[i % colorSets.length];
+        
+        let x, y;
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        // Try to find a safe position (away from collision elements)
+        do {
+          x = Math.random() * this.canvas.width;
+          y = Math.random() * this.canvas.height;
+          attempts++;
+        } while (!this.isPositionSafe(x, y, radius) && attempts < maxAttempts);
+        
+        // If we couldn't find a safe position, place at edges
+        if (attempts >= maxAttempts) {
+          const corner = Math.floor(Math.random() * 4);
+          switch (corner) {
+            case 0: // Top-left
+              x = radius + 20;
+              y = radius + 20;
+              break;
+            case 1: // Top-right
+              x = this.canvas.width - radius - 20;
+              y = radius + 20;
+              break;
+            case 2: // Bottom-left
+              x = radius + 20;
+              y = this.canvas.height - radius - 20;
+              break;
+            case 3: // Bottom-right
+              x = this.canvas.width - radius - 20;
+              y = this.canvas.height - radius - 20;
+              break;
+          }
+        }
+        
+        this.shapes.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          radius: radius,
+          mass: radius,
+          color: colors[0],
+          colors: colors,
+          originalColor: colors[0],
+          hoverColor: this.lightenColor(colors[0], 0.3),
+          isHovered: false,
+          pulse: Math.random() * Math.PI * 2,
+          pulseSpeed: Math.random() * 0.02 + 0.01,
+          id: Date.now() + i,
+          wobblePhase: Math.random() * Math.PI * 2,
+          wobbleSpeed: Math.random() * 0.03 + 0.02,
+          distortionSeed: Math.random() * 1000,
+          reflectionAngle: Math.random() * Math.PI * 2,
+          isPopping: false,
+          popPhase: 0
+        });
+      }
+    }
+
+    lightenColor(color, amount) {
+      const rgba = color.match(/\d+/g);
+      if (rgba) {
+        const r = Math.min(255, parseInt(rgba[0]) + amount * 255);
+        const g = Math.min(255, parseInt(rgba[1]) + amount * 255);
+        const b = Math.min(255, parseInt(rgba[2]) + amount * 255);
+        return `rgba(${r}, ${g}, ${b}, ${rgba[3] || 0.6})`;
+      }
+      return color;
+    }
+
+    handleMouseMove(e) {
+      if (!this.config.enableMouseInteraction && !this.config.enableMousePop) return;
+      
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = e.clientX - rect.left;
+      this.mouse.y = e.clientY - rect.top;
+    }
+
+    handleClick(e) {
+      const rect = this.canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      
+      if (clickX < 0 || clickX > rect.width || clickY < 0 || clickY > rect.height) {
+        return;
+      }
+      
+      // Find clicked bubble and trigger pop animation (don't explode immediately)
+      for (let i = this.shapes.length - 1; i >= 0; i--) {
+        const shape = this.shapes[i];
+        if (shape.life !== undefined) continue;
+        if (shape.isPopping) continue; // Already popping
+        
+        const distance = Math.sqrt(
+          Math.pow(shape.x - clickX, 2) + 
+          Math.pow(shape.y - clickY, 2)
+        );
+        
+        if (distance < shape.radius) {
+          e.preventDefault();
+          // Trigger pop animation instead of exploding immediately
+          // This ensures it goes through the same path as collision-based pops
+          shape.isPopping = true;
+          shape.popPhase = 0;
+          break;
+        }
+      }
+    }
+
+    bindEvents() {
+      window.addEventListener('resize', this.resizeHandler);
+      if (this.config.enableMouseInteraction || this.config.enableMousePop) {
+        document.addEventListener('mousemove', this.mouseMoveHandler);
+        document.addEventListener('click', this.clickHandler);
+      }
+    }
+
+    unbindEvents() {
+      window.removeEventListener('resize', this.resizeHandler);
+      document.removeEventListener('mousemove', this.mouseMoveHandler);
+      document.removeEventListener('click', this.clickHandler);
+    }
+
+    explodeShape(shape, index) {
+      // Create explosion particles
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const distance = 60 + Math.random() * 40;
+        const particle = {
+          x: shape.x,
+          y: shape.y,
+          vx: Math.cos(angle) * (distance / 20),
+          vy: Math.sin(angle) * (distance / 20),
+          radius: 3,
+          mass: 3,
+          color: shape.color,
+          originalColor: shape.color,
+          hoverColor: shape.color,
+          isHovered: false,
+          pulse: 0,
+          pulseSpeed: 0,
+          id: Date.now() + i,
+          life: 60,
+          size: 3
+        };
+        this.shapes.push(particle);
+      }
+      
+      // Remove the exploded shape by index (safer during iteration)
+      if (index !== undefined && index >= 0 && index < this.shapes.length) {
+        this.shapes.splice(index, 1);
+      } else {
+        // Fallback: find and remove by id
+        const shapeIndex = this.shapes.findIndex(s => s.id === shape.id);
+        if (shapeIndex >= 0) {
+          this.shapes.splice(shapeIndex, 1);
+        }
+      }
+      
+      // Schedule new shape creation
+      const timeoutId = setTimeout(() => {
+        if (!this.isDestroyed) {
+          this.createNewShape();
+        }
+      }, 1000);
+      this.pendingTimeouts.push(timeoutId);
+    }
+
+    isPositionSafe(x, y, radius) {
+      if (this.config.collisionSelectors.length === 0) return true;
+      
+      const canvasRect = this.canvas.getBoundingClientRect();
+      const minDistance = radius + 20;
+      
+      for (const selector of this.config.collisionSelectors) {
+        const element = document.querySelector(selector);
+        if (!element) continue;
+        
+        const rect = element.getBoundingClientRect();
+        const elementLeft = rect.left - canvasRect.left;
+        const elementRight = rect.right - canvasRect.left;
+        const elementTop = rect.top - canvasRect.top;
+        const elementBottom = rect.bottom - canvasRect.top;
+        const elementCenterX = (elementLeft + elementRight) / 2;
+        const elementCenterY = (elementTop + elementBottom) / 2;
+        
+        const distanceToElement = Math.sqrt(
+          Math.pow(x - elementCenterX, 2) + Math.pow(y - elementCenterY, 2)
+        );
+        
+        const expandedWidth = (elementRight - elementLeft) / 2 + minDistance;
+        const expandedHeight = (elementBottom - elementTop) / 2 + minDistance;
+        
+        if (distanceToElement < Math.max(expandedWidth, expandedHeight)) {
+          return false;
+        }
+      }
+      
+      return true;
+    }
+
+    createNewShape() {
+      const colorSets = this.getDefaultColorSets();
+      const randomColors = colorSets[Math.floor(Math.random() * colorSets.length)];
+      const radius = Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
+      
+      let x, y;
+      let attempts = 0;
+      const maxAttempts = 50;
+      
+      do {
+        x = Math.random() * this.canvas.width;
+        y = Math.random() * this.canvas.height;
+        attempts++;
+      } while (!this.isPositionSafe(x, y, radius) && attempts < maxAttempts);
+      
+      if (attempts >= maxAttempts) {
+        const corner = Math.floor(Math.random() * 4);
+        switch (corner) {
+          case 0:
+            x = radius + 20;
+            y = radius + 20;
+            break;
+          case 1:
+            x = this.canvas.width - radius - 20;
+            y = radius + 20;
+            break;
+          case 2:
+            x = radius + 20;
+            y = this.canvas.height - radius - 20;
+            break;
+          case 3:
+            x = this.canvas.width - radius - 20;
+            y = this.canvas.height - radius - 20;
+            break;
+        }
+      }
+      
+      const newShape = {
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        radius: radius,
+        mass: radius,
+        color: randomColors[0],
+        colors: randomColors,
+        originalColor: randomColors[0],
+        hoverColor: this.lightenColor(randomColors[0], 0.3),
+        isHovered: false,
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.02 + 0.01,
+        id: Date.now(),
+        wobblePhase: Math.random() * Math.PI * 2,
+        wobbleSpeed: Math.random() * 0.03 + 0.02,
+        distortionSeed: Math.random() * 1000,
+        reflectionAngle: Math.random() * Math.PI * 2,
+        isPopping: false,
+        popPhase: 0
+      };
+      
+      this.shapes.push(newShape);
+    }
+
+    startPhysics() {
+      if (this.isRunning) return;
+      this.isRunning = true;
+      this.physicsLoop();
+    }
+
+    physicsLoop() {
+      if (!this.isRunning) return;
+      this.updatePhysics();
+      this.drawShapes();
+      this.animationFrameId = requestAnimationFrame(() => this.physicsLoop());
+    }
+
+    destroy() {
+      if (!this.initialized) return;
+      
+      this.isDestroyed = true;
+      this.isRunning = false;
+      
+      if (this.animationFrameId !== null) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+      
+      this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+      this.pendingTimeouts = [];
+      
+      if (this.unbindEvents) {
+        this.unbindEvents();
+      }
+      
+      this.shapes = [];
+      
+      if (this.ctx && this.canvas) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+    }
+
+    checkCollisionWithElements(shape) {
+      if (this.config.collisionSelectors.length === 0) return false;
+      
+      const canvasRect = this.canvas.getBoundingClientRect();
+      
+      for (const selector of this.config.collisionSelectors) {
+        const element = document.querySelector(selector);
+        if (!element) continue;
+        
+        const rect = element.getBoundingClientRect();
+        const elementLeft = rect.left - canvasRect.left;
+        const elementRight = rect.right - canvasRect.left;
+        const elementTop = rect.top - canvasRect.top;
+        const elementBottom = rect.bottom - canvasRect.top;
+        
+        const bubbleLeft = shape.x - shape.radius;
+        const bubbleRight = shape.x + shape.radius;
+        const bubbleTop = shape.y - shape.radius;
+        const bubbleBottom = shape.y + shape.radius;
+        
+        if (bubbleRight > elementLeft && bubbleLeft < elementRight && 
+            bubbleBottom > elementTop && bubbleTop < elementBottom) {
+          const closestX = Math.max(elementLeft, Math.min(shape.x, elementRight));
+          const closestY = Math.max(elementTop, Math.min(shape.y, elementBottom));
+          const distance = Math.sqrt(
+            Math.pow(shape.x - closestX, 2) + Math.pow(shape.y - closestY, 2)
+          );
+          if (distance <= shape.radius + 2) {
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    }
+    
+    checkCollisionWithMouse(shape) {
+      if (!this.config.enableMousePop) return false;
+      
+      const dx = this.mouse.x - shape.x;
+      const dy = this.mouse.y - shape.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance <= shape.radius;
+    }
+
+    updatePhysics() {
+      const screenWidth = this.canvas.width;
+      const screenHeight = this.canvas.height;
+
+      // Iterate backwards to safely remove items during iteration
+      for (let i = this.shapes.length - 1; i >= 0; i--) {
+        const shape = this.shapes[i];
+        
+        // Handle explosion particles
+        if (shape.life !== undefined) {
+          shape.life--;
+          shape.x += shape.vx;
+          shape.y += shape.vy;
+          shape.vx *= 0.98;
+          shape.vy *= 0.98;
+          
+          if (shape.life <= 0) {
+            this.shapes.splice(i, 1);
+            continue;
+          }
+          continue;
+        }
+
+        // Handle pop animation
+        if (shape.isPopping) {
+          shape.popPhase = (shape.popPhase || 0) + 0.15;
+          if (shape.popPhase >= 1) {
+            // Explode immediately - particles added to end won't affect reverse iteration
+            this.explodeShape(shape, i);
+            continue;
+          }
+        }
+
+        // Check for collisions
+        if (!shape.isPopping && this.checkCollisionWithMouse(shape)) {
+          shape.isPopping = true;
+          shape.popPhase = 0;
+        }
+
+        if (!shape.isPopping && this.checkCollisionWithElements(shape)) {
+          shape.isPopping = true;
+          shape.popPhase = 0;
+        }
+
+        // Update wobble
+        if (shape.wobblePhase !== undefined && shape.wobbleSpeed !== undefined) {
+          shape.wobblePhase += shape.wobbleSpeed;
+        }
+
+        // Update reflection based on position
+        const normalizedY = shape.y / this.canvas.height;
+        if (shape.reflectionAngle !== undefined) {
+          shape.reflectionAngle = normalizedY * 0.3 - 0.15;
+        }
+
+        // Update position
+        shape.x += shape.vx;
+        shape.y += shape.vy;
+
+        // Check if off-screen
+        const isFullyOffScreen = 
+          (shape.x + shape.radius < 0) || 
+          (shape.x - shape.radius > screenWidth) ||
+          (shape.y + shape.radius < 0) || 
+          (shape.y - shape.radius > screenHeight);
+
+        if (isFullyOffScreen) {
+          this.shapes.splice(i, 1);
+          this.createNewShape();
+          continue;
+        }
+
+        // Mouse interaction
+        if (this.config.enableMouseInteraction) {
+          const dx = this.mouse.x - shape.x;
+          const dy = this.mouse.y - shape.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 120 && distance > shape.radius + 5) {
+            const force = (120 - distance) / 120;
+            shape.vx += (dx / distance) * force * 0.0002;
+            shape.vy += (dy / distance) * force * 0.0002;
+          }
+
+          shape.isHovered = distance < shape.radius;
+        }
+
+        // Update pulse
+        shape.pulse += shape.pulseSpeed;
+      }
+    }
+
+    generateWobblyPath(shape) {
+      const path = new Path2D();
+      const baseRadius = shape.radius;
+      const pulseSize = baseRadius + Math.sin(shape.pulse) * 0.5;
+      path.arc(shape.x, shape.y, pulseSize, 0, Math.PI * 2);
+      path.closePath();
+      return path;
+    }
+
+    drawShapes() {
+      if (!this.ctx || !this.canvas) return;
+      
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      
+      if (this.shapes.length === 0) return;
+
+      for (const shape of this.shapes) {
+        if (shape.life !== undefined) {
+          this.ctx.save();
+          this.ctx.globalAlpha = shape.life / 60;
+          this.ctx.fillStyle = shape.color;
+          this.ctx.beginPath();
+          this.ctx.arc(shape.x, shape.y, shape.size || 3, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
+          continue;
+        }
+
+        if (shape.isPopping && (shape.popPhase || 0) >= 1) {
+          continue;
+        }
+
+        this.ctx.save();
+        
+        const bubblePath = this.generateWobblyPath(shape);
+        const baseRadius = shape.radius;
+        const pulseSize = baseRadius + Math.sin(shape.pulse) * 0.5;
+        const popPhase = shape.isPopping ? (shape.popPhase || 0) : 0;
+        const bubbleAlpha = 1 - popPhase;
+        
+        if (shape.colors && shape.colors.length >= 3) {
+          const mainGradient = this.ctx.createRadialGradient(
+            shape.x - pulseSize * 0.35, shape.y - pulseSize * 0.35, 0,
+            shape.x, shape.y, pulseSize
+          );
+          mainGradient.addColorStop(0, `rgba(255, 255, 255, ${0.02 * bubbleAlpha})`);
+          mainGradient.addColorStop(0.7, this.adjustAlpha(shape.colors[0], bubbleAlpha));
+          mainGradient.addColorStop(0.85, this.adjustAlpha(shape.colors[1], bubbleAlpha));
+          mainGradient.addColorStop(1, this.adjustAlpha(shape.colors[2], bubbleAlpha));
+          
+          this.ctx.fillStyle = mainGradient;
+          this.ctx.fill(bubblePath);
+        }
+        
+        const reflectionOffset = shape.reflectionAngle || 0;
+        const reflectionX = shape.x + reflectionOffset * pulseSize * 0.2;
+        const reflectionY = shape.y - pulseSize * 0.3 + reflectionOffset * pulseSize * 0.1;
+        const primaryReflection = this.ctx.createRadialGradient(
+          reflectionX, reflectionY, 0,
+          reflectionX, reflectionY, pulseSize * 0.4
+        );
+        primaryReflection.addColorStop(0, `rgba(255, 255, 255, ${0.95 * bubbleAlpha})`);
+        primaryReflection.addColorStop(0.25, `rgba(255, 255, 255, ${0.7 * bubbleAlpha})`);
+        primaryReflection.addColorStop(0.5, `rgba(255, 255, 255, ${0.3 * bubbleAlpha})`);
+        primaryReflection.addColorStop(0.75, `rgba(255, 255, 255, ${0.1 * bubbleAlpha})`);
+        primaryReflection.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        this.ctx.fillStyle = primaryReflection;
+        this.ctx.fill(bubblePath);
+        
+        const secondaryX = shape.x + reflectionOffset * pulseSize * 0.15;
+        const secondaryY = shape.y - pulseSize * 0.15 + reflectionOffset * pulseSize * 0.08;
+        const secondaryReflection = this.ctx.createRadialGradient(
+          secondaryX, secondaryY, 0,
+          secondaryX, secondaryY, pulseSize * 0.25
+        );
+        secondaryReflection.addColorStop(0, `rgba(255, 255, 255, ${0.6 * bubbleAlpha})`);
+        secondaryReflection.addColorStop(0.5, `rgba(255, 255, 255, ${0.2 * bubbleAlpha})`);
+        secondaryReflection.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        this.ctx.fillStyle = secondaryReflection;
+        this.ctx.fill(bubblePath);
+        
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = `rgba(255, 255, 255, ${0.35 * bubbleAlpha})`;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.25 * bubbleAlpha})`;
+        this.ctx.lineWidth = 0.5;
+        this.ctx.stroke(bubblePath);
+        
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowColor = 'transparent';
+        
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * bubbleAlpha})`;
+        this.ctx.lineWidth = 0.3;
+        this.ctx.stroke(bubblePath);
+        
+        if (shape.isPopping && popPhase > 0) {
+          const particleCount = Math.floor(popPhase * 15);
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / 15) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+            const dist = pulseSize * (0.3 + popPhase * 1.2);
+            const px = shape.x + Math.cos(angle) * dist;
+            const py = shape.y + Math.sin(angle) * dist;
+            const particleSize = 2 + Math.random() * 3;
+            const distanceFactor = Math.min(1, dist / (pulseSize * 1.5));
+            const particleAlpha = (1 - distanceFactor * 0.7) * (1 - popPhase * 0.3);
+            const particleColor = shape.colors ? shape.colors[i % shape.colors.length] : shape.color;
+            this.ctx.fillStyle = this.adjustAlpha(particleColor, particleAlpha);
+            this.ctx.beginPath();
+            this.ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
+        
+        this.ctx.restore();
+      }
+    }
+
+    adjustAlpha(color, alpha) {
+      const match = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+      if (match) {
+        const r = match[1];
+        const g = match[2];
+        const b = match[3];
+        const originalAlpha = parseFloat(match[4]);
+        return `rgba(${r}, ${g}, ${b}, ${originalAlpha * alpha})`;
+      }
+      return color;
+    }
+  }
+
+  // Initialize when DOM is loaded
+  let soapBubbles = null;
+
+  function initializeBubbles() {
+    try {
+      const existing = window[`soapBubbles_${canvasId}`];
+      if (existing && typeof existing.destroy === 'function' && existing.initialized) {
+        existing.destroy();
+      }
+      
+      // Check if canvas exists
+      const canvasElement = document.getElementById(canvasId);
+      if (!canvasElement) {
+        console.warn(`SoapBubbles: Canvas with id "${canvasId}" not found, retrying...`);
+        setTimeout(initializeBubbles, 100);
+        return;
+      }
+      
+      const config = {
+        containerSelector,
+        canvasId,
+        bubbleCount,
+        minRadius,
+        maxRadius,
+        collisionSelectors: collisionSelectorsArray,
+        enableMousePop,
+        enableMouseInteraction
+      };
+      
+      soapBubbles = new SoapBubbles(config);
+      
+      if (soapBubbles.initialized) {
+        window[`soapBubbles_${canvasId}`] = soapBubbles;
+        console.log(`SoapBubbles: Initialized successfully with ${bubbleCount} bubbles`);
+        console.log(`SoapBubbles: Canvas size: ${soapBubbles.canvas.width}x${soapBubbles.canvas.height}`);
+        console.log(`SoapBubbles: Shapes created: ${soapBubbles.shapes.length}`);
+      } else {
+        console.warn(`SoapBubbles: Failed to initialize properly for canvas "${canvasId}"`);
+        soapBubbles = null;
+      }
+    } catch (e) {
+      console.error(`SoapBubbles: Error during initialization for canvas "${canvasId}":`, e);
+      soapBubbles = null;
+    }
+  }
+
+  // Try to initialize immediately if DOM is already loaded, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeBubbles);
+  } else {
+    // DOM is already loaded, but wait a tick to ensure Astro has rendered
+    setTimeout(initializeBubbles, 0);
+  }
+
+  window.addEventListener('beforeunload', function() {
+    if (soapBubbles && typeof soapBubbles.destroy === 'function') {
+      soapBubbles.destroy();
+      soapBubbles = null;
+    }
+    const existing = window[`soapBubbles_${canvasId}`];
+    if (existing && typeof existing.destroy === 'function') {
+      existing.destroy();
+      window[`soapBubbles_${canvasId}`] = null;
+    }
+  });
+</script>
+
+<style>
+  .soap-bubbles-canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+</style>
+
