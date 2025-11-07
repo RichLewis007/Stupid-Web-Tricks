@@ -11,9 +11,18 @@
 
 </div>
 
+---
 # Stupid Web Tricks
 
 A collection of web effects and animations I've been experimenting with. Built with Astro and React, with the source shown with comments and documentation to help you learn from and use these tricks in your own websites.
+
+## Quick Start
+
+```bash
+npm install       # install dependencies
+npm run dev       # start the local dev server
+npm run check     # run Astro's diagnostics (optional)
+```
 
 ## What's Inside
 
@@ -112,6 +121,7 @@ npm run dev
 npm run dev      # Start development server
 npm run build    # Build for production
 npm run preview  # Preview production build
+npm run check    # Run Astro diagnostics (type/syntax checks)
 ```
 
 ## Deployment

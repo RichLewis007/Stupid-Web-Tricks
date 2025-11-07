@@ -27,7 +27,6 @@ body {
 /* Prevent font flash for Bangers titles */
 .bangers-font {
   font-family: 'Bangers', 'Impact', 'Arial Black', sans-serif;
-  font-display: swap;
 }
 
 body {

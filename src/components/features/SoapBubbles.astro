@@ -1,31 +1,19 @@
 ---
 // SoapBubbles.astro - Standalone reusable soap bubble animation component
-// 
-// Props:
-//   - containerSelector: CSS selector for the container element (default: 'body')
-//   - canvasId: Unique ID for the canvas element (default: 'soapBubblesCanvas')
-//   - bubbleCount: Number of bubbles to create (default: 6)
-//   - minRadius: Minimum bubble radius in pixels (default: 20)
-//   - maxRadius: Maximum bubble radius in pixels (default: 60)
-//   - collisionSelectors: Array of CSS selectors for elements that bubbles should pop on collision (default: [])
-//   - enableMousePop: Whether bubbles should pop when mouse touches them (default: true)
-//   - enableMouseInteraction: Whether bubbles should be attracted to mouse (default: true)
-//   - zIndex: CSS z-index for the canvas (default: 3)
-//   - pointerEvents: CSS pointer-events value (default: 'none')
 //
-interface Props {
-  containerSelector?: string;
-  canvasId?: string;
-  bubbleCount?: number;
-  minRadius?: number;
-  maxRadius?: number;
-  collisionSelectors?: string[];
-  enableMousePop?: boolean;
-  enableMouseInteraction?: boolean;
-  zIndex?: number;
-  pointerEvents?: string;
-}
-
+/**
+ * Configuration options:
+ * @property {string} containerSelector - CSS selector for the container to size/position the canvas (default: 'body').
+ * @property {string} canvasId - Unique ID applied to the canvas element; used for DOM lookups (default: 'soapBubblesCanvas').
+ * @property {number} bubbleCount - Number of large bubbles to render simultaneously (default: 6).
+ * @property {number} minRadius - Minimum radius, in pixels, when creating new bubbles (default: 20).
+ * @property {number} maxRadius - Maximum radius, in pixels, when creating new bubbles (default: 60).
+ * @property {string[]} collisionSelectors - Elements that trigger a pop when touched (default: none).
+ * @property {boolean} enableMousePop - Whether bubbles pop when the mouse touches them (default: true).
+ * @property {boolean} enableMouseInteraction - Whether bubbles react to/are attracted to the mouse (default: true).
+ * @property {number} zIndex - CSS z-index applied to the canvas (default: 3).
+ * @property {string} pointerEvents - Pointer-event mode for the canvas (default: 'none').
+ */
 const {
   containerSelector = 'body',
   canvasId = 'soapBubblesCanvas',
@@ -46,7 +34,7 @@ const {
   style={`z-index: ${zIndex}; pointer-events: ${pointerEvents};`}
 ></canvas>
 
-<script define:vars={{ containerSelector, canvasId, bubbleCount, minRadius, maxRadius, enableMousePop, enableMouseInteraction, collisionSelectorsJson: JSON.stringify(collisionSelectors) }}>
+<script lang="js" define:vars={{ containerSelector, canvasId, bubbleCount, minRadius, maxRadius, enableMousePop, enableMouseInteraction, collisionSelectorsJson: JSON.stringify(collisionSelectors) }}>
   // Parse collisionSelectors from JSON string
   const collisionSelectorsArray = JSON.parse(collisionSelectorsJson || '[]');
   

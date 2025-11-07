@@ -11,11 +11,11 @@
     "preview": "astro preview",
     "clean": "rm -rf dist .astro",
     "clean:all": "rm -rf dist .astro node_modules",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.16",
-    "@types/gsap": "^1.20.2",
     "astro": "^5.15.1",
     "framer-motion": "^12.23.24",
     "gsap": "^3.13.0",

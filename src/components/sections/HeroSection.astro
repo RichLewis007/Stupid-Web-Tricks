@@ -41,28 +41,26 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
   </div>
 </section>
 
-<script>
+<script lang="js">
   // Magnetic Text Effect
   class MagneticText {
-    private elements: HTMLElement[] = [];
-    private mouseX = 0;
-    private mouseY = 0;
-    private isActive = false;
-    private lastMouseMoveTime = 0;
-    private idleTimeout: number | null = null;
-    private isGlowing = false;
-    private animationFrame: number | null = null;
-    private mouseMoveHandler: (e: MouseEvent) => void;
-    private mouseLeaveHandler: () => void;
-    private isDestroyed: boolean = false; // Flag to prevent timeout execution after destroy
-
     constructor() {
-      this.mouseMoveHandler = (e: MouseEvent) => this.handleMouseMove(e);
+      this.elements = [];
+      this.mouseX = 0;
+      this.mouseY = 0;
+      this.isActive = false;
+      this.lastMouseMoveTime = 0;
+      this.idleTimeout = null;
+      this.isGlowing = false;
+      this.animationFrame = null;
+      this.isDestroyed = false; // Flag to prevent timeout execution after destroy
+
+      this.mouseMoveHandler = (e) => this.handleMouseMove(e);
       this.mouseLeaveHandler = () => this.handleMouseLeave();
     }
 
     init() {
-      this.elements = Array.from(document.querySelectorAll<HTMLElement>('.magnetic-text'));
+      this.elements = Array.from(document.querySelectorAll('.magnetic-text'));
       if (this.elements.length === 0) return;
 
       const heroSection = document.querySelector('.hero-section');
@@ -73,7 +71,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
       this.animate();
     }
 
-    handleMouseMove(e: MouseEvent) {
+    handleMouseMove(e) {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
       this.isActive = true;
@@ -261,48 +259,33 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     }
   }
 
-  // Particle interface - now represents tiny soap bubbles
-  interface Particle {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    life: number;
-    maxLife: number;
-    radius: number; // Size/radius of the bubble
-    colors: string[]; // Iridescent colors for the bubble
-    reflectionAngle: number; // For reflection positioning
-    pulse: number; // Subtle pulse animation
-  }
-
   // Particle Trail Effect
   class ParticleTrail {
-    private canvas: HTMLCanvasElement | null = null;
-    private ctx: CanvasRenderingContext2D | null = null;
-    private particles: Particle[] = [];
-    private mouseX = 0;
-    private mouseY = 0;
-    private lastMouseX = 0;
-    private lastMouseY = 0;
-    private isActive = false;
-    private animationFrame: number | null = null;
-    private mouseMoveHandler: (e: MouseEvent) => void;
-    private mouseLeaveHandler: () => void;
-    private resizeHandler: () => void;
-    private maxParticles = 50; // Limit particles to prevent memory issues
-
     constructor() {
-      this.mouseMoveHandler = (e: MouseEvent) => this.handleMouseMove(e);
+      this.canvas = null;
+      this.ctx = null;
+      this.particles = [];
+      this.mouseX = 0;
+      this.mouseY = 0;
+      this.lastMouseX = 0;
+      this.lastMouseY = 0;
+      this.isActive = false;
+      this.animationFrame = null;
+      this.maxParticles = 50; // Limit particles to prevent memory issues
+
+      this.mouseMoveHandler = (e) => this.handleMouseMove(e);
       this.mouseLeaveHandler = () => this.handleMouseLeave();
       this.resizeHandler = () => this.resize();
     }
 
     init() {
-      this.canvas = document.getElementById('particleTrail') as HTMLCanvasElement;
-      if (!this.canvas) return;
+      const canvasElement = document.getElementById('particleTrail');
+      if (!(canvasElement instanceof HTMLCanvasElement)) return;
+      this.canvas = canvasElement;
 
-      this.ctx = this.canvas.getContext('2d', { alpha: true });
-      if (!this.ctx) return;
+      const context = this.canvas.getContext('2d', { alpha: true });
+      if (!context) return;
+      this.ctx = context;
 
       this.resize();
       const heroSection = document.querySelector('.hero-section');
@@ -320,7 +303,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
       this.canvas.height = window.innerHeight;
     }
 
-    handleMouseMove(e: MouseEvent) {
+    handleMouseMove(e) {
       this.lastMouseX = this.mouseX;
       this.lastMouseY = this.mouseY;
       this.mouseX = e.clientX;
@@ -447,7 +430,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
     }
 
     // Helper to adjust alpha in rgba color strings
-    adjustAlpha(color: string, alpha: number): string {
+    adjustAlpha(color, alpha) {
       // Match rgba values - format is rgba(r, g, b, a) where a is 0-1
       const match = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
       if (match) {
@@ -479,8 +462,8 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
   }
 
   // Initialize effects
-  let magneticText: MagneticText | null = null;
-  let particleTrail: ParticleTrail | null = null;
+  let magneticText = null;
+  let particleTrail = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     magneticText = new MagneticText();
