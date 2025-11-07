@@ -64,6 +64,16 @@ const {
       this.pendingTimeouts = [];
       this.isDestroyed = false;
       this.animationFrameId = null;
+      this.baseBubbleCount = config.bubbleCount;
+      this.dynamicBubbleCount = config.bubbleCount;
+      this.minBubbleCount = Math.max(3, Math.floor(config.bubbleCount * 0.6));
+      this.maxBubbleCount = Math.max(config.bubbleCount * 2, 18);
+      this.populationDirty = true;
+      this.performanceSamples = [];
+      this.lastFrameTime = null;
+      this.lastPerformanceCheck = typeof performance !== 'undefined' ? performance.now() : 0;
+      this.reduceMotionMediaQuery = null;
+      this.reduceMotionListener = null;
       
       // Bind handlers to preserve context
       this.resizeHandler = () => this.resizeCanvas();
@@ -76,7 +86,9 @@ const {
 
     init() {
       this.resizeCanvas();
+      this.dynamicBubbleCount = this.calculateAdaptiveBubbleCount();
       this.createShapes();
+      this.populationDirty = false;
       this.bindEvents();
       this.startPhysics();
     }
@@ -103,6 +115,12 @@ const {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
       }
+
+      const newTarget = this.calculateAdaptiveBubbleCount();
+      if (newTarget !== this.dynamicBubbleCount) {
+        this.dynamicBubbleCount = newTarget;
+      }
+      this.populationDirty = true;
     }
 
     // Default soap bubble color sets (pale, iridescent)
@@ -130,7 +148,8 @@ const {
       
       const colorSets = this.getDefaultColorSets();
       
-      for (let i = 0; i < this.config.bubbleCount; i++) {
+      const targetCount = this.dynamicBubbleCount;
+      for (let i = 0; i < targetCount; i++) {
         const radius = Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
         const colors = colorSets[i % colorSets.length];
         
@@ -192,6 +211,7 @@ const {
           hasTriggeredSound: false
         });
       }
+      this.populationDirty = false;
     }
 
     lightenColor(color, amount) {
@@ -203,6 +223,128 @@ const {
         return `rgba(${r}, ${g}, ${b}, ${rgba[3] || 0.6})`;
       }
       return color;
+    }
+
+    calculateAdaptiveBubbleCount() {
+      const canvasWidth = this.canvas ? this.canvas.width : (typeof window !== 'undefined' ? window.innerWidth : 1280);
+      const canvasHeight = this.canvas ? this.canvas.height : (typeof window !== 'undefined' ? window.innerHeight : 720);
+      const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+      const normalizedArea = canvasWidth * canvasHeight;
+
+      let areaBased = Math.ceil(normalizedArea / (120000 * Math.min(dpr, 1.5)));
+      if (!Number.isFinite(areaBased) || areaBased <= 0) {
+        areaBased = this.baseBubbleCount;
+      }
+
+      if (canvasWidth < 420) {
+        areaBased = Math.min(areaBased, 3);
+      } else if (canvasWidth < 640) {
+        areaBased = Math.min(areaBased, 5);
+      } else if (canvasWidth < 1024) {
+        areaBased = Math.min(areaBased, 7);
+      }
+
+      if (typeof navigator !== 'undefined') {
+        const deviceMemory = navigator.deviceMemory ?? 4;
+        if (deviceMemory <= 2) {
+          areaBased = Math.min(areaBased, 4);
+        }
+
+        const cores = navigator.hardwareConcurrency ?? 4;
+        if (cores <= 4) {
+          areaBased = Math.min(areaBased, 6);
+        }
+
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (connection && ['slow-2g', '2g'].includes(connection.effectiveType)) {
+          areaBased = Math.min(areaBased, 3);
+        }
+      }
+
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        try {
+          const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduceMotion) {
+            areaBased = Math.min(areaBased, 4);
+          }
+        } catch (_) {
+          // ignore
+        }
+      }
+
+      areaBased = Math.max(this.minBubbleCount, areaBased);
+      areaBased = Math.min(this.maxBubbleCount, areaBased);
+      return areaBased;
+    }
+
+    getLiveBubbleCount() {
+      if (!Array.isArray(this.shapes)) return 0;
+      return this.shapes.reduce((count, shape) => {
+        return shape && shape.life === undefined ? count + 1 : count;
+      }, 0);
+    }
+
+    trimExcessBubbles(excess) {
+      if (excess <= 0) return;
+      for (let i = this.shapes.length - 1; i >= 0 && excess > 0; i--) {
+        const shape = this.shapes[i];
+        if (!shape || shape.life !== undefined || shape.isPopping) continue;
+        this.shapes.splice(i, 1);
+        excess--;
+      }
+
+      // If we still have excess (all remaining are popping/particles), remove whatever is left
+      for (let i = this.shapes.length - 1; i >= 0 && excess > 0; i--) {
+        const shape = this.shapes[i];
+        if (!shape || shape.life !== undefined) continue;
+        this.shapes.splice(i, 1);
+        excess--;
+      }
+    }
+
+    syncBubblePopulation() {
+      if (!this.populationDirty) return;
+      this.populationDirty = false;
+
+      const target = this.dynamicBubbleCount;
+      const liveCount = this.getLiveBubbleCount();
+
+      if (liveCount > target) {
+        this.trimExcessBubbles(liveCount - target);
+      } else if (liveCount < target) {
+        const deficit = target - liveCount;
+        for (let i = 0; i < deficit; i++) {
+          this.createNewShape(true);
+        }
+      }
+    }
+
+    recordPerformanceSample(delta) {
+      if (typeof performance === 'undefined' || !delta || !isFinite(delta)) return;
+      if (delta > 250) return; // Ignore long pauses (tab switches, throttling)
+
+      const fps = 1000 / delta;
+      this.performanceSamples.push(fps);
+      if (this.performanceSamples.length > 120) {
+        this.performanceSamples.shift();
+      }
+
+      const now = performance.now();
+      if (now - this.lastPerformanceCheck >= 2000 && this.performanceSamples.length >= 20) {
+        const avgFps = this.performanceSamples.reduce((sum, value) => sum + value, 0) / this.performanceSamples.length;
+        const adaptiveTarget = this.calculateAdaptiveBubbleCount();
+
+        if (avgFps < 42 && this.dynamicBubbleCount > this.minBubbleCount) {
+          this.dynamicBubbleCount = Math.max(this.minBubbleCount, this.dynamicBubbleCount - 1);
+          this.populationDirty = true;
+        } else if (avgFps > 58 && this.dynamicBubbleCount < adaptiveTarget) {
+          this.dynamicBubbleCount = Math.min(adaptiveTarget, this.dynamicBubbleCount + 1);
+          this.populationDirty = true;
+        }
+
+        this.performanceSamples = [];
+        this.lastPerformanceCheck = now;
+      }
     }
 
     triggerPopSound(shape) {
@@ -268,12 +410,45 @@ const {
         document.addEventListener('mousemove', this.mouseMoveHandler);
         document.addEventListener('click', this.clickHandler);
       }
+
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        try {
+          const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+          this.reduceMotionMediaQuery = mediaQuery;
+          this.reduceMotionListener = () => {
+            const newTarget = this.calculateAdaptiveBubbleCount();
+            if (newTarget !== this.dynamicBubbleCount) {
+              this.dynamicBubbleCount = newTarget;
+              this.populationDirty = true;
+            }
+          };
+
+          if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', this.reduceMotionListener);
+          } else if (mediaQuery.addListener) {
+            mediaQuery.addListener(this.reduceMotionListener);
+          }
+        } catch (_) {
+          this.reduceMotionMediaQuery = null;
+          this.reduceMotionListener = null;
+        }
+      }
     }
 
     unbindEvents() {
       window.removeEventListener('resize', this.resizeHandler);
       document.removeEventListener('mousemove', this.mouseMoveHandler);
       document.removeEventListener('click', this.clickHandler);
+
+      if (this.reduceMotionMediaQuery && this.reduceMotionListener) {
+        if (this.reduceMotionMediaQuery.removeEventListener) {
+          this.reduceMotionMediaQuery.removeEventListener('change', this.reduceMotionListener);
+        } else if (this.reduceMotionMediaQuery.removeListener) {
+          this.reduceMotionMediaQuery.removeListener(this.reduceMotionListener);
+        }
+      }
+      this.reduceMotionMediaQuery = null;
+      this.reduceMotionListener = null;
     }
 
     explodeShape(shape, index) {
@@ -354,7 +529,10 @@ const {
       return true;
     }
 
-    createNewShape() {
+    createNewShape(force = false) {
+      if (!force && this.getLiveBubbleCount() >= this.dynamicBubbleCount) {
+        return;
+      }
       const colorSets = this.getDefaultColorSets();
       const randomColors = colorSets[Math.floor(Math.random() * colorSets.length)];
       const radius = Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
@@ -426,8 +604,16 @@ const {
 
     physicsLoop() {
       if (!this.isRunning) return;
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const delta = this.lastFrameTime !== null ? now - this.lastFrameTime : 16;
+      this.lastFrameTime = now;
+
       this.updatePhysics();
       this.drawShapes();
+
+      this.recordPerformanceSample(delta);
+      this.syncBubblePopulation();
+
       this.animationFrameId = requestAnimationFrame(() => this.physicsLoop());
     }
 

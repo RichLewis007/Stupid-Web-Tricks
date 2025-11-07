@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Adaptive soap bubble population that scales with viewport, device capabilities, motion preferences, and connection quality
+- Runtime FPS sampling that trims or restores bubbles to keep animation smooth on slower hardware
+- Updated hero collision handling and population sync for cleaner, low-latency bubble pops around headline text
 - GitHub Pages deployment support
 - Dual deployment configuration for Cloudflare Pages and GitHub Pages
 - GitHub Actions workflow for automatic GitHub Pages deployment
