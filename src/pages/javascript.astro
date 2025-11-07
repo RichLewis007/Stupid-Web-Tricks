@@ -548,7 +548,7 @@ self.onmessage = (e) => {
   }
 </style>
 
-<script>
+<script is:inline>
   // Counter functionality
   document.addEventListener('DOMContentLoaded', function() {
     let count = 0;
@@ -558,10 +558,13 @@ self.onmessage = (e) => {
     const resetBtn = document.getElementById('reset');
 
     function updateCounter() {
-      counter.textContent = count;
+      if (!(counter instanceof HTMLElement)) return;
+      counter.textContent = String(count);
       counter.style.transform = 'scale(1.1)';
       setTimeout(() => {
-        counter.style.transform = 'scale(1)';
+        if (counter instanceof HTMLElement) {
+          counter.style.transform = 'scale(1)';
+        }
       }, 150);
     }
 
@@ -585,17 +588,30 @@ self.onmessage = (e) => {
     const colorPreview = document.getElementById('colorPreview');
     const colorValue = document.getElementById('colorValue');
 
-    colorPicker?.addEventListener('input', (e) => {
-      const color = e.target.value;
-      colorPreview.style.backgroundColor = color;
-      colorValue.textContent = color;
-    });
+    if (
+      colorPicker instanceof HTMLInputElement &&
+      colorPreview instanceof HTMLElement &&
+      colorValue instanceof HTMLElement
+    ) {
+      colorPicker.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        const color = target.value;
+        colorPreview.style.backgroundColor = color;
+        colorValue.textContent = color;
+      });
+    }
 
     // Typing animation
     const typingText = document.getElementById('typingText');
     const startTypingBtn = document.getElementById('startTyping');
     const textToType = "This is a typing animation effect!";
 
+    /**
+     * @param {HTMLElement} element
+     * @param {string} text
+     * @param {number} speed
+     */
     function typeText(element, text, speed = 100) {
       let i = 0;
       element.textContent = '';
@@ -610,38 +626,51 @@ self.onmessage = (e) => {
       }, speed);
     }
 
-    startTypingBtn?.addEventListener('click', () => {
-      typeText(typingText, textToType, 100);
-    });
+    if (typingText instanceof HTMLElement) {
+      startTypingBtn?.addEventListener('click', () => {
+        typeText(typingText, textToType, 100);
+      });
+    }
 
     // Drag and drop functionality
     const draggable = document.getElementById('draggable');
     const dropZone = document.getElementById('dropZone');
 
-    draggable?.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', e.target.id);
-      e.target.style.opacity = '0.5';
-    });
+    if (draggable instanceof HTMLElement && dropZone instanceof HTMLElement) {
+      draggable.addEventListener('dragstart', (event) => {
+        if (!event.dataTransfer) return;
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        event.dataTransfer.setData('text/plain', target.id);
+        target.style.opacity = '0.5';
+      });
 
-    draggable?.addEventListener('dragend', (e) => {
-      e.target.style.opacity = '1';
-    });
+      draggable.addEventListener('dragend', (event) => {
+        const target = event.target;
+        if (target instanceof HTMLElement) {
+          target.style.opacity = '1';
+        }
+      });
 
-    dropZone?.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('drag-over');
-    });
+      dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
 
-    dropZone?.addEventListener('dragleave', () => {
-      dropZone.classList.remove('drag-over');
-    });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+      });
 
-    dropZone?.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      const data = e.dataTransfer.getData('text/plain');
-      const draggedElement = document.getElementById(data);
-      dropZone.appendChild(draggedElement);
-    });
+      dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (!event.dataTransfer) return;
+        const data = event.dataTransfer.getData('text/plain');
+        const draggedElement = document.getElementById(data);
+        if (draggedElement) {
+          dropZone.appendChild(draggedElement);
+        }
+      });
+    }
   });
 </script>

@@ -34,7 +34,7 @@ const {
   style={`z-index: ${zIndex}; pointer-events: ${pointerEvents};`}
 ></canvas>
 
-<script lang="js" define:vars={{ containerSelector, canvasId, bubbleCount, minRadius, maxRadius, enableMousePop, enableMouseInteraction, collisionSelectorsJson: JSON.stringify(collisionSelectors) }}>
+<script lang="js" is:inline define:vars={{ containerSelector, canvasId, bubbleCount, minRadius, maxRadius, enableMousePop, enableMouseInteraction, collisionSelectorsJson: JSON.stringify(collisionSelectors) }}>
   // Parse collisionSelectors from JSON string
   const collisionSelectorsArray = JSON.parse(collisionSelectorsJson || '[]');
   

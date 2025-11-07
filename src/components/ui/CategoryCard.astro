@@ -1,6 +1,16 @@
 ---
 // CategoryCard.astro - Reusable category card component
-const { title, description, icon, iconClass, href, features } = Astro.props;
+const {
+  title,
+  description,
+  icon,
+  iconClass,
+  href,
+  features: rawFeatures = []
+} = Astro.props;
+
+/** @type {string[]} */
+const features = Array.isArray(rawFeatures) ? rawFeatures : [];
 ---
 
 <div class="category-card group">

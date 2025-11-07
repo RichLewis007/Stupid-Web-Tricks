@@ -425,29 +425,40 @@ import Layout from '../layouts/Layout.astro';
   }
 </style>
 
-<script>
+<script is:inline>
   document.addEventListener('DOMContentLoaded', function() {
     // Canvas drawing functionality
     const canvas = document.getElementById('drawingCanvas');
-    if (canvas) {
+    if (canvas instanceof HTMLCanvasElement) {
       const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
       let isDrawing = false;
       const colorPicker = document.getElementById('colorPicker');
       const brushSize = document.getElementById('brushSize');
       const clearBtn = document.getElementById('clearCanvas');
 
+      /**
+       * @param {MouseEvent} e
+       */
       function startDrawing(e) {
         isDrawing = true;
         ctx.beginPath();
         ctx.moveTo(e.offsetX, e.offsetY);
       }
 
+      /**
+       * @param {MouseEvent} e
+       */
       function draw(e) {
         if (!isDrawing) return;
         
-        ctx.lineWidth = brushSize.value;
+        const lineWidth = brushSize instanceof HTMLInputElement ? Number(brushSize.value) || 1 : 1;
+        const strokeStyle = colorPicker instanceof HTMLInputElement ? colorPicker.value : '#ffffff';
+
+        ctx.lineWidth = lineWidth;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = colorPicker.value;
+        ctx.strokeStyle = strokeStyle;
         
         ctx.lineTo(e.offsetX, e.offsetY);
         ctx.stroke();
@@ -472,10 +483,10 @@ import Layout from '../layouts/Layout.astro';
 
     // Particles system
     const particlesCanvas = document.getElementById('particlesCanvas');
-    if (particlesCanvas) {
+    if (particlesCanvas instanceof HTMLCanvasElement) {
       const ctx = particlesCanvas.getContext('2d');
-      const particles = [];
-      
+      if (!ctx) return;
+
       class Particle {
         constructor() {
           this.x = Math.random() * particlesCanvas.width;
@@ -505,6 +516,9 @@ import Layout from '../layouts/Layout.astro';
         }
       }
       
+      /** @type {Particle[]} */
+      const particles = [];
+
       // Create particles
       for (let i = 0; i < 50; i++) {
         particles.push(new Particle());

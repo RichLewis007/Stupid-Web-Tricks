@@ -41,7 +41,7 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
   </div>
 </section>
 
-<script lang="js">
+<script lang="js" is:inline>
   // Magnetic Text Effect
   class MagneticText {
     constructor() {
@@ -75,7 +75,6 @@ import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
       this.isActive = true;
-      const previousMouseMoveTime = this.lastMouseMoveTime;
       this.lastMouseMoveTime = Date.now();
       
       // Cancel any pending glow animation trigger (but don't interrupt ongoing sequences)
