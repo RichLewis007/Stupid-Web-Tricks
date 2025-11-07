@@ -1,9 +1,11 @@
 ---
 // HeroSection.astro - Main hero section with magnetic text, particle trail, and liquid blobs
 import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
+import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 ---
 
 <section class="hero-section relative h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
+  <SoundEffectsProvider client:load />
   <!-- Liquid blob background -->
   <div class="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
     <div class="liquid-blobs absolute inset-0">

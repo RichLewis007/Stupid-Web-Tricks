@@ -188,7 +188,8 @@ const {
           distortionSeed: Math.random() * 1000,
           reflectionAngle: Math.random() * Math.PI * 2,
           isPopping: false,
-          popPhase: 0
+          popPhase: 0,
+          hasTriggeredSound: false
         });
       }
     }
@@ -202,6 +203,23 @@ const {
         return `rgba(${r}, ${g}, ${b}, ${rgba[3] || 0.6})`;
       }
       return color;
+    }
+
+    triggerPopSound(shape) {
+      if (shape.hasTriggeredSound) return;
+      shape.hasTriggeredSound = true;
+
+      try {
+        const detail = {
+          id: shape.id,
+          x: shape.x,
+          y: shape.y,
+          radius: shape.radius
+        };
+        window.dispatchEvent(new CustomEvent('soapbubbles:pop', { detail }));
+      } catch (error) {
+        console.warn('SoapBubbles: Failed to dispatch pop sound event', error);
+      }
     }
 
     handleMouseMove(e) {
@@ -238,6 +256,7 @@ const {
           // This ensures it goes through the same path as collision-based pops
           shape.isPopping = true;
           shape.popPhase = 0;
+          this.triggerPopSound(shape);
           break;
         }
       }
@@ -392,7 +411,8 @@ const {
         distortionSeed: Math.random() * 1000,
         reflectionAngle: Math.random() * Math.PI * 2,
         isPopping: false,
-        popPhase: 0
+        popPhase: 0,
+        hasTriggeredSound: false
       };
       
       this.shapes.push(newShape);
@@ -518,11 +538,13 @@ const {
         if (!shape.isPopping && this.checkCollisionWithMouse(shape)) {
           shape.isPopping = true;
           shape.popPhase = 0;
+          this.triggerPopSound(shape);
         }
 
         if (!shape.isPopping && this.checkCollisionWithElements(shape)) {
           shape.isPopping = true;
           shape.popPhase = 0;
+          this.triggerPopSound(shape);
         }
 
         // Update wobble
