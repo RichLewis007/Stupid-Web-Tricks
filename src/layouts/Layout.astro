@@ -34,6 +34,47 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@300;400;500;600;700&display=swap" as="style">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@300;400;500;600;700&display=swap">
+    <style is:inline>
+      :root:not(.fonts-loaded) .bangers-font { font-family: 'Impact', 'Arial Black', sans-serif !important; }
+      :root.fonts-loaded .bangers-font { font-family: 'Bangers', 'Impact', 'Arial Black', sans-serif !important; }
+    </style>
+    <script is:inline>
+      (function() {
+        const root = document.documentElement;
+        const markFontsLoaded = () => {
+          root.classList.add('fonts-loaded');
+          try {
+            sessionStorage.setItem('fonts-loaded', 'true');
+          } catch (_) {}
+        };
+
+        try {
+          if (sessionStorage.getItem('fonts-loaded') === 'true') {
+            markFontsLoaded();
+            return;
+          }
+        } catch (_) {}
+
+        if ('fonts' in document && document.fonts.ready) {
+          Promise.all([
+            document.fonts.ready,
+            document.fonts.load('1em "Bangers"')
+          ])
+          .then(() => {
+            // ensure the font actually rendered before flipping
+            requestAnimationFrame(markFontsLoaded);
+          })
+          .catch(markFontsLoaded);
+        } else {
+          window.addEventListener('load', markFontsLoaded, { once: true });
+        }
+      })();
+    </script>
+    <noscript>
+      <style>
+        .bangers-font { font-family: 'Bangers', 'Impact', 'Arial Black', sans-serif; }
+      </style>
+    </noscript>
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

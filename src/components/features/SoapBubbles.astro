@@ -461,30 +461,37 @@ const {
       
       const canvasRect = this.canvas.getBoundingClientRect();
       
+      const padding = Math.max(3, shape.radius * 0.15);
       for (const selector of this.config.collisionSelectors) {
         const element = document.querySelector(selector);
         if (!element) continue;
-        
-        const rect = element.getBoundingClientRect();
-        const elementLeft = rect.left - canvasRect.left;
-        const elementRight = rect.right - canvasRect.left;
-        const elementTop = rect.top - canvasRect.top;
-        const elementBottom = rect.bottom - canvasRect.top;
-        
-        const bubbleLeft = shape.x - shape.radius;
-        const bubbleRight = shape.x + shape.radius;
-        const bubbleTop = shape.y - shape.radius;
-        const bubbleBottom = shape.y + shape.radius;
-        
-        if (bubbleRight > elementLeft && bubbleLeft < elementRight && 
-            bubbleBottom > elementTop && bubbleTop < elementBottom) {
-          const closestX = Math.max(elementLeft, Math.min(shape.x, elementRight));
-          const closestY = Math.max(elementTop, Math.min(shape.y, elementBottom));
-          const distance = Math.sqrt(
-            Math.pow(shape.x - closestX, 2) + Math.pow(shape.y - closestY, 2)
-          );
-          if (distance <= shape.radius + 2) {
-            return true;
+
+        const clientRects = element.getClientRects();
+        const rectArray = clientRects.length ? Array.from(clientRects) : [element.getBoundingClientRect()];
+
+        for (const rect of rectArray) {
+          const elementLeft = rect.left - canvasRect.left - padding;
+          const elementRight = rect.right - canvasRect.left + padding;
+          const elementTop = rect.top - canvasRect.top - padding;
+          const elementBottom = rect.bottom - canvasRect.top + padding;
+
+          const bubbleLeft = shape.x - shape.radius;
+          const bubbleRight = shape.x + shape.radius;
+          const bubbleTop = shape.y - shape.radius;
+          const bubbleBottom = shape.y + shape.radius;
+
+          const horizontalOverlap = bubbleRight >= elementLeft && bubbleLeft <= elementRight;
+          const verticalOverlap = bubbleBottom >= elementTop && bubbleTop <= elementBottom;
+
+          if (horizontalOverlap && verticalOverlap) {
+            const closestX = Math.max(elementLeft, Math.min(shape.x, elementRight));
+            const closestY = Math.max(elementTop, Math.min(shape.y, elementBottom));
+            const distance = Math.sqrt(
+              Math.pow(shape.x - closestX, 2) + Math.pow(shape.y - closestY, 2)
+            );
+            if (distance <= shape.radius + padding) {
+              return true;
+            }
           }
         }
       }

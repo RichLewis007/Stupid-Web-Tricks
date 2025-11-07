@@ -25,8 +25,12 @@ body {
 }
 
 /* Prevent font flash for Bangers titles */
-.bangers-font {
-  font-family: 'Bangers', 'Impact', 'Arial Black', sans-serif;
+:root:not(.fonts-loaded) .bangers-font {
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+}
+
+:root.fonts-loaded .bangers-font {
+  font-family: 'Bangers', 'Impact', 'Arial Black', sans-serif !important;
 }
 
 body {
