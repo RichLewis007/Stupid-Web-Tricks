@@ -265,17 +265,50 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     constructor() {
       this.canvas = null;
       this.ctx = null;
-      this.particles = [];
-      this.mouseX = 0;
-      this.mouseY = 0;
-      this.lastMouseX = 0;
-      this.lastMouseY = 0;
-      this.isActive = false;
+      this.trailPoints = [];
+      this.pointer = { x: 0, y: 0, lastX: 0, lastY: 0, vx: 0, vy: 0, speed: 0, active: false };
+      this.smoothedPointer = { x: 0, y: 0 };
+      this.lastPointerUpdate = 0;
+      this.lastEmitPosition = null;
+      this.lastEmitTime = 0;
+      this.emitInterval = 180;
+      this.lastStationaryEmitTime = 0;
+      this.stationaryEmitInterval = 800;
+      this.stationaryThreshold = 500;
+      this.lastFrameTime = 0;
       this.animationFrame = null;
-      this.maxParticles = 50; // Limit particles to prevent memory issues
+      this.initialMaxTrailPoints = 600;
+      this.maxTrailPoints = this.initialMaxTrailPoints;
+      this.performanceLimitedMax = null;
+      this.minimumSpacing = 8;
+      this.dpr = 1;
+      this.disabled = false;
+      this.currentPeakTrailCount = 0;
+      this.performanceSamples = [];
+      this.lastPerformanceCheck = 0;
+      this.minBubbleCount = 30;
+      this.dynamicBubbleCount = 30;
+      this.populationDirty = false;
 
-      this.mouseMoveHandler = (e) => this.handleMouseMove(e);
-      this.mouseLeaveHandler = () => this.handleMouseLeave();
+      if (typeof navigator !== 'undefined') {
+        const deviceMemory = navigator.deviceMemory ?? 4;
+        if (deviceMemory <= 2) {
+          console.log("LOW MEMORY!");
+          this.initialMaxTrailPoints = Math.min(this.initialMaxTrailPoints, 30);
+          this.minimumSpacing = 10;
+          this.emitInterval = Math.max(this.emitInterval, 220);
+        }
+        // if (cores <= 4) {
+        //   console.log("LOW CORES!");
+        //   this.initialMaxTrailPoints = Math.min(this.initialMaxTrailPoints, 40);
+        // }
+      }
+      this.maxTrailPoints = this.initialMaxTrailPoints;
+
+      this.pointerMoveHandler = (e) => this.handlePointerMove(e);
+      this.pointerLeaveHandler = () => this.handlePointerLeave();
+      this.pointerDownHandler = () => this.handlePointerDown();
+      this.pointerUpHandler = () => this.handlePointerUp();
       this.resizeHandler = () => this.resize();
     }
 
@@ -288,50 +321,103 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       if (!context) return;
       this.ctx = context;
 
+      const prefersReducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+      const hasFinePointer = window.matchMedia ? window.matchMedia('(pointer: fine)').matches : true;
+      if (prefersReducedMotion || !hasFinePointer) {
+        this.disabled = true;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        return;
+      }
+
       this.resize();
       const heroSection = document.querySelector('.hero-section');
       if (heroSection) {
-        heroSection.addEventListener('mousemove', this.mouseMoveHandler);
-        heroSection.addEventListener('mouseleave', this.mouseLeaveHandler);
+        if (window.PointerEvent) {
+          heroSection.addEventListener('pointermove', this.pointerMoveHandler, { passive: true });
+          heroSection.addEventListener('pointerdown', this.pointerDownHandler, { passive: true });
+          heroSection.addEventListener('pointerup', this.pointerUpHandler, { passive: true });
+          heroSection.addEventListener('pointerleave', this.pointerLeaveHandler);
+        } else {
+          heroSection.addEventListener('mousemove', this.pointerMoveHandler);
+          heroSection.addEventListener('mousedown', this.pointerDownHandler);
+          heroSection.addEventListener('mouseup', this.pointerUpHandler);
+          heroSection.addEventListener('mouseleave', this.pointerLeaveHandler);
+        }
       }
       window.addEventListener('resize', this.resizeHandler);
       this.animate();
     }
 
     resize() {
-      if (!this.canvas) return;
-      this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
+      if (!this.canvas || !this.ctx) return;
+
+      const width = this.canvas.clientWidth || window.innerWidth;
+      const height = this.canvas.clientHeight || window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.dpr = dpr;
+      this.canvas.width = Math.round(width * dpr);
+      this.canvas.height = Math.round(height * dpr);
+      if (typeof this.ctx.setTransform === 'function') {
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      } else if (typeof this.ctx.resetTransform === 'function') {
+        this.ctx.resetTransform();
+        this.ctx.scale(dpr, dpr);
+      } else {
+        this.ctx.scale(dpr, dpr);
+      }
+      this.lastEmitPosition = null;
     }
 
-    handleMouseMove(e) {
-      this.lastMouseX = this.mouseX;
-      this.lastMouseY = this.mouseY;
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
-      this.isActive = true;
+    handlePointerDown() {
+      this.pointer.active = true;
+      this.lastPointerUpdate = performance.now();
+    }
 
-      // Create particles at mouse position
-      if (this.particles.length < this.maxParticles) {
-        const speed = Math.sqrt(
-          Math.pow(this.mouseX - this.lastMouseX, 2) + 
-          Math.pow(this.mouseY - this.lastMouseY, 2)
-        );
-        
-        for (let i = 0; i < Math.min(3, Math.floor(speed / 5)); i++) {
-          this.createParticle();
-        }
+    handlePointerUp() {
+      this.pointer.active = false;
+    }
+
+    handlePointerLeave() {
+      this.pointer.active = false;
+      this.lastEmitPosition = null;
+      this.pointer.x = 0;
+      this.pointer.y = 0;
+      this.lastStationaryEmitTime = 0;
+    }
+
+    handlePointerMove(e) {
+      if (!this.canvas) return;
+      if (e.pointerType && e.pointerType !== 'mouse' && e.pointerType !== 'pen') {
+        return;
+      }
+
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      this.pointer.lastX = this.pointer.x;
+      this.pointer.lastY = this.pointer.y;
+      this.pointer.x = x;
+      this.pointer.y = y;
+      this.pointer.vx = this.pointer.x - (this.pointer.lastX ?? this.pointer.x);
+      this.pointer.vy = this.pointer.y - (this.pointer.lastY ?? this.pointer.y);
+      const speed = Math.sqrt(this.pointer.vx * this.pointer.vx + this.pointer.vy * this.pointer.vy);
+      this.pointer.speed = speed;
+      this.pointer.active = true;
+      this.lastPointerUpdate = performance.now();
+
+      if (!this.lastEmitPosition) {
+        const spawn = this.getSpawnPosition(x, y);
+        this.smoothedPointer.x = spawn.x;
+        this.smoothedPointer.y = spawn.y;
+        this.lastEmitPosition = { ...spawn };
+        this.emitTrailPoint(spawn.x, spawn.y);
       }
     }
 
-    handleMouseLeave() {
-      this.isActive = false;
-    }
+    getSpawnPosition(x, y) {
+      if (!this.ctx) return;
 
-    createParticle() {
-      if (this.particles.length >= this.maxParticles || !this.ctx) return;
-
-      // Use same soap bubble color sets as big bubbles
       const soapBubbleColorSets = [
         ['rgba(255, 230, 250, 0.15)', 'rgba(230, 250, 255, 0.18)', 'rgba(240, 255, 255, 0.12)'],
         ['rgba(240, 230, 255, 0.16)', 'rgba(230, 240, 255, 0.17)', 'rgba(230, 255, 250, 0.14)'],
@@ -341,67 +427,222 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         ['rgba(235, 255, 255, 0.16)', 'rgba(245, 235, 255, 0.15)', 'rgba(255, 235, 250, 0.17)']
       ];
 
-      const randomColors = soapBubbleColorSets[Math.floor(Math.random() * soapBubbleColorSets.length)];
+      const pointerSpeed = Math.sqrt((this.pointer.vx || 0) ** 2 + (this.pointer.vy || 0) ** 2);
+      const norm = pointerSpeed > 0.01 ? pointerSpeed : 1;
+      const motionFactor = Math.min(pointerSpeed / 80, 1);
+      const offsetDistance = 6 + motionFactor * 26;
+      const offsetX = (this.pointer.vx || 0) / norm * offsetDistance;
+      const offsetY = (this.pointer.vy || 0) / norm * offsetDistance;
+      const driftAngle = Math.random() * Math.PI * 2;
+      const driftMagnitude = 0.12 + motionFactor * 0.08;
 
-      this.particles.push({
-        x: this.mouseX + (Math.random() - 0.5) * 10,
-        y: this.mouseY + (Math.random() - 0.5) * 10,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: (Math.random() - 0.5) * 1.5,
-        life: 80, // Longer life for tiny bubbles
-        maxLife: 80,
-        radius: Math.random() * 4 + 3, // Tiny bubbles: 3-7px radius
-        colors: randomColors,
-        reflectionAngle: Math.random() * 0.3 - 0.15, // Small reflection offset
-        pulse: Math.random() * Math.PI * 2 // Random pulse phase
+      return {
+        x: x - offsetX,
+        y: y - offsetY,
+        driftX: Math.cos(driftAngle) * driftMagnitude,
+        driftY: Math.sin(driftAngle) * driftMagnitude,
+        motionFactor,
+        colors: soapBubbleColorSets[Math.floor(Math.random() * soapBubbleColorSets.length)]
+      };
+    }
+
+    emitTrailPoint(x, y) {
+      if (!this.ctx) return;
+      if (this.trailPoints.length >= this.maxTrailPoints) return;
+
+      const spawn = this.getSpawnPosition(x, y);
+      if (!spawn) return;
+
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.25 + Math.random() * 0.1;
+      const velocityX = Math.cos(angle) * speed;
+      const velocityY = Math.sin(angle) * speed;
+
+      this.trailPoints.unshift({
+        x: spawn.x + (Math.random() - 0.5) * 3,
+        y: spawn.y + (Math.random() - 0.5) * 3,
+        vx: velocityX,
+        vy: velocityY,
+        life: 1,
+        birth: performance.now(),
+        fullLifeMs: 4000,
+        delayMs: 3000,
+        shrinkStartMs: null,
+        colors: spawn.colors,
+        baseRadius: 3 + Math.random() * 3,
+        currentRadius: 0,
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: 0.034 + Math.random() * 0.009
       });
+
+      this.lastEmitTime = performance.now();
+    }
+
+    emitStationaryBubbles(x, y) {
+      if (!this.ctx) return;
+      if (this.trailPoints.length >= this.maxTrailPoints) return;
+
+      const soapBubbleColorSets = [
+        ['rgba(255, 230, 250, 0.15)', 'rgba(230, 250, 255, 0.18)', 'rgba(240, 255, 255, 0.12)'],
+        ['rgba(240, 230, 255, 0.16)', 'rgba(230, 240, 255, 0.17)', 'rgba(230, 255, 250, 0.14)'],
+        ['rgba(230, 245, 255, 0.17)', 'rgba(240, 255, 255, 0.16)', 'rgba(255, 240, 250, 0.15)'],
+        ['rgba(235, 255, 240, 0.15)', 'rgba(230, 245, 255, 0.17)', 'rgba(245, 235, 255, 0.16)'],
+        ['rgba(255, 250, 235, 0.14)', 'rgba(255, 235, 245, 0.16)', 'rgba(235, 245, 255, 0.15)'],
+        ['rgba(235, 255, 255, 0.16)', 'rgba(245, 235, 255, 0.15)', 'rgba(255, 235, 250, 0.17)']
+      ];
+
+      // Emit 1-2 small bubbles moving away in different directions
+      const bubbleCount = 1 + Math.floor(Math.random() * 2);
+      
+      for (let i = 0; i < bubbleCount; i++) {
+        if (this.trailPoints.length >= this.maxTrailPoints) break;
+
+        // Random angle for each bubble to move away from center
+        const angle = Math.random() * Math.PI * 2;
+        // Speed for stationary bubbles (doubled from original)
+        const speed = 0.16 + Math.random() * 0.1;
+        const velocityX = Math.cos(angle) * speed;
+        const velocityY = Math.sin(angle) * speed;
+
+        // Small random offset from exact pointer position
+        const offsetX = (Math.random() - 0.5) * 8;
+        const offsetY = (Math.random() - 0.5) * 8;
+
+        this.trailPoints.unshift({
+          x: x + offsetX,
+          y: y + offsetY,
+          vx: velocityX,
+          vy: velocityY,
+          life: 1,
+          birth: performance.now(),
+          fullLifeMs: 5000,
+          delayMs: 3000,
+          shrinkStartMs: null,
+          colors: soapBubbleColorSets[Math.floor(Math.random() * soapBubbleColorSets.length)],
+          baseRadius: 2 + Math.random() * 2, // Smaller bubbles
+          currentRadius: 0,
+          pulse: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.025 + Math.random() * 0.008
+        });
+      }
+
+      this.lastStationaryEmitTime = performance.now();
     }
 
     animate() {
-      if (!this.ctx || !this.canvas) return;
+      if (!this.ctx || !this.canvas || this.disabled) return;
 
-      // Clear canvas with transparent background
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      const now = performance.now();
+      const delta = this.lastFrameTime > 0 ? now - this.lastFrameTime : 16; // Default to ~60fps if first frame
+      this.lastFrameTime = now;
+      
+      const timeSinceLastMove = now - this.lastPointerUpdate;
+      const isStationary = timeSinceLastMove > this.stationaryThreshold && this.pointer.x > 0 && this.pointer.y > 0;
+      
+      if (this.pointer.active && timeSinceLastMove > 300) {
+        this.pointer.active = false;
+      }
+      
+      if (this.pointer.active || timeSinceLastMove < 250) {
+        const followSpeed = this.pointer.active ? 0.34 : 0.1;
+        this.smoothedPointer.x += (this.pointer.x - this.smoothedPointer.x) * followSpeed;
+        this.smoothedPointer.y += (this.pointer.y - this.smoothedPointer.y) * followSpeed;
 
-      // Update and draw tiny bubbles
-      this.particles = this.particles.filter(particle => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        particle.vx *= 0.96;
-        particle.vy *= 0.96;
-        particle.life--;
-        particle.pulse += 0.05; // Subtle pulse animation
+        const maxSpeed = 800;
+        const minMultiplier = 1;
+        const maxMultiplier = 4;
+        const speedMultiplier = minMultiplier + Math.min(maxMultiplier - minMultiplier, (this.pointer.speed || 0) / maxSpeed * (maxMultiplier - minMultiplier));
 
-        if (particle.life <= 0 || !this.ctx) return false;
+        const current = { x: this.smoothedPointer.x, y: this.smoothedPointer.y };
+        if (!this.lastEmitPosition) {
+          this.lastEmitPosition = { ...current };
+        }
 
-        const alpha = particle.life / particle.maxLife;
-        const pulseSize = particle.radius + Math.sin(particle.pulse) * 0.3;
-        
+        // const dx = current.x - this.lastEmitPosition.x;
+        // const dy = current.y - this.lastEmitPosition.y;
+        // const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // if (distance >= this.minimumSpacing) {
+        //   const steps = Math.min(3, Math.floor(distance / this.minimumSpacing));
+        //   for (let i = 1; i <= steps; i++) {
+        //     if (this.trailPoints.length >= this.maxTrailPoints) break;
+        //     const t = i / steps;
+        //     const emitX = this.lastEmitPosition.x + dx * t;
+        //     const emitY = this.lastEmitPosition.y + dy * t;
+        //     this.emitTrailPoint(emitX, emitY);
+        //     if (i === steps) {
+        //       this.lastEmitPosition = { x: emitX, y: emitY };
+        //     }
+        //   }
+        // } else 
+        if (this.trailPoints.length < this.maxTrailPoints && (now - this.lastEmitTime) > this.emitInterval * speedMultiplier) {
+          this.emitTrailPoint(current.x, current.y);
+          this.lastEmitPosition = { ...current };
+        } else {
+          this.lastEmitPosition = { ...current };
+        }
+      } else {
+        this.lastEmitPosition = null;
+      }
+
+      // Emit stationary bubbles when pointer is still in hero area but not moving
+      if (isStationary && this.trailPoints.length < this.maxTrailPoints && (now - this.lastStationaryEmitTime) > this.stationaryEmitInterval) {
+        this.emitStationaryBubbles(this.smoothedPointer.x, this.smoothedPointer.y);
+      }
+
+      const clearWidth = this.canvas.width / this.dpr;
+      const clearHeight = this.canvas.height / this.dpr;
+      this.ctx.clearRect(0, 0, clearWidth, clearHeight);
+
+      this.trailPoints = this.trailPoints.filter(point => {
+        point.x += point.vx;
+        point.y += point.vy;
+        const elapsed = now - (point.birth || now);
+
+        if (elapsed >= (point.fullLifeMs || 6000)) {
+          return false;
+        }
+
+        let lifeFactor = 1;
+        const delayMs = point.delayMs ?? 3000;
+        const fadeWindow = Math.max((point.fullLifeMs || 6000) - delayMs, 1);
+
+        if (elapsed >= delayMs) {
+          if (point.shrinkStartMs === null) {
+            point.shrinkStartMs = now;
+          }
+          const fadeElapsed = now - (point.shrinkStartMs || now);
+          lifeFactor = Math.max(0, 1 - fadeElapsed / fadeWindow);
+        }
+
+        point.pulse += point.pulseSpeed;
+        point.currentRadius = elapsed < delayMs ? point.baseRadius : point.baseRadius * lifeFactor;
+
+        const alpha = elapsed < delayMs ? 1 : lifeFactor;
+
         this.ctx.save();
-        
-        // Create bubble path (perfect circle)
+
         const bubblePath = new Path2D();
-        bubblePath.arc(particle.x, particle.y, pulseSize, 0, Math.PI * 2);
+        const baseRadius = point.currentRadius;
+        const pulseOffset = Math.sin(point.pulse) * 0.25;
+        const pulseSize = Math.max(0.05, baseRadius + pulseOffset);
+        bubblePath.arc(point.x, point.y, pulseSize, 0, Math.PI * 2);
         bubblePath.closePath();
-        
-        // Draw main bubble body with iridescent gradient
-        if (particle.colors && particle.colors.length >= 3) {
+
+        if (point.colors && point.colors.length >= 3) {
           const mainGradient = this.ctx.createRadialGradient(
-            particle.x - pulseSize * 0.35, particle.y - pulseSize * 0.35, 0,
-            particle.x, particle.y, pulseSize
+            point.x - pulseSize * 0.35, point.y - pulseSize * 0.35, 0,
+            point.x, point.y, pulseSize
           );
           mainGradient.addColorStop(0, `rgba(255, 255, 255, ${0.02 * alpha})`);
-          mainGradient.addColorStop(0.7, this.adjustAlpha(particle.colors[0], alpha));
-          mainGradient.addColorStop(0.85, this.adjustAlpha(particle.colors[1], alpha));
-          mainGradient.addColorStop(1, this.adjustAlpha(particle.colors[2], alpha));
-          
+          mainGradient.addColorStop(0.7, this.adjustAlpha(point.colors[0], alpha));
+          mainGradient.addColorStop(0.85, this.adjustAlpha(point.colors[1], alpha));
+          mainGradient.addColorStop(1, this.adjustAlpha(point.colors[2], alpha));
+
           this.ctx.fillStyle = mainGradient;
           this.ctx.fill(bubblePath);
         }
-        
-        // Skip reflections - too prominent for tiny bubbles
-        
-        // Soft border/outline
+
         this.ctx.shadowBlur = 5;
         this.ctx.shadowColor = `rgba(255, 255, 255, ${0.35 * alpha})`;
         this.ctx.shadowOffsetX = 0;
@@ -409,25 +650,45 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.25 * alpha})`;
         this.ctx.lineWidth = 0.3;
         this.ctx.stroke(bubblePath);
-        
-        // Reset shadow
+
         this.ctx.shadowBlur = 0;
         this.ctx.shadowColor = 'transparent';
-        
-        // Subtle inner edge
+
         this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * alpha})`;
         this.ctx.lineWidth = 0.2;
         this.ctx.stroke(bubblePath);
-        
-        this.ctx.restore();
 
+        this.ctx.restore();
         return true;
       });
 
-      if (this.ctx) {
-        this.ctx.globalAlpha = 1;
+      if (this.trailPoints.length > this.currentPeakTrailCount) {
+        this.currentPeakTrailCount = this.trailPoints.length;
       }
+
+      this.ctx.globalAlpha = 1;
       this.animationFrame = requestAnimationFrame(() => this.animate());
+
+      if (now - this.lastPerformanceCheck >= 2000 && this.performanceSamples.length >= 20) {
+        const avgFps = this.performanceSamples.reduce((sum, value) => sum + value, 0) / this.performanceSamples.length;
+        const adaptiveTarget = this.calculateAdaptiveBubbleCount();
+
+        if (avgFps < 42 && this.dynamicBubbleCount > this.minBubbleCount) {
+          this.dynamicBubbleCount = Math.max(this.minBubbleCount, this.dynamicBubbleCount - 1);
+          this.populationDirty = true;
+
+          if (this.performanceLimitedMax === null) {
+            this.performanceLimitedMax = Math.max(this.currentPeakTrailCount, this.trailPoints.length);
+            this.maxTrailPoints = Math.min(this.maxTrailPoints, Math.floor(this.performanceLimitedMax * 0.75));
+          }
+        } else if (avgFps > 58 && this.dynamicBubbleCount < adaptiveTarget) {
+          this.dynamicBubbleCount = Math.min(adaptiveTarget, this.dynamicBubbleCount + 1);
+          this.populationDirty = true;
+        }
+ 
+        this.performanceSamples = [];
+        this.lastPerformanceCheck = now;
+      }
     }
 
     // Helper to adjust alpha in rgba color strings
@@ -451,13 +712,21 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       }
       const heroSection = document.querySelector('.hero-section');
       if (heroSection) {
-        heroSection.removeEventListener('mousemove', this.mouseMoveHandler);
-        heroSection.removeEventListener('mouseleave', this.mouseLeaveHandler);
+        heroSection.removeEventListener('pointermove', this.pointerMoveHandler);
+        heroSection.removeEventListener('pointerdown', this.pointerDownHandler);
+        heroSection.removeEventListener('pointerup', this.pointerUpHandler);
+        heroSection.removeEventListener('pointerleave', this.pointerLeaveHandler);
+        heroSection.removeEventListener('mousemove', this.pointerMoveHandler);
+        heroSection.removeEventListener('mousedown', this.pointerDownHandler);
+        heroSection.removeEventListener('mouseup', this.pointerUpHandler);
+        heroSection.removeEventListener('mouseleave', this.pointerLeaveHandler);
       }
       window.removeEventListener('resize', this.resizeHandler);
-      this.particles = [];
+      this.trailPoints = [];
       if (this.ctx && this.canvas) {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        const clearWidth = this.canvas.width / this.dpr;
+        const clearHeight = this.canvas.height / this.dpr;
+        this.ctx.clearRect(0, 0, clearWidth, clearHeight);
       }
     }
   }
@@ -641,5 +910,18 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
   /* Particle canvas - on top so particles are visible */
   #particleTrail {
     z-index: 5;
+  }
+
+  .content-wrapper {
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+  }
+
+  .content-wrapper * {
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    cursor: default;
   }
 </style>

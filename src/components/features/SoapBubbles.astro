@@ -425,8 +425,6 @@ const {
 
           if (mediaQuery.addEventListener) {
             mediaQuery.addEventListener('change', this.reduceMotionListener);
-          } else if (mediaQuery.addListener) {
-            mediaQuery.addListener(this.reduceMotionListener);
           }
         } catch (_) {
           this.reduceMotionMediaQuery = null;
@@ -443,8 +441,6 @@ const {
       if (this.reduceMotionMediaQuery && this.reduceMotionListener) {
         if (this.reduceMotionMediaQuery.removeEventListener) {
           this.reduceMotionMediaQuery.removeEventListener('change', this.reduceMotionListener);
-        } else if (this.reduceMotionMediaQuery.removeListener) {
-          this.reduceMotionMediaQuery.removeListener(this.reduceMotionListener);
         }
       }
       this.reduceMotionMediaQuery = null;

@@ -73,7 +73,7 @@ function useDeferredPlay(play: () => void) {
 }
 
 export default function SoundEffectsProvider() {
-  const [playBubblePop, { sound }] = useSound('/audio/pop.wav', {
+  const [playBubblePop, { sound }] = useSound('/assets/sounds/bubble-pop-1.wav', {
     volume: 0.4,
     interrupt: true
   });

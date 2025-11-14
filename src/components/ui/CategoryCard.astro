@@ -9,8 +9,7 @@ const {
   features: rawFeatures = []
 } = Astro.props;
 
-/** @type {string[]} */
-const features = Array.isArray(rawFeatures) ? rawFeatures : [];
+const features: string[] = Array.isArray(rawFeatures) ? rawFeatures : [];
 ---
 
 <div class="category-card group">
