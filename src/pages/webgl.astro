@@ -449,6 +449,11 @@ const fragmentShaderSource = \`
         gl.deleteProgram(program);
         return null;
       }
+      gl.validateProgram(program);
+      const log = gl.getProgramInfoLog(program);
+      if (log) {
+        console.warn('Program validation log:', log);
+      }
       return program;
     };
 
@@ -488,7 +493,7 @@ const fragmentShaderSource = \`
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         
         const positionAttributeLocation = gl.getAttribLocation(program, 'position');
-        if (positionAttributeLocation >= 0) {
+        if (positionAttributeLocation !== -1) {
           gl.enableVertexAttribArray(positionAttributeLocation);
           gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
         }
@@ -506,6 +511,7 @@ const fragmentShaderSource = \`
       if (gl) {
         // Simple rotating square (2D version of cube for demo)
         const vertexShaderSource = `
+          precision mediump float;
           attribute vec2 position;
           uniform float time;
           void main() {
@@ -571,7 +577,7 @@ const fragmentShaderSource = \`
           gl.useProgram(program);
           
           const timeUniformLocation = gl.getUniformLocation(program, 'time');
-          if (timeUniformLocation) {
+          if (timeUniformLocation !== null) {
             gl.uniform1f(timeUniformLocation, time);
           }
           
@@ -591,6 +597,7 @@ const fragmentShaderSource = \`
       
       if (gl) {
         const vertexShaderSource = `
+          precision mediump float;
           attribute vec2 position;
           void main() {
             gl_Position = vec4(position, 0.0, 1.0);
@@ -653,8 +660,8 @@ const fragmentShaderSource = \`
           const timeUniformLocation = gl.getUniformLocation(program, 'time');
           const resolutionUniformLocation = gl.getUniformLocation(program, 'resolution');
           
-          if (timeUniformLocation) gl.uniform1f(timeUniformLocation, time);
-          if (resolutionUniformLocation) {
+          if (timeUniformLocation !== null) gl.uniform1f(timeUniformLocation, time);
+          if (resolutionUniformLocation !== null) {
             gl.uniform2f(resolutionUniformLocation, shaderCanvas.width, shaderCanvas.height);
           }
           
@@ -674,6 +681,7 @@ const fragmentShaderSource = \`
       
       if (gl) {
         const vertexShaderSource = `
+          precision mediump float;
           attribute vec2 position;
           uniform float time;
           
@@ -711,7 +719,7 @@ const fragmentShaderSource = \`
         gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
         
         const positionAttributeLocation = gl.getAttribLocation(program, 'position');
-        if (positionAttributeLocation >= 0) {
+        if (positionAttributeLocation !== -1) {
           gl.enableVertexAttribArray(positionAttributeLocation);
           gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
         }
@@ -723,7 +731,7 @@ const fragmentShaderSource = \`
           gl.useProgram(program);
           
           const timeUniformLocation = gl.getUniformLocation(program, 'time');
-          if (timeUniformLocation) gl.uniform1f(timeUniformLocation, time);
+          if (timeUniformLocation !== null) gl.uniform1f(timeUniformLocation, time);
           
           gl.drawArrays(gl.POINTS, 0, particleCount);
           

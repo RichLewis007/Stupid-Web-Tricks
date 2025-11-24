@@ -25,13 +25,6 @@ html {
   outline-offset: 2px;
 }
 
-/* WebKit-only text-size adjust guarded by @supports to avoid warnings elsewhere */
-@supports (-webkit-text-size-adjust: 100%) {
-  html {
-    -webkit-text-size-adjust: 100%;
-  }
-}
-
 /* Set Fredoka as default body font */
 body {
   font-family: 'Fredoka', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -113,24 +106,4 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-/* Custom scrollbar (WebKit only) wrapped to prevent warnings in other engines) */
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #1a1a2e;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--gradient-primary);
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--gradient-secondary);
-  }
 }
