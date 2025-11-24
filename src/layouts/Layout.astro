@@ -1,8 +1,10 @@
 ---
 import HamburgerIcon from '../assets/icons/hamburger.svg';
 import GithubIcon from '../assets/icons/github.svg';
+import '../styles/global.css';
 
 const { title, description = "Stupid Web Tricks - Amazing web effects, animations, and techniques" } = Astro.props;
+const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
 ---
 
 <!DOCTYPE html>
@@ -11,12 +13,12 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href={`${basePath}/favicon-96x96.png`} sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href={`${basePath}/favicon.svg`} />
+    <link rel="shortcut icon" href={`${basePath}/favicon.ico`} />
+    <link rel="apple-touch-icon" sizes="180x180" href={`${basePath}/apple-touch-icon.png`} />
     <meta name="apple-mobile-web-app-title" content="Stupid Web Tricks" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="manifest" href={`${basePath}/site.webmanifest`} />
     <meta name="generator" content={Astro.generator} />
     
     <!-- SEO Meta Tags -->
@@ -81,9 +83,6 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Import global styles -->
-    <link rel="stylesheet" href="/src/styles/global.css" />
   </head>
   <body>
     <!-- Navigation -->
@@ -91,7 +90,7 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
-            <a href="/" class="flex flex-col">
+            <a href={`${basePath || '/'}`} class="flex flex-col">
               <span class="text-2xl font-bold hover:animate-glow transition-all duration-300 bangers-font" style="color: #7661d1; text-shadow: 1px 1px 2px rgba(0,0,0,0.5), 0 0 4px rgba(118, 97, 209, 0.3); letter-spacing: 2px; line-height: 1; margin-bottom: -2px;">
                 Stupid Web Tricks
               </span>
@@ -102,22 +101,22 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
-              <a href="/" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={`${basePath || '/'}`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 Home
               </a>
-              <a href="/html" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={`${basePath}/html`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 HTML Tricks
               </a>
-              <a href="/css" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={`${basePath}/css`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 CSS Effects
               </a>
-              <a href="/javascript" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={`${basePath}/javascript`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 JavaScript
               </a>
-              <a href="/svg-canvas" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={`${basePath}/svg-canvas`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 SVG & Canvas
               </a>
-              <a href="/webgl" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={`${basePath}/webgl`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 WebGL
               </a>
             </div>
@@ -147,10 +146,10 @@ const { title, description = "Stupid Web Tricks - Amazing web effects, animation
           <a href="/javascript" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             JavaScript
           </a>
-          <a href="/svg-canvas" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={`${basePath}/svg-canvas`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             SVG & Canvas
           </a>
-          <a href="/webgl" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={`${basePath}/webgl`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             WebGL
           </a>
         </div>
