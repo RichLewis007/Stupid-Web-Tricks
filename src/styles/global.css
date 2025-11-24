@@ -19,6 +19,13 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Scope WebKit-only adjustments to avoid console noise elsewhere */
+@supports (-webkit-touch-callout: none) {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
 /* Set Fredoka as default body font */
 body {
   font-family: 'Fredoka', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -104,20 +111,22 @@ body {
   background-clip: text;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
+/* Custom scrollbar (WebKit only) */
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
 
-::-webkit-scrollbar-track {
-  background: #1a1a2e;
-}
+  ::-webkit-scrollbar-track {
+    background: #1a1a2e;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--gradient-primary);
-  border-radius: 4px;
-}
+  ::-webkit-scrollbar-thumb {
+    background: var(--gradient-primary);
+    border-radius: 4px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--gradient-secondary);
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--gradient-secondary);
+  }
 }
