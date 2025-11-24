@@ -1,6 +1,9 @@
 ---
 // CategoriesSection.astro - Categories grid section
-import CategoryCard from '../ui/CategoryCard.astro';
+import CategoryCard, { styles as categoryCardStyles } from '../ui/CategoryCard';
+
+const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
+const withBase = (path: string) => `${basePath}${path}`;
 ---
 
 <section id="categories" class="py-20 px-4 sm:px-6 lg:px-8">
@@ -19,9 +22,9 @@ import CategoryCard from '../ui/CategoryCard.astro';
       <CategoryCard
         title="HTML Tricks"
         description="Clever HTML techniques, semantic markup tricks, and accessibility hacks"
-        icon="fab fa-html5"
+        icon="html"
         iconClass="html-icon"
-        href="/html"
+        href={withBase('/html')}
         features={[
           "Semantic HTML patterns",
           "Accessibility improvements", 
@@ -34,9 +37,9 @@ import CategoryCard from '../ui/CategoryCard.astro';
       <CategoryCard
         title="CSS Effects"
         description="Stunning animations, transitions, and visual effects using pure CSS"
-        icon="fab fa-css3-alt"
+        icon="css"
         iconClass="css-icon"
-        href="/css"
+        href={withBase('/css')}
         features={[
           "Advanced animations",
           "Glass morphism",
@@ -49,9 +52,9 @@ import CategoryCard from '../ui/CategoryCard.astro';
       <CategoryCard
         title="JavaScript"
         description="Interactive features, DOM manipulation, and modern JavaScript techniques"
-        icon="fab fa-js-square"
+        icon="js"
         iconClass="js-icon"
-        href="/javascript"
+        href={withBase('/javascript')}
         features={[
           "DOM manipulation",
           "Event handling",
@@ -64,9 +67,9 @@ import CategoryCard from '../ui/CategoryCard.astro';
       <CategoryCard
         title="SVG & Canvas"
         description="Vector graphics, canvas animations, and creative visual effects"
-        icon="fas fa-vector-square"
+        icon="svg"
         iconClass="svg-icon"
-        href="/svg-canvas"
+        href={withBase('/svg-canvas')}
         features={[
           "SVG animations",
           "Canvas drawings",
@@ -79,9 +82,9 @@ import CategoryCard from '../ui/CategoryCard.astro';
       <CategoryCard
         title="WebGL"
         description="Advanced 3D graphics, shaders, and immersive web experiences"
-        icon="fas fa-cube"
+        icon="webgl"
         iconClass="webgl-icon"
-        href="/webgl"
+        href={withBase('/webgl')}
         features={[
           "3D graphics",
           "Shader programming",
@@ -95,7 +98,7 @@ import CategoryCard from '../ui/CategoryCard.astro';
         <CategoryCard
           title="More Coming"
           description="Additional categories and tricks are being added regularly"
-          icon="fas fa-plus-circle"
+          icon="coming"
           iconClass="coming-soon-icon"
           href="#"
           features={[
@@ -109,3 +112,7 @@ import CategoryCard from '../ui/CategoryCard.astro';
     </div>
   </div>
 </section>
+
+<style>
+  {categoryCardStyles}
+</style>

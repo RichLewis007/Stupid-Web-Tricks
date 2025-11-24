@@ -80,9 +80,6 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
         .bangers-font { font-family: 'Bangers', 'Impact', 'Arial Black', sans-serif; }
       </style>
     </noscript>
-    
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
   <body>
     <!-- Navigation -->
@@ -134,16 +131,16 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
       <!-- Mobile menu -->
       <div id="mobile-menu" class="md:hidden hidden">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 glass">
-          <a href="/" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={`${basePath || '/'}`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             Home
           </a>
-          <a href="/html" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={`${basePath}/html`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             HTML Tricks
           </a>
-          <a href="/css" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={`${basePath}/css`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             CSS Effects
           </a>
-          <a href="/javascript" class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={`${basePath}/javascript`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             JavaScript
           </a>
           <a href={`${basePath}/svg-canvas`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
