@@ -425,6 +425,33 @@ const fragmentShaderSource = \`
 
 <script is:inline>
   document.addEventListener('DOMContentLoaded', function() {
+    // Shared helpers
+    const createShader = (gl, type, source) => {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    };
+
+    const createProgram = (gl, vertexShader, fragmentShader) => {
+      if (!vertexShader || !fragmentShader) return null;
+      const program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error('Program link error:', gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        return null;
+      }
+      return program;
+    };
+
     // Basic WebGL Triangle
     const triangleCanvas = document.getElementById('triangleCanvas');
     if (triangleCanvas instanceof HTMLCanvasElement) {
@@ -445,46 +472,6 @@ const fragmentShaderSource = \`
           }
         `;
         
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {number} type
-         * @param {string} source
-         */
-        function createShader(gl, type, source) {
-          const shader = gl.createShader(type);
-          gl.shaderSource(shader, source);
-          gl.compileShader(shader);
-          
-          if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
-            return null;
-          }
-          
-          return shader;
-        }
-        
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {WebGLShader | null} vertexShader
-         * @param {WebGLShader | null} fragmentShader
-         */
-        function createProgram(gl, vertexShader, fragmentShader) {
-          if (!vertexShader || !fragmentShader) return null;
-          const program = gl.createProgram();
-          gl.attachShader(program, vertexShader);
-          gl.attachShader(program, fragmentShader);
-          gl.linkProgram(program);
-          
-          if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            console.error('Program linking error:', gl.getProgramInfoLog(program));
-            gl.deleteProgram(program);
-            return null;
-          }
-          
-          return program;
-        }
-        
         const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
         const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
         const program = createProgram(gl, vertexShader, fragmentShader);
@@ -501,8 +488,10 @@ const fragmentShaderSource = \`
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         
         const positionAttributeLocation = gl.getAttribLocation(program, 'position');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        if (positionAttributeLocation >= 0) {
+          gl.enableVertexAttribArray(positionAttributeLocation);
+          gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        }
         
         gl.useProgram(program);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -544,32 +533,6 @@ const fragmentShaderSource = \`
           }
         `;
         
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {number} type
-         * @param {string} source
-         */
-        function createShader(gl, type, source) {
-          const shader = gl.createShader(type);
-          gl.shaderSource(shader, source);
-          gl.compileShader(shader);
-          return shader;
-        }
-        
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {WebGLShader | null} vertexShader
-         * @param {WebGLShader | null} fragmentShader
-         */
-        function createProgram(gl, vertexShader, fragmentShader) {
-          if (!vertexShader || !fragmentShader) return null;
-          const program = gl.createProgram();
-          gl.attachShader(program, vertexShader);
-          gl.attachShader(program, fragmentShader);
-          gl.linkProgram(program);
-          return program;
-        }
-        
         const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
         const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
         const program = createProgram(gl, vertexShader, fragmentShader);
@@ -596,8 +559,10 @@ const fragmentShaderSource = \`
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
         
         const positionAttributeLocation = gl.getAttribLocation(program, 'position');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        if (positionAttributeLocation >= 0) {
+          gl.enableVertexAttribArray(positionAttributeLocation);
+          gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        }
         
         let time = 0;
         function animate() {
@@ -606,7 +571,9 @@ const fragmentShaderSource = \`
           gl.useProgram(program);
           
           const timeUniformLocation = gl.getUniformLocation(program, 'time');
-          gl.uniform1f(timeUniformLocation, time);
+          if (timeUniformLocation) {
+            gl.uniform1f(timeUniformLocation, time);
+          }
           
           gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
           
@@ -646,32 +613,6 @@ const fragmentShaderSource = \`
           }
         `;
         
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {number} type
-         * @param {string} source
-         */
-        function createShader(gl, type, source) {
-          const shader = gl.createShader(type);
-          gl.shaderSource(shader, source);
-          gl.compileShader(shader);
-          return shader;
-        }
-        
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {WebGLShader | null} vertexShader
-         * @param {WebGLShader | null} fragmentShader
-         */
-        function createProgram(gl, vertexShader, fragmentShader) {
-          if (!vertexShader || !fragmentShader) return null;
-          const program = gl.createProgram();
-          gl.attachShader(program, vertexShader);
-          gl.attachShader(program, fragmentShader);
-          gl.linkProgram(program);
-          return program;
-        }
-        
         const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
         const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
         const program = createProgram(gl, vertexShader, fragmentShader);
@@ -698,8 +639,10 @@ const fragmentShaderSource = \`
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
         
         const positionAttributeLocation = gl.getAttribLocation(program, 'position');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        if (positionAttributeLocation >= 0) {
+          gl.enableVertexAttribArray(positionAttributeLocation);
+          gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        }
         
         let time = 0;
         function animate() {
@@ -710,8 +653,10 @@ const fragmentShaderSource = \`
           const timeUniformLocation = gl.getUniformLocation(program, 'time');
           const resolutionUniformLocation = gl.getUniformLocation(program, 'resolution');
           
-          gl.uniform1f(timeUniformLocation, time);
-          gl.uniform2f(resolutionUniformLocation, shaderCanvas.width, shaderCanvas.height);
+          if (timeUniformLocation) gl.uniform1f(timeUniformLocation, time);
+          if (resolutionUniformLocation) {
+            gl.uniform2f(resolutionUniformLocation, shaderCanvas.width, shaderCanvas.height);
+          }
           
           gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
           
@@ -749,32 +694,6 @@ const fragmentShaderSource = \`
           }
         `;
         
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {number} type
-         * @param {string} source
-         */
-        function createShader(gl, type, source) {
-          const shader = gl.createShader(type);
-          gl.shaderSource(shader, source);
-          gl.compileShader(shader);
-          return shader;
-        }
-        
-        /**
-         * @param {WebGLRenderingContext} gl
-         * @param {WebGLShader | null} vertexShader
-         * @param {WebGLShader | null} fragmentShader
-         */
-        function createProgram(gl, vertexShader, fragmentShader) {
-          if (!vertexShader || !fragmentShader) return null;
-          const program = gl.createProgram();
-          gl.attachShader(program, vertexShader);
-          gl.attachShader(program, fragmentShader);
-          gl.linkProgram(program);
-          return program;
-        }
-        
         const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
         const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
         const program = createProgram(gl, vertexShader, fragmentShader);
@@ -792,8 +711,10 @@ const fragmentShaderSource = \`
         gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
         
         const positionAttributeLocation = gl.getAttribLocation(program, 'position');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        if (positionAttributeLocation >= 0) {
+          gl.enableVertexAttribArray(positionAttributeLocation);
+          gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        }
         
         let time = 0;
         function animate() {
@@ -802,7 +723,7 @@ const fragmentShaderSource = \`
           gl.useProgram(program);
           
           const timeUniformLocation = gl.getUniformLocation(program, 'time');
-          gl.uniform1f(timeUniformLocation, time);
+          if (timeUniformLocation) gl.uniform1f(timeUniformLocation, time);
           
           gl.drawArrays(gl.POINTS, 0, particleCount);
           
