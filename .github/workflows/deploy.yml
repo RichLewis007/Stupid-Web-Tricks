@@ -1,10 +1,8 @@
 name: Deploy to Cloudflare Pages
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  # Disabled for now; keep manual trigger only while GitHub Pages is the primary deploy.
+  workflow_dispatch:
 
 jobs:
   deploy:
