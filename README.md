@@ -16,6 +16,8 @@
 
 A collection of web effects and animations I've been experimenting with. Built with Astro and React, with the source shown with comments and documentation to help you learn from and use these tricks in your own websites.
 
+Check it out at: https://richlewis007.com/Stupid-Web-Tricks/
+
 ## Quick Start
 
 ```bash

@@ -5,7 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
+**Author:** Rich Lewis - @RichLewis007
+**Project:** Stupid Web Tricks  
+**Repository:** https://github.com/richlewis007/stupid-web-tricks
+
+This project was developed over time when playing with modern front-end web technologies. I'm sharing this in the best spirit of the internet, hoping to give you something fun to see and play with, and maybe teach you something along the way.
+
+---
+
 ## [Unreleased]
+
+## [0.1.4] - 2025-11-23
+
+### Changed
+- Expanded `.gitignore` to cover common local/workspace artifacts across Node/Astro tooling.
+
+## [0.1.3] - 2025-11-21
+
+### Added
+- Idle pointer bubble emission plus new pop audio and hero bubble sounds.
+- Documentation touch-ups and simplified code for learners; improved run script.
+- Astro diagnostic fixes to keep the project clean.
+
+### Changed
+- Bubble system extracted into a component and tuned (colors, counts, responsiveness).
+- Adaptive bubble population based on viewport/device and motion preferences.
+- Better collision handling around hero text and prevention of unstyled flashes.
+
+## [0.1.2] - 2025-11-13
+
+### Added
+- Hero text/background effects with glowing word sequences when paused.
+- Utility clean scripts for build artifacts.
+- Additional bubble and constellation behaviors, including smaller constellations and idle click triggers.
+
+### Changed
+- Rebuilt the constellation system with richer visuals and smoother interactions.
+- TypeScript/Tailwind adjustments and performance tuning; loosened strict TS for development.
+- Polished hero animations, header typography, and card icon/opacity styling.
+- Click automation on the hero until the user interacts.
+
+### Fixed
+- TypeScript issues caught during iteration.
+
+## [0.1.1] - 2025-11-10
+
+### Added
+- Improved interactive HTML/CSS/JS/SVG/Canvas/WebGL demos.
+- Improved deployment configuration and documentation for Cloudflare Pages and GitHub Pages.
+
+### Changed
+- Build fixes and content completion.
+
+## [1.1.0] - 2025-11-05
 
 ### Added
 - Adaptive soap bubble population that scales with viewport, device capabilities, motion preferences, and connection quality
@@ -277,11 +331,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated from default Astro template to custom structure
-
----
-
-**Author:** Rich Lewis  
-**Project:** Stupid Web Tricks  
-**Repository:** https://github.com/richlewis007/stupid-web-tricks
-
-This project was developed over time when playing with modern front-end web technologies. I'm sharing this in the best spirit of the internet, hoping to give you something fun to see and play with, and maybe teach you something along the way.

@@ -3,14 +3,16 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
+const publicBase = process.env.PUBLIC_BASE_URL ?? '/';
+const defaultSite =
+  publicBase === '/stupid-web-tricks'
+    ? 'https://richlewis007.com/stupid-web-tricks' // GitHub Pages with custom domain + path
+    : 'https://stupid-web-tricks.pages.dev'; // Cloudflare Pages default
+
 // https://astro.build/config
 export default defineConfig({
-  // Support for multiple deployment platforms
-  site: process.env.PUBLIC_BASE_URL 
-    ? (process.env.PUBLIC_BASE_URL === '/stupid-web-tricks' 
-        ? 'https://richlewis007.com'  // Custom domain for GitHub Pages
-        : `https://richlewis007.github.io${process.env.PUBLIC_BASE_URL}`)
-    : 'https://stupid-web-tricks.pages.dev',  // Default Cloudflare Pages
+  site: process.env.PUBLIC_SITE_URL ?? defaultSite,
+  base: publicBase,
   integrations: [react()],
   output: 'static',
   vite: {
