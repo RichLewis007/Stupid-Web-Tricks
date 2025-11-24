@@ -4,11 +4,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'bangers': ['Bangers', 'cursive'],
-        'fredoka': ['Fredoka', 'sans-serif'],
+        bangers: ['Bangers', 'cursive'],
+        fredoka: ['Fredoka', 'sans-serif'],
       },
       animation: {
-        'glow': 'glow 2s ease-in-out infinite alternate',
+        glow: 'glow 2s ease-in-out infinite alternate',
         'slide-up': 'slide-up 0.8s ease-out forwards',
         'gentle-drift': 'gentle-drift 8s ease-in-out infinite',
       },
@@ -29,9 +29,9 @@ export default {
         },
       },
       backdropBlur: {
-        'xs': '2px',
+        xs: '2px',
       },
     },
   },
   plugins: [],
-}
+};

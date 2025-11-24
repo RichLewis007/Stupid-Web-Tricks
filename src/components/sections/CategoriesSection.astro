@@ -1,7 +1,8 @@
 ---
 // CategoriesSection.astro - Categories grid section
-import CategoryCard, { styles as categoryCardStyles } from '../ui/CategoryCard';
+import CategoryCard from '../ui/CategoryCard';
 import { getBasePath, withBase } from '../../lib/paths';
+import '../../styles/category-card.css';
 
 const basePath = getBasePath(Astro.site);
 ---
@@ -24,7 +25,7 @@ const basePath = getBasePath(Astro.site);
         description="Clever HTML techniques, semantic markup tricks, and accessibility hacks"
         icon="html"
         iconClass="html-icon"
-        href={withBase('/html')}
+        href={withBase('/html', basePath)}
         features={[
           "Semantic HTML patterns",
           "Accessibility improvements", 
@@ -39,7 +40,7 @@ const basePath = getBasePath(Astro.site);
         description="Stunning animations, transitions, and visual effects using pure CSS"
         icon="css"
         iconClass="css-icon"
-        href={withBase('/css')}
+        href={withBase('/css', basePath)}
         features={[
           "Advanced animations",
           "Glass morphism",
@@ -54,7 +55,7 @@ const basePath = getBasePath(Astro.site);
         description="Interactive features, DOM manipulation, and modern JavaScript techniques"
         icon="js"
         iconClass="js-icon"
-        href={withBase('/javascript')}
+        href={withBase('/javascript', basePath)}
         features={[
           "DOM manipulation",
           "Event handling",
@@ -69,7 +70,7 @@ const basePath = getBasePath(Astro.site);
         description="Vector graphics, canvas animations, and creative visual effects"
         icon="svg"
         iconClass="svg-icon"
-        href={withBase('/svg-canvas')}
+        href={withBase('/svg-canvas', basePath)}
         features={[
           "SVG animations",
           "Canvas drawings",
@@ -84,7 +85,7 @@ const basePath = getBasePath(Astro.site);
         description="Advanced 3D graphics, shaders, and immersive web experiences"
         icon="webgl"
         iconClass="webgl-icon"
-        href={withBase('/webgl')}
+        href={withBase('/webgl', basePath)}
         features={[
           "3D graphics",
           "Shader programming",
@@ -113,6 +114,4 @@ const basePath = getBasePath(Astro.site);
   </div>
 </section>
 
-<style>
-  {categoryCardStyles}
-</style>
+<style>{categoryCardStyles}</style>

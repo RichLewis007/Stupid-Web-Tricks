@@ -50,7 +50,7 @@ function useDeferredPlay(play: () => void) {
       ['mouseup', { once: true, capture: true }],
       ['touchstart', { once: true, capture: true, passive: true }],
       ['keydown', { once: true, capture: true }],
-      ['focus', { once: true, capture: true }]
+      ['focus', { once: true, capture: true }],
     ];
 
     unlockEvents.forEach(([eventName, options]) => {
@@ -75,7 +75,7 @@ function useDeferredPlay(play: () => void) {
 export default function SoundEffectsProvider() {
   const [playBubblePop, { sound }] = useSound('/assets/sounds/bubble-pop-1.wav', {
     volume: 0.4,
-    interrupt: true
+    interrupt: true,
   });
 
   useEffect(() => {
@@ -105,4 +105,3 @@ export default function SoundEffectsProvider() {
 
   return null;
 }
-

@@ -19,10 +19,10 @@ export default defineConfig({
     plugins: [tailwindcss()],
     ssr: {
       // Bundle ESM-only deps so Node doesn't try to load them as CJS during SSR
-      noExternal: ['use-sound']
-    }
+      noExternal: ['use-sound'],
+    },
   },
   build: {
-    assets: '_astro'
-  }
+    assets: '_astro',
+  },
 });

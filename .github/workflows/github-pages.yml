@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:
@@ -20,16 +20,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
+      - name: Format check
+        run: npm run format:check
+
       - name: Type/AST check
         env:
           PUBLIC_BASE_URL: /stupid-web-tricks
@@ -41,10 +44,10 @@ jobs:
           PUBLIC_BASE_URL: /stupid-web-tricks
           PUBLIC_SITE_URL: https://richlewis007.com/stupid-web-tricks
         run: npm run build:github
-      
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

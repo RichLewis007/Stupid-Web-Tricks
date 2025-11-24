@@ -12,10 +12,19 @@
 }
 
 @keyframes gentle-drift {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(10px, -5px); }
-  50% { transform: translate(-5px, 10px); }
-  75% { transform: translate(-10px, -5px); }
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(10px, -5px);
+  }
+  50% {
+    transform: translate(-5px, 10px);
+  }
+  75% {
+    transform: translate(-10px, -5px);
+  }
 }
 
 .animate-slide-up {

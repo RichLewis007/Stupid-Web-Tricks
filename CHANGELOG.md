@@ -20,16 +20,19 @@ This project was developed over time when playing with modern front-end web tech
 ## [0.1.4] - 2025-11-23
 
 ### Changed
+
 - Expanded `.gitignore` to cover common local/workspace artifacts across Node/Astro tooling.
 
 ## [0.1.3] - 2025-11-21
 
 ### Added
+
 - Idle pointer bubble emission plus new pop audio and hero bubble sounds.
 - Documentation touch-ups and simplified code for learners; improved run script.
 - Astro diagnostic fixes to keep the project clean.
 
 ### Changed
+
 - Bubble system extracted into a component and tuned (colors, counts, responsiveness).
 - Adaptive bubble population based on viewport/device and motion preferences.
 - Better collision handling around hero text and prevention of unstyled flashes.
@@ -37,31 +40,37 @@ This project was developed over time when playing with modern front-end web tech
 ## [0.1.2] - 2025-11-13
 
 ### Added
+
 - Hero text/background effects with glowing word sequences when paused.
 - Utility clean scripts for build artifacts.
 - Additional bubble and constellation behaviors, including smaller constellations and idle click triggers.
 
 ### Changed
+
 - Rebuilt the constellation system with richer visuals and smoother interactions.
 - TypeScript/Tailwind adjustments and performance tuning; loosened strict TS for development.
 - Polished hero animations, header typography, and card icon/opacity styling.
 - Click automation on the hero until the user interacts.
 
 ### Fixed
+
 - TypeScript issues caught during iteration.
 
 ## [0.1.1] - 2025-11-10
 
 ### Added
+
 - Improved interactive HTML/CSS/JS/SVG/Canvas/WebGL demos.
 - Improved deployment configuration and documentation for Cloudflare Pages and GitHub Pages.
 
 ### Changed
+
 - Build fixes and content completion.
 
 ## [1.1.0] - 2025-11-05
 
 ### Added
+
 - Adaptive soap bubble population that scales with viewport, device capabilities, motion preferences, and connection quality
 - Runtime FPS sampling that trims or restores bubbles to keep animation smooth on slower hardware
 - Updated hero collision handling and population sync for cleaner, low-latency bubble pops around headline text
@@ -73,6 +82,7 @@ This project was developed over time when playing with modern front-end web tech
 - CNAME file for GitHub Pages custom domain
 
 ### Changed
+
 - Updated astro.config.mjs to support both deployment platforms and custom domains
 - Enhanced deployment documentation with both platform instructions
 - Updated README.md with custom domain information
@@ -80,90 +90,105 @@ This project was developed over time when playing with modern front-end web tech
 ## [1.0.8] - 2025-10-27
 
 ### Added
+
 - Final documentation updates
 - Project completion checklist
 - Deployment verification
 - Production readiness confirmation
 
 ### Changed
+
 - Finalized project structure
 - Completed development phase
 
 ## [1.0.7] - 2025-10-24
 
 ### Added
+
 - Final performance optimizations
 - Build process improvements
 - Asset optimization
 - Bundle size reduction
 
 ### Changed
+
 - Enhanced site performance
 - Improved loading times
 
 ## [1.0.6] - 2025-10-20
 
 ### Added
+
 - Code example improvements
 - Better syntax highlighting
 - Enhanced readability
 - Copy-to-clipboard functionality
 
 ### Changed
+
 - Improved code presentation
 - Enhanced developer experience
 
 ## [1.0.5] - 2025-10-15
 
 ### Added
+
 - Interactive demo improvements
 - Better error handling
 - Enhanced mobile experience
 - Cross-browser compatibility fixes
 
 ### Changed
+
 - Improved demo reliability
 - Enhanced mobile responsiveness
 
 ## [1.0.4] - 2025-10-08
 
 ### Added
+
 - Pro tips sections for each category
 - Best practices documentation
 - Code optimization examples
 - Performance benchmarks
 
 ### Changed
+
 - Enhanced educational content
 - Improved learning experience
 
 ## [1.0.3] - 2025-09-30
 
 ### Added
+
 - Design system documentation
 - Color palette definitions
 - Typography specifications
 - Animation guidelines
 
 ### Changed
+
 - Standardized design tokens
 - Improved consistency across pages
 
 ## [1.0.2] - 2025-09-22
 
 ### Added
+
 - Performance tips sections
 - Browser support information
 - Troubleshooting guides
 - Support resources
 
 ### Changed
+
 - Enhanced user experience
 - Improved accessibility
 
 ## [1.0.1] - 2025-09-15
 
 ### Added
+
 - Comprehensive README.md
 - Deployment guide
 - Contributing guidelines
@@ -171,12 +196,14 @@ This project was developed over time when playing with modern front-end web tech
 - Contact information
 
 ### Changed
+
 - Improved documentation structure
 - Enhanced project description
 
 ## [1.0.0] - 2025-09-08
 
 ### Added
+
 - Cloudflare Pages deployment configuration
 - GitHub Actions workflow
 - Wrangler.toml configuration
@@ -186,10 +213,12 @@ This project was developed over time when playing with modern front-end web tech
 - Performance monitoring setup
 
 ### Changed
+
 - Optimized build process
 - Enhanced deployment pipeline
 
 ### Fixed
+
 - Build issues with template literals
 - HTML entity encoding problems
 - CSS syntax conflicts
@@ -198,6 +227,7 @@ This project was developed over time when playing with modern front-end web tech
 ## [0.9.0] - 2025-08-25
 
 ### Added
+
 - GSAP animation library integration
 - Framer Motion for advanced animations
 - Lucide React icons
@@ -208,12 +238,14 @@ This project was developed over time when playing with modern front-end web tech
 - Accessibility improvements
 
 ### Changed
+
 - Enhanced animation performance
 - Improved SEO optimization
 
 ## [0.8.0] - 2025-08-12
 
 ### Added
+
 - WebGL page with 3D demos
 - Basic WebGL triangle
 - Rotating 3D cube
@@ -226,12 +258,14 @@ This project was developed over time when playing with modern front-end web tech
 - Instanced rendering
 
 ### Changed
+
 - Enhanced 3D graphics performance
 - Improved shader examples
 
 ## [0.7.0] - 2025-07-28
 
 ### Added
+
 - SVG & Canvas page
 - SVG path animations
 - Interactive canvas drawing
@@ -244,12 +278,14 @@ This project was developed over time when playing with modern front-end web tech
 - Canvas WebGL integration
 
 ### Changed
+
 - Enhanced graphics demos
 - Improved canvas performance
 
 ## [0.6.0] - 2025-07-15
 
 ### Added
+
 - JavaScript tricks page
 - Interactive counter demo
 - Dynamic color picker
@@ -262,12 +298,14 @@ This project was developed over time when playing with modern front-end web tech
 - Web Workers examples
 
 ### Changed
+
 - Improved JavaScript demo interactivity
 - Enhanced code examples with better formatting
 
 ## [0.5.0] - 2025-07-02
 
 ### Added
+
 - CSS effects page with live demos
 - Glass morphism interactive demo
 - Animated gradient backgrounds
@@ -277,12 +315,14 @@ This project was developed over time when playing with modern front-end web tech
 - Floating element animations
 
 ### Changed
+
 - Enhanced CSS demo containers
 - Improved code example formatting
 
 ## [0.4.0] - 2025-06-18
 
 ### Added
+
 - HTML tricks page with semantic examples
 - Form validation demonstrations
 - Accessibility features showcase
@@ -291,12 +331,14 @@ This project was developed over time when playing with modern front-end web tech
 - Microdata and Schema.org examples
 
 ### Changed
+
 - Organized content into logical categories
 - Added difficulty badges for each trick
 
 ## [0.3.0] - 2025-06-05
 
 ### Added
+
 - Homepage with animated hero section
 - Floating particle animations
 - Interactive category cards with hover effects
@@ -304,12 +346,14 @@ This project was developed over time when playing with modern front-end web tech
 - Smooth scroll behavior
 
 ### Changed
+
 - Enhanced homepage design with modern UI elements
 - Improved animation timing and easing
 
 ## [0.2.0] - 2025-05-28
 
 ### Added
+
 - Main layout component with navigation
 - Global CSS styles with custom animations
 - Glass morphism effects and gradient backgrounds
@@ -317,12 +361,14 @@ This project was developed over time when playing with modern front-end web tech
 - Custom scrollbar styling
 
 ### Changed
+
 - Improved overall design system
 - Enhanced typography with Inter font
 
 ## [0.1.0] - 2025-05-23
 
 ### Added
+
 - Initial project setup with Astro 5.15.1
 - Tailwind CSS 4.1.16 integration
 - Basic project structure with layouts and pages
@@ -330,4 +376,5 @@ This project was developed over time when playing with modern front-end web tech
 - Package.json configuration
 
 ### Changed
+
 - Updated from default Astro template to custom structure

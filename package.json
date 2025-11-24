@@ -12,7 +12,10 @@
     "clean": "rm -rf dist .astro",
     "clean:all": "rm -rf dist .astro node_modules",
     "astro": "astro",
-    "check": "astro check"
+    "check": "astro check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run check"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",

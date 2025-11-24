@@ -12,6 +12,7 @@
 </div>
 
 ---
+
 # Stupid Web Tricks
 
 A collection of web effects and animations I've been experimenting with. Built with Astro and React, with the source shown with comments and documentation to help you learn from and use these tricks in your own websites.
@@ -62,6 +63,7 @@ src/
 ## Categories
 
 ### HTML Tricks
+
 - Semantic HTML patterns
 - Accessibility improvements
 - Form validation tricks
@@ -70,6 +72,7 @@ src/
 - Microdata & Schema
 
 ### CSS Effects
+
 - Glass morphism
 - Animated gradients
 - 3D transforms
@@ -78,6 +81,7 @@ src/
 - Advanced animations
 
 ### JavaScript
+
 - Interactive counters
 - Dynamic color pickers
 - Typing animations
@@ -86,6 +90,7 @@ src/
 - Event delegation
 
 ### SVG & Canvas
+
 - SVG path animations
 - Interactive drawing
 - Shape morphing
@@ -94,6 +99,7 @@ src/
 - Image processing
 
 ### WebGL
+
 - Basic 3D graphics
 - Rotating objects
 - Custom shaders
@@ -159,15 +165,18 @@ npm run build:github
 ## Design System
 
 ### Colors
+
 - **Primary**: Purple to Blue gradient (`#667eea` to `#764ba2`)
 - **Secondary**: Pink to Red gradient (`#f093fb` to `#f5576c`)
 - **Accent**: Blue to Cyan gradient (`#4facfe` to `#00f2fe`)
 
 ### Typography
+
 - **Font**: Inter (Google Fonts)
 - **Weights**: 300, 400, 500, 600, 700, 800, 900
 
 ### Animations
+
 - **Duration**: 0.3s for interactions, 0.6s for page transitions
 - **Easing**: ease-out for natural feel
 - **Effects**: Float, glow, slide-up, fade-scale
