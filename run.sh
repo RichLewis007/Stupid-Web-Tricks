@@ -208,6 +208,7 @@ case "$MODE" in
     check)
         echo -e "${BLUE}Running Astro type checking...${NC}\n"
         npm run check
+        npm run format
         exit $?
         ;;
 esac

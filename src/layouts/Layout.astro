@@ -7,6 +7,14 @@ import { getBasePath, withBase } from '../lib/paths';
 const { title, description = "Stupid Web Tricks - Amazing web effects, animations, and techniques" } = Astro.props;
 const basePath = getBasePath(Astro.site);
 const homeHref = basePath || '/';
+const navLinks = [
+  { href: homeHref, label: 'Home' },
+  { href: withBase('/html', basePath), label: 'HTML Tricks' },
+  { href: withBase('/css', basePath), label: 'CSS Effects' },
+  { href: withBase('/javascript', basePath), label: 'JavaScript' },
+  { href: withBase('/svg-canvas', basePath), label: 'SVG & Canvas' },
+  { href: withBase('/webgl', basePath), label: 'WebGL' }
+];
 ---
 
 <!DOCTYPE html>
@@ -100,24 +108,11 @@ const homeHref = basePath || '/';
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
-              <a href={homeHref} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
-                Home
-              </a>
-              <a href={withBase('/html', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
-                HTML Tricks
-              </a>
-              <a href={withBase('/css', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
-                CSS Effects
-              </a>
-              <a href={withBase('/javascript', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
-                JavaScript
-              </a>
-              <a href={withBase('/svg-canvas', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
-                SVG & Canvas
-              </a>
-              <a href={withBase('/webgl', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
-                WebGL
-              </a>
+              {navLinks.map((link) => (
+                <a href={link.href} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+                  {link.label}
+                </a>
+              ))}
             </div>
           </div>
           
@@ -133,24 +128,11 @@ const homeHref = basePath || '/';
       <!-- Mobile menu -->
       <div id="mobile-menu" class="md:hidden hidden">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 glass">
-          <a href={homeHref} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
-            Home
-          </a>
-          <a href={withBase('/html', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
-            HTML Tricks
-          </a>
-          <a href={withBase('/css', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
-            CSS Effects
-          </a>
-          <a href={withBase('/javascript', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
-            JavaScript
-          </a>
-          <a href={withBase('/svg-canvas', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
-            SVG & Canvas
-          </a>
-          <a href={withBase('/webgl', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
-            WebGL
-          </a>
+          {navLinks.map((link) => (
+            <a href={link.href} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+              {link.label}
+            </a>
+          ))}
         </div>
       </div>
     </nav>
@@ -197,6 +179,15 @@ const homeHref = basePath || '/';
           mobileMenuButton.addEventListener('click', function() {
             const isOpen = mobileMenu.classList.toggle('hidden') === false;
             mobileMenuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          });
+
+          document.addEventListener('click', (e) => {
+            if (
+              !mobileMenu.contains(e.target as Node) &&
+              !mobileMenuButton.contains(e.target as Node)
+            ) {
+              closeMenu();
+            }
           });
 
           document.addEventListener('keydown', (e) => {
