@@ -533,7 +533,6 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       if (!this.ctx || !this.canvas || this.disabled) return;
 
       const now = performance.now();
-      const delta = this.lastFrameTime > 0 ? now - this.lastFrameTime : 16; // Default to ~60fps if first frame
       this.lastFrameTime = now;
       
       const timeSinceLastMove = now - this.lastPointerUpdate;
