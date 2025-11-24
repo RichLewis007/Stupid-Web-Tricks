@@ -1,3 +1,3 @@
 module.exports = {
-  plugins: [require('tailwindcss'), require('./postcss-remove-webkit.cjs')],
+  plugins: [require('@tailwindcss/postcss'), require('./postcss-remove-webkit.cjs')],
 };

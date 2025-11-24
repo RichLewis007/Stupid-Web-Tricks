@@ -20,6 +20,8 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
   
   <!-- Particle trail canvas -->
   <canvas id="particleTrail" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+  <!-- Laser overlay canvas -->
+  <canvas id="heroLaser" class="absolute inset-0 w-full h-full pointer-events-none z-40 block" style="opacity: 0;"></canvas>
   
   <!-- Content -->
   <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto content-wrapper" style="isolation: isolate;">
@@ -257,6 +259,217 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       }
       
       this.elements = [];
+    }
+  }
+
+  // Helper functions shared with laser overlay
+  function randomEdgePoint(width, height, margin = 0) {
+    const side = Math.floor(Math.random() * 4);
+    switch (side) {
+      case 0:
+        return { x: -margin, y: Math.random() * height };
+      case 1:
+        return { x: width + margin, y: Math.random() * height };
+      case 2:
+        return { x: Math.random() * width, y: -margin };
+      default:
+        return { x: Math.random() * width, y: height + margin };
+    }
+  }
+
+  function extendToBoundary(start, dir, width, height, margin = 0) {
+    const candidates = [];
+    if (Math.abs(dir.x) > 0.0001) {
+      candidates.push({ t: (width + margin - start.x) / dir.x, x: width + margin, axis: 'x' });
+      candidates.push({ t: (-margin - start.x) / dir.x, x: -margin, axis: 'x' });
+    }
+    if (Math.abs(dir.y) > 0.0001) {
+      candidates.push({ t: (height + margin - start.y) / dir.y, y: height + margin, axis: 'y' });
+      candidates.push({ t: (-margin - start.y) / dir.y, y: -margin, axis: 'y' });
+    }
+    const valid = candidates.filter((c) => c.t > 0);
+    if (!valid.length) return { x: start.x, y: start.y };
+    const best = valid.reduce((min, c) => (c.t < min.t ? c : min), valid[0]);
+    if (best.axis === 'x') {
+      const y = start.y + dir.y * best.t;
+      return { x: best.x, y };
+    }
+    const x = start.x + dir.x * best.t;
+    return { x, y: best.y };
+  }
+
+  function segmentCircleHit(a, b, circle) {
+    const abx = b.x - a.x;
+    const aby = b.y - a.y;
+    const apx = circle.x - a.x;
+    const apy = circle.y - a.y;
+    const abLenSq = abx * abx + aby * aby || 1;
+    let t = (apx * abx + apy * aby) / abLenSq;
+    t = Math.max(0, Math.min(1, t));
+    const closestX = a.x + abx * t;
+    const closestY = a.y + aby * t;
+    const dx = circle.x - closestX;
+    const dy = circle.y - closestY;
+    return dx * dx + dy * dy <= circle.r * circle.r;
+  }
+
+  // Laser overlay isolates drawing from bubble canvas
+  class LaserOverlay {
+    constructor() {
+      this.canvas = null;
+      this.ctx = null;
+      this.dpr = 1;
+      this.intervalId = null;
+      this.fadeTimeout = null;
+      this.clearTimeout = null;
+      this.resizeHandler = () => this.resize();
+    }
+
+    init() {
+      const canvas = document.getElementById('heroLaser');
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+      this.canvas = canvas;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      this.ctx = ctx;
+      this.resize();
+      window.addEventListener('resize', this.resizeHandler);
+      this.intervalId = window.setInterval(() => this.fire(), LASER_INTERVAL_MS);
+      setTimeout(() => this.fire(), LASER_INTERVAL_MS);
+    }
+
+    resize() {
+      if (!this.canvas || !this.ctx) return;
+      const width = this.canvas.clientWidth || window.innerWidth;
+      const height = this.canvas.clientHeight || window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.dpr = dpr;
+      this.canvas.width = Math.round(width * dpr);
+      this.canvas.height = Math.round(height * dpr);
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    fire() {
+      if (!this.canvas || !this.ctx) return;
+      const soap = window?.soapBubbles_floatingShapesCanvas;
+      const mainBubbles =
+        soap?.shapes?.filter(
+          (s) => s && !s.isPopping && s.life === undefined && Number.isFinite(s.radius)
+        ) || [];
+      const width = this.canvas.width / this.dpr || (this.canvas.clientWidth || window.innerWidth);
+      const height =
+        this.canvas.height / this.dpr || (this.canvas.clientHeight || window.innerHeight);
+
+      // If bubbles aren't ready yet, still show a streak across the hero
+      if (!mainBubbles.length) {
+        const startFallback = { x: 0, y: height * 0.5 };
+        const endFallback = { x: width, y: height * 0.5 };
+        this.drawLaser(startFallback, endFallback);
+        return;
+      }
+
+      // largest of top 6
+      const ranked = [...mainBubbles]
+        .filter((b) => b.x >= -b.radius && b.x <= width + b.radius && b.y >= -b.radius && b.y <= height + b.radius)
+        .sort((a, b) => b.radius - a.radius)
+        .slice(0, 6);
+      const target = ranked[0];
+      if (!target) return;
+
+      const start = randomEdgePoint(width, height, 60);
+      let dir = { x: target.x - start.x, y: target.y - start.y };
+      if (Math.abs(dir.x) < 1) dir.x += (Math.random() > 0.5 ? 1 : -1) * 0.5;
+      if (Math.abs(dir.y) < 1) dir.y += (Math.random() > 0.5 ? 1 : -1) * 0.5;
+      const end = extendToBoundary(start, dir, width, height, 60);
+
+      this.drawLaser(start, end);
+      this.popBubbles(mainBubbles, target, start, end);
+
+      const expires = performance.now() + 1300;
+      activeLaserSegment = { start, end, expires };
+      window.activeLaserSegment = activeLaserSegment;
+      setTimeout(() => {
+        activeLaserSegment = null;
+        window.activeLaserSegment = null;
+      }, 1400);
+    }
+
+    drawLaser(start, end) {
+      if (!this.ctx || !this.canvas) return;
+      this.ctx.clearRect(0, 0, this.canvas.width / this.dpr, this.canvas.height / this.dpr);
+      const gradient = this.ctx.createLinearGradient(start.x, start.y, end.x, end.y);
+      gradient.addColorStop(0, 'rgba(255, 120, 120, 0.7)');
+      gradient.addColorStop(0.5, 'rgba(255, 40, 40, 1)');
+      gradient.addColorStop(1, 'rgba(255, 120, 120, 0.7)');
+      this.ctx.strokeStyle = gradient;
+      this.ctx.lineWidth = 2;
+      this.ctx.shadowBlur = 6;
+      this.ctx.shadowColor = 'rgba(255, 60, 60, 0.8)';
+      this.ctx.beginPath();
+      this.ctx.moveTo(start.x, start.y);
+      this.ctx.lineTo(end.x, end.y);
+      this.ctx.stroke();
+
+      // Make the streak visible, then fade it out
+      this.canvas.style.transition = 'none';
+      this.canvas.style.opacity = '1';
+      // force reflow so the next transition applies
+      void this.canvas.offsetWidth;
+      this.canvas.style.transition = 'opacity 1s ease-out';
+      if (this.fadeTimeout) clearTimeout(this.fadeTimeout);
+      this.fadeTimeout = window.setTimeout(() => {
+        this.canvas && (this.canvas.style.opacity = '0');
+      }, 900);
+      if (this.clearTimeout) clearTimeout(this.clearTimeout);
+      this.clearTimeout = window.setTimeout(() => {
+        if (this.ctx && this.canvas) {
+          this.ctx.clearRect(0, 0, this.canvas.width / this.dpr, this.canvas.height / this.dpr);
+        }
+      }, 1600);
+    }
+
+    popBubbles(mainBubbles, target, start, end) {
+      const hitList = [];
+      mainBubbles.forEach((b) => {
+        const hit = segmentCircleHit(start, end, { x: b.x, y: b.y, r: b.radius || 0 });
+        if (hit || b === target) {
+          b.forcePop = true;
+          b.lightExplosion = true;
+          hitList.push(b);
+        }
+      });
+      if (hitList.length) {
+        requestAnimationFrame(() => {
+          try {
+            hitList.forEach((b) => {
+              window.dispatchEvent(
+                new CustomEvent('soapbubbles:pop', {
+                  detail: { id: b.id, x: b.x, y: b.y, radius: b.radius }
+                })
+              );
+            });
+          } catch (_) {}
+        });
+      }
+    }
+
+    destroy() {
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+      }
+      if (this.fadeTimeout) {
+        clearTimeout(this.fadeTimeout);
+        this.fadeTimeout = null;
+      }
+      if (this.clearTimeout) {
+        clearTimeout(this.clearTimeout);
+        this.clearTimeout = null;
+      }
+      window.removeEventListener('resize', this.resizeHandler);
+      if (this.ctx && this.canvas) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      }
     }
   }
 
@@ -650,16 +863,16 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         this.ctx.lineWidth = 0.3;
         this.ctx.stroke(bubblePath);
 
-        this.ctx.shadowBlur = 0;
-        this.ctx.shadowColor = 'transparent';
+      this.ctx.shadowBlur = 0;
+      this.ctx.shadowColor = 'transparent';
 
-        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * alpha})`;
-        this.ctx.lineWidth = 0.2;
-        this.ctx.stroke(bubblePath);
+      this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * alpha})`;
+      this.ctx.lineWidth = 0.2;
+      this.ctx.stroke(bubblePath);
 
-        this.ctx.restore();
-        return true;
-      });
+      this.ctx.restore();
+      return true;
+    });
 
       if (this.trailPoints.length > this.currentPeakTrailCount) {
         this.currentPeakTrailCount = this.trailPoints.length;
@@ -730,9 +943,14 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     }
   }
 
+  // Shared laser segment state so other systems can react
+  let activeLaserSegment = null;
+  const LASER_INTERVAL_MS = 3000;
+
   // Initialize effects
   let magneticText = null;
   let particleTrail = null;
+  let laserOverlay = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     magneticText = new MagneticText();
@@ -740,6 +958,9 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
     particleTrail = new ParticleTrail();
     particleTrail.init();
+
+    laserOverlay = new LaserOverlay();
+    laserOverlay.init();
 
     // Trigger initial jiggle sequence on page load
     setTimeout(() => {
@@ -758,6 +979,10 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     if (particleTrail) {
       particleTrail.destroy();
       particleTrail = null;
+    }
+    if (laserOverlay) {
+      laserOverlay.destroy();
+      laserOverlay = null;
     }
   });
 </script>

@@ -15,6 +15,9 @@ export default defineConfig({
   base: publicBase,
   integrations: [react()],
   output: 'static',
+  devToolbar: {
+    enabled: false,
+  },
   vite: {
     plugins: [tailwindcss()],
     ssr: {

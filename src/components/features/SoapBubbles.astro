@@ -74,6 +74,10 @@ const {
       this.lastPerformanceCheck = typeof performance !== 'undefined' ? performance.now() : 0;
       this.reduceMotionMediaQuery = null;
       this.reduceMotionListener = null;
+      this.pendingSpawn = 0;
+      this.spawnCount = 0;
+      this.maxNormalRadius = 0;
+      this.spawnSpeed = 1.2;
       
       // Bind handlers to preserve context
       this.resizeHandler = () => this.resizeCanvas();
@@ -82,6 +86,42 @@ const {
       
       this.initialized = true;
       this.init();
+    }
+
+    getEdgeSpawn(radius) {
+      const width = this.canvas.width || (typeof window !== 'undefined' ? window.innerWidth : 1280);
+      const height = this.canvas.height || (typeof window !== 'undefined' ? window.innerHeight : 720);
+      const side = Math.floor(Math.random() * 3); // 0 left, 1 right, 2 bottom
+      const inward = this.spawnSpeed || 1.2;
+      let x = 0;
+      let y = 0;
+      let vx = 0;
+      let vy = 0;
+      const jitter = () => (Math.random() - 0.5) * inward * 0.5;
+
+      switch (side) {
+        case 0: // left
+          x = -radius - 20;
+          y = Math.random() * height;
+          vx = inward * (1 + Math.random() * 0.5);
+          vy = jitter();
+          break;
+        case 1: // right
+          x = width + radius + 20;
+          y = Math.random() * height;
+          vx = -inward * (1 + Math.random() * 0.5);
+          vy = jitter();
+          break;
+        case 2: // bottom
+        default:
+          x = Math.random() * width;
+          y = height + radius + 20;
+          vx = jitter();
+          vy = -inward * (1 + Math.random() * 0.5);
+          break;
+      }
+
+      return { x, y, vx, vy };
     }
 
     init() {
@@ -147,69 +187,9 @@ const {
       }
       
       const colorSets = this.getDefaultColorSets();
-      
       const targetCount = this.dynamicBubbleCount;
       for (let i = 0; i < targetCount; i++) {
-        const radius = Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
-        const colors = colorSets[i % colorSets.length];
-        
-        let x, y;
-        let attempts = 0;
-        const maxAttempts = 50;
-        
-        // Try to find a safe position (away from collision elements)
-        do {
-          x = Math.random() * this.canvas.width;
-          y = Math.random() * this.canvas.height;
-          attempts++;
-        } while (!this.isPositionSafe(x, y, radius) && attempts < maxAttempts);
-        
-        // If we couldn't find a safe position, place at edges
-        if (attempts >= maxAttempts) {
-          const corner = Math.floor(Math.random() * 4);
-          switch (corner) {
-            case 0: // Top-left
-              x = radius + 20;
-              y = radius + 20;
-              break;
-            case 1: // Top-right
-              x = this.canvas.width - radius - 20;
-              y = radius + 20;
-              break;
-            case 2: // Bottom-left
-              x = radius + 20;
-              y = this.canvas.height - radius - 20;
-              break;
-            case 3: // Bottom-right
-              x = this.canvas.width - radius - 20;
-              y = this.canvas.height - radius - 20;
-              break;
-          }
-        }
-        
-        this.shapes.push({
-          x: x,
-          y: y,
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2,
-          radius: radius,
-          mass: radius,
-          color: colors[0],
-          colors: colors,
-          originalColor: colors[0],
-          hoverColor: this.lightenColor(colors[0], 0.3),
-          isHovered: false,
-          pulse: Math.random() * Math.PI * 2,
-          pulseSpeed: Math.random() * 0.02 + 0.01,
-          id: Date.now() + i,
-          wobblePhase: Math.random() * Math.PI * 2,
-          wobbleSpeed: Math.random() * 0.03 + 0.02,
-          distortionSeed: Math.random() * 1000,
-          reflectionAngle: Math.random() * Math.PI * 2,
-          isPopping: false,
-          popPhase: 0,
-          hasTriggeredSound: false
-        });
+        this.createNewShape(true, colorSets[i % colorSets.length]);
       }
       this.populationDirty = false;
     }
@@ -448,9 +428,10 @@ const {
     }
 
     explodeShape(shape, index) {
-      // Create explosion particles
-      for (let i = 0; i < 12; i++) {
-        const angle = (i / 12) * Math.PI * 2;
+      // Create explosion particles (lighter burst when requested)
+      const particleCount = shape.lightExplosion ? 8 : 12;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (i / particleCount) * Math.PI * 2;
         const distance = 60 + Math.random() * 40;
         const particle = {
           x: shape.x,
@@ -466,7 +447,7 @@ const {
           pulse: 0,
           pulseSpeed: 0,
           id: Date.now() + i,
-          life: 60,
+          life: shape.lightExplosion ? 40 : 60,
           size: 3
         };
         this.shapes.push(particle);
@@ -526,50 +507,42 @@ const {
     }
 
     createNewShape(force = false) {
+      const activeLaser =
+        (typeof window !== 'undefined' && window.activeLaserSegment) || null;
+      if (!force && activeLaser) {
+        // Skip spawning while laser is visible; remember to backfill later
+        this.pendingSpawn = (this.pendingSpawn || 0) + 1;
+        return;
+      }
       if (!force && this.getLiveBubbleCount() >= this.dynamicBubbleCount) {
         return;
       }
       const colorSets = this.getDefaultColorSets();
       const randomColors = colorSets[Math.floor(Math.random() * colorSets.length)];
-      const radius = Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
+      let radius =
+        Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
       
-      let x, y;
-      let attempts = 0;
-      const maxAttempts = 50;
-      
-      do {
-        x = Math.random() * this.canvas.width;
-        y = Math.random() * this.canvas.height;
-        attempts++;
-      } while (!this.isPositionSafe(x, y, radius) && attempts < maxAttempts);
-      
-      if (attempts >= maxAttempts) {
-        const corner = Math.floor(Math.random() * 4);
-        switch (corner) {
-          case 0:
-            x = radius + 20;
-            y = radius + 20;
-            break;
-          case 1:
-            x = this.canvas.width - radius - 20;
-            y = radius + 20;
-            break;
-          case 2:
-            x = radius + 20;
-            y = this.canvas.height - radius - 20;
-            break;
-          case 3:
-            x = this.canvas.width - radius - 20;
-            y = this.canvas.height - radius - 20;
-            break;
-        }
+      // Every 10th creation, make it a bit larger than current largest
+      this.spawnCount += 1;
+      const isSpecial = this.spawnCount % 10 === 0;
+      if (isSpecial) {
+        const baseline = this.maxNormalRadius || radius;
+        radius = Math.max(radius, baseline * 1.5);
+      } else {
+        this.maxNormalRadius = Math.max(this.maxNormalRadius, radius);
       }
+      
+      const spawn = this.getEdgeSpawn(radius);
+      const x = spawn.x;
+      const y = spawn.y;
+      const vx = spawn.vx;
+      const vy = spawn.vy;
       
       const newShape = {
         x: x,
         y: y,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
+        vx: vx,
+        vy: vy,
         radius: radius,
         mass: radius,
         color: randomColors[0],
@@ -693,10 +666,17 @@ const {
     updatePhysics() {
       const screenWidth = this.canvas.width;
       const screenHeight = this.canvas.height;
+      const activeLaser =
+        (typeof window !== 'undefined' && window.activeLaserSegment) || null;
 
       // Iterate backwards to safely remove items during iteration
       for (let i = this.shapes.length - 1; i >= 0; i--) {
         const shape = this.shapes[i];
+        if (shape.forcePop) {
+          shape.isPopping = true;
+          shape.popPhase = 0;
+          shape.forcePop = false;
+        }
         
         // Handle explosion particles
         if (shape.life !== undefined) {
@@ -719,6 +699,21 @@ const {
           if (shape.popPhase >= 1) {
             // Explode immediately - particles added to end won't affect reverse iteration
             this.explodeShape(shape, i);
+            continue;
+          }
+        }
+
+        // Laser collision: pop if segment intersects
+        if (activeLaser && !shape.isPopping && !shape.forcePop) {
+          const hit = this.segmentCircleHit(
+            activeLaser.start,
+            activeLaser.end,
+            { x: shape.x, y: shape.y, r: shape.radius || 0 }
+          );
+          if (hit) {
+            shape.forcePop = true;
+            shape.lightExplosion = true;
+            this.triggerPopSound(shape);
             continue;
           }
         }
@@ -752,11 +747,12 @@ const {
         shape.y += shape.vy;
 
         // Check if off-screen
+        const margin = shape.radius * 2 + 50;
         const isFullyOffScreen = 
-          (shape.x + shape.radius < 0) || 
-          (shape.x - shape.radius > screenWidth) ||
-          (shape.y + shape.radius < 0) || 
-          (shape.y - shape.radius > screenHeight);
+          (shape.x + shape.radius < -margin) || 
+          (shape.x - shape.radius > screenWidth + margin) ||
+          (shape.y + shape.radius < -margin) || 
+          (shape.y - shape.radius > screenHeight + margin);
 
         if (isFullyOffScreen) {
           this.shapes.splice(i, 1);
@@ -782,6 +778,34 @@ const {
         // Update pulse
         shape.pulse += shape.pulseSpeed;
       }
+
+      // Backfill any skipped spawns once laser is gone
+      const shortage = Math.max(
+        this.dynamicBubbleCount - this.getLiveBubbleCount() + (this.pendingSpawn || 0),
+        0
+      );
+      if (!activeLaser && shortage > 0) {
+        const toSpawn = Math.min(shortage, 3);
+        for (let s = 0; s < toSpawn; s++) {
+          this.createNewShape(true);
+        }
+        this.pendingSpawn = Math.max(0, (this.pendingSpawn || 0) - toSpawn);
+      }
+    }
+
+    segmentCircleHit(a, b, circle) {
+      const abx = b.x - a.x;
+      const aby = b.y - a.y;
+      const apx = circle.x - a.x;
+      const apy = circle.y - a.y;
+      const abLenSq = abx * abx + aby * aby || 1;
+      let t = (apx * abx + apy * aby) / abLenSq;
+      t = Math.max(0, Math.min(1, t));
+      const closestX = a.x + abx * t;
+      const closestY = a.y + aby * t;
+      const dx = circle.x - closestX;
+      const dy = circle.y - closestY;
+      return dx * dx + dy * dy <= circle.r * circle.r;
     }
 
     generateWobblyPath(shape) {
@@ -993,4 +1017,3 @@ const {
     height: 100% !important;
   }
 </style>
-
