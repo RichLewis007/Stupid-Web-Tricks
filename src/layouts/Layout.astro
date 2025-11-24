@@ -2,9 +2,11 @@
 import HamburgerIcon from '../assets/icons/hamburger.svg';
 import GithubIcon from '../assets/icons/github.svg';
 import '../styles/global.css';
+import { getBasePath, withBase } from '../lib/paths';
 
 const { title, description = "Stupid Web Tricks - Amazing web effects, animations, and techniques" } = Astro.props;
-const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
+const basePath = getBasePath(Astro.site);
+const homeHref = basePath || '/';
 ---
 
 <!DOCTYPE html>
@@ -87,7 +89,7 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
-            <a href={`${basePath || '/'}`} class="flex flex-col">
+            <a href={homeHref} class="flex flex-col">
               <span class="text-2xl font-bold hover:animate-glow transition-all duration-300 bangers-font" style="color: #7661d1; text-shadow: 1px 1px 2px rgba(0,0,0,0.5), 0 0 4px rgba(118, 97, 209, 0.3); letter-spacing: 2px; line-height: 1; margin-bottom: -2px;">
                 Stupid Web Tricks
               </span>
@@ -98,22 +100,22 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
-              <a href={`${basePath || '/'}`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={homeHref} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 Home
               </a>
-              <a href={`${basePath}/html`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={withBase('/html', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 HTML Tricks
               </a>
-              <a href={`${basePath}/css`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={withBase('/css', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 CSS Effects
               </a>
-              <a href={`${basePath}/javascript`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={withBase('/javascript', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 JavaScript
               </a>
-              <a href={`${basePath}/svg-canvas`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={withBase('/svg-canvas', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 SVG & Canvas
               </a>
-              <a href={`${basePath}/webgl`} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+              <a href={withBase('/webgl', basePath)} class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 WebGL
               </a>
             </div>
@@ -121,7 +123,7 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
           
           <!-- Mobile menu button -->
           <div class="md:hidden">
-            <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none focus:text-white">
+            <button id="mobile-menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu" class="text-gray-300 hover:text-white focus:outline-none focus:text-white">
               <HamburgerIcon class="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
@@ -131,22 +133,22 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
       <!-- Mobile menu -->
       <div id="mobile-menu" class="md:hidden hidden">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 glass">
-          <a href={`${basePath || '/'}`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={homeHref} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             Home
           </a>
-          <a href={`${basePath}/html`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={withBase('/html', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             HTML Tricks
           </a>
-          <a href={`${basePath}/css`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={withBase('/css', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             CSS Effects
           </a>
-          <a href={`${basePath}/javascript`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={withBase('/javascript', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             JavaScript
           </a>
-          <a href={`${basePath}/svg-canvas`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={withBase('/svg-canvas', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             SVG & Canvas
           </a>
-          <a href={`${basePath}/webgl`} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <a href={withBase('/webgl', basePath)} class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             WebGL
           </a>
         </div>
@@ -170,10 +172,10 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
             © 2025 Rich Lewis. Built with Astro and deployed on
             <a
               href="https://github.com/richlewis007/stupid-web-tricks"
-              class="inline-flex items-center gap-1 ml-1 text-gray-400 hover:text-white transition-colors duration-200 align-baseline"
+              class="inline-flex items-center gap-1 ml-1 text-gray-400 hover:text-white transition-colors duration-200 leading-tight items-center align-baseline"
             >
-              <GithubIcon class="h-5 w-5 translate-y-[4px]" aria-hidden="true" />
-              <span class="relative top-[4px]">GitHub Pages</span>
+              <GithubIcon class="h-5 w-5" aria-hidden="true" />
+              <span>GitHub Pages</span>
             </a>.
           </p>
         </div>
@@ -187,8 +189,20 @@ const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
         const mobileMenu = document.getElementById('mobile-menu');
         
         if (mobileMenuButton && mobileMenu) {
+          const closeMenu = () => {
+            mobileMenu.classList.add('hidden');
+            mobileMenuButton.setAttribute('aria-expanded', 'false');
+          };
+
           mobileMenuButton.addEventListener('click', function() {
-            mobileMenu.classList.toggle('hidden');
+            const isOpen = mobileMenu.classList.toggle('hidden') === false;
+            mobileMenuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          });
+
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+              closeMenu();
+            }
           });
         }
       });

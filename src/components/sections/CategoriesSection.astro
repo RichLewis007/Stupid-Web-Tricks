@@ -1,9 +1,9 @@
 ---
 // CategoriesSection.astro - Categories grid section
 import CategoryCard, { styles as categoryCardStyles } from '../ui/CategoryCard';
+import { getBasePath, withBase } from '../../lib/paths';
 
-const basePath = (Astro.site?.pathname ?? '').replace(/\/$/, '');
-const withBase = (path: string) => `${basePath}${path}`;
+const basePath = getBasePath(Astro.site);
 ---
 
 <section id="categories" class="py-20 px-4 sm:px-6 lg:px-8">
