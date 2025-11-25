@@ -41,7 +41,7 @@ npm run check     # run Astro's diagnostics (optional)
 - **Tailwind CSS** - Utility-first CSS (because writing custom CSS is tedious)
 - **GSAP** - For the fancy animations
 - **Lucide React** - Clean icons
-- **Cloudflare Pages** - Free hosting that actually works
+- **Cloudflare or GitHub Pages** - Free hosting that actually works
 
 ## Project Structure
 
