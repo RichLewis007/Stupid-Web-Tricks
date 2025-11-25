@@ -362,9 +362,9 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
       // If bubbles aren't ready yet, still show a streak across the hero
       if (!mainBubbles.length) {
-        const startFallback = { x: 0, y: height * 0.5 };
-        const endFallback = { x: width, y: height * 0.5 };
-        this.drawLaser(startFallback, endFallback);
+       // const startFallback = { x: 0, y: height * 0.5 };
+       // const endFallback = { x: width, y: height * 0.5 };
+     //   this.drawLaser(startFallback, endFallback);
         return;
       }
 
@@ -511,6 +511,7 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
           this.minimumSpacing = 10;
           this.emitInterval = Math.max(this.emitInterval, 220);
         }
+// TODO: Revisit this corre number
         // if (cores <= 4) {
         //   console.log("LOW CORES!");
         //   this.initialMaxTrailPoints = Math.min(this.initialMaxTrailPoints, 40);
@@ -945,7 +946,7 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
   // Shared laser segment state so other systems can react
   let activeLaserSegment = null;
-  const LASER_INTERVAL_MS = 3000;
+  const LASER_INTERVAL_MS = 10000;
 
   // Initialize effects
   let magneticText = null;
