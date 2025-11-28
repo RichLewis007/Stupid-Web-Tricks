@@ -80,6 +80,7 @@ const {
       this.spawnSpeed = 1.2;
       this.isVisible = true;
       this.visibilityHandler = null;
+      this.isOnScreen = true;
       
       // Bind handlers to preserve context
       this.resizeHandler = () => this.resizeCanvas();
@@ -331,6 +332,8 @@ const {
 
     triggerPopSound(shape) {
       if (shape.hasTriggeredSound) return;
+      // Don't play sounds when off screen
+      if (!this.isOnScreen) return;
       shape.hasTriggeredSound = true;
 
       try {
@@ -596,6 +599,14 @@ const {
       this.physicsLoop();
     }
 
+    pause() {
+      this.isOnScreen = false;
+    }
+
+    resume() {
+      this.isOnScreen = true;
+    }
+
     physicsLoop() {
       if (!this.isRunning || this.isDestroyed) return;
       
@@ -604,14 +615,14 @@ const {
         const delta = this.lastFrameTime !== null ? now - this.lastFrameTime : 16;
         this.lastFrameTime = now;
 
-        // Only update if visible (tab is active)
-        if (this.isVisible) {
+        // Only update if visible (tab is active) and on screen
+        if (this.isVisible && this.isOnScreen) {
           this.updatePhysics();
           this.drawShapes();
           this.recordPerformanceSample(delta);
           this.syncBubblePopulation();
         } else {
-          // When tab is inactive, still clean up dead particles to prevent memory leaks
+          // When tab is inactive or off screen, still clean up dead particles to prevent memory leaks
           this.cleanupDeadParticles();
         }
 

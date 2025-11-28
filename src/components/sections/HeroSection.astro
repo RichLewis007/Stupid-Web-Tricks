@@ -204,8 +204,16 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       }
     }
 
+    pause() {
+      this.isOnScreen = false;
+    }
+
+    resume() {
+      this.isOnScreen = true;
+    }
+
     animate() {
-      if (this.isDestroyed) return;
+      if (this.isDestroyed || !this.isOnScreen) return;
       
       try {
         if (this.isActive) {
@@ -334,9 +342,26 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.isVisible = true;
       this.visibilityHandler = null;
       this.audioContext = null;
+      this.isOnScreen = true;
+    }
+
+    pause() {
+      this.isOnScreen = false;
+      // Stop any ongoing sounds by closing audio context
+      if (this.audioContext && this.audioContext.state !== 'closed') {
+        this.audioContext.close().catch(() => {});
+        this.audioContext = null;
+      }
+    }
+
+    resume() {
+      this.isOnScreen = true;
     }
 
     playLaserSound() {
+      // Don't play sound if hero is off screen
+      if (!this.isOnScreen) return;
+      
       try {
         // Create audio context if it doesn't exist
         if (!this.audioContext) {
@@ -402,12 +427,12 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       }
       
       this.intervalId = window.setInterval(() => {
-        if (this.isVisible) {
+        if (this.isVisible && this.isOnScreen) {
           this.fire();
         }
       }, LASER_INTERVAL_MS);
       setTimeout(() => {
-        if (this.isVisible) {
+        if (this.isVisible && this.isOnScreen) {
           this.fire();
         }
       }, LASER_INTERVAL_MS);
@@ -605,6 +630,7 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.populationDirty = false;
       this.isVisible = true;
       this.visibilityHandler = null;
+      this.isOnScreen = true;
 
       if (typeof navigator !== 'undefined') {
         const deviceMemory = navigator.deviceMemory ?? 4;
@@ -865,8 +891,16 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.lastStationaryEmitTime = performance.now();
     }
 
+    pause() {
+      this.isOnScreen = false;
+    }
+
+    resume() {
+      this.isOnScreen = true;
+    }
+
     animate() {
-      if (!this.ctx || !this.canvas || this.disabled) return;
+      if (!this.ctx || !this.canvas || this.disabled || !this.isOnScreen) return;
 
       const now = performance.now();
       this.lastFrameTime = now;
@@ -1114,6 +1148,55 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
     laserOverlay = new LaserOverlay();
     laserOverlay.init();
+
+    // Set up Intersection Observer to pause animations when hero is off screen
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const isOnScreen = entry.isIntersecting;
+          
+          // Pause/resume all animations
+          if (magneticText) {
+            if (isOnScreen) {
+              magneticText.resume();
+            } else {
+              magneticText.pause();
+            }
+          }
+          
+          if (particleTrail) {
+            if (isOnScreen) {
+              particleTrail.resume();
+            } else {
+              particleTrail.pause();
+            }
+          }
+          
+          if (laserOverlay) {
+            if (isOnScreen) {
+              laserOverlay.resume();
+            } else {
+              laserOverlay.pause();
+            }
+          }
+          
+          // Pause/resume bubble animations
+          const soapBubbles = window?.soapBubbles_floatingShapesCanvas;
+          if (soapBubbles && typeof soapBubbles.pause === 'function' && typeof soapBubbles.resume === 'function') {
+            if (isOnScreen) {
+              soapBubbles.resume();
+            } else {
+              soapBubbles.pause();
+            }
+          }
+        });
+      }, {
+        threshold: 0.1 // Trigger when at least 10% of hero section is visible
+      });
+      
+      observer.observe(heroSection);
+    }
 
     // Trigger initial jiggle sequence on page load
     setTimeout(() => {
