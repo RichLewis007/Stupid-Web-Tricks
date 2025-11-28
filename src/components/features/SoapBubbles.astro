@@ -74,7 +74,6 @@ const {
       this.lastPerformanceCheck = typeof performance !== 'undefined' ? performance.now() : 0;
       this.reduceMotionMediaQuery = null;
       this.reduceMotionListener = null;
-      this.pendingSpawn = 0;
       this.spawnCount = 0;
       this.maxNormalRadius = 0;
       this.spawnSpeed = 1.2;
@@ -507,13 +506,7 @@ const {
     }
 
     createNewShape(force = false) {
-      const activeLaser =
-        (typeof window !== 'undefined' && window.activeLaserSegment) || null;
-      if (!force && activeLaser) {
-        // Skip spawning while laser is visible; remember to backfill later
-        this.pendingSpawn = (this.pendingSpawn || 0) + 1;
-        return;
-      }
+      if (this.isDestroyed) return;
       if (!force && this.getLiveBubbleCount() >= this.dynamicBubbleCount) {
         return;
       }
@@ -522,12 +515,12 @@ const {
       let radius =
         Math.random() * (this.config.maxRadius - this.config.minRadius) + this.config.minRadius;
       
-      // Every 10th creation, make it a bit larger than current largest
+      // Every 5th creation, make it match the largest normal bubble
       this.spawnCount += 1;
-      const isSpecial = this.spawnCount % 10 === 0;
+      const isSpecial = this.spawnCount % 5 === 0;
       if (isSpecial) {
         const baseline = this.maxNormalRadius || radius;
-        radius = Math.max(radius, baseline * 1.5);
+        radius = Math.max(radius, baseline);
       } else {
         this.maxNormalRadius = Math.max(this.maxNormalRadius, radius);
       }
@@ -605,6 +598,7 @@ const {
       }
       
       this.shapes = [];
+      this.spawnCount = 0;
       
       if (this.ctx && this.canvas) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -664,6 +658,7 @@ const {
     }
 
     updatePhysics() {
+      if (this.isDestroyed) return;
       const screenWidth = this.canvas.width;
       const screenHeight = this.canvas.height;
       const activeLaser =
@@ -780,16 +775,12 @@ const {
       }
 
       // Backfill any skipped spawns once laser is gone
-      const shortage = Math.max(
-        this.dynamicBubbleCount - this.getLiveBubbleCount() + (this.pendingSpawn || 0),
-        0
-      );
-      if (!activeLaser && shortage > 0) {
+      const shortage = Math.max(this.dynamicBubbleCount - this.getLiveBubbleCount(), 0);
+      if (shortage > 0) {
         const toSpawn = Math.min(shortage, 3);
         for (let s = 0; s < toSpawn; s++) {
           this.createNewShape(true);
         }
-        this.pendingSpawn = Math.max(0, (this.pendingSpawn || 0) - toSpawn);
       }
     }
 

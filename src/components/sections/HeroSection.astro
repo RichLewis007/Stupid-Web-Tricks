@@ -351,14 +351,23 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
     fire() {
       if (!this.canvas || !this.ctx) return;
+      const width = this.canvas.width / this.dpr || this.canvas.clientWidth || window.innerWidth;
+      const height = this.canvas.height / this.dpr || this.canvas.clientHeight || window.innerHeight;
+
       const soap = window?.soapBubbles_floatingShapesCanvas;
       const mainBubbles =
         soap?.shapes?.filter(
-          (s) => s && !s.isPopping && s.life === undefined && Number.isFinite(s.radius)
+          (s) =>
+            s &&
+            !s.isPopping &&
+            s.life === undefined &&
+            Number.isFinite(s.radius) &&
+            // Only consider bubbles fully on-screen
+            s.x - s.radius >= 0 &&
+            s.x + s.radius <= width &&
+            s.y - s.radius >= 0 &&
+            s.y + s.radius <= height
         ) || [];
-      const width = this.canvas.width / this.dpr || (this.canvas.clientWidth || window.innerWidth);
-      const height =
-        this.canvas.height / this.dpr || (this.canvas.clientHeight || window.innerHeight);
 
       // If bubbles aren't ready yet, still show a streak across the hero
       if (!mainBubbles.length) {
@@ -434,7 +443,6 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         const hit = segmentCircleHit(start, end, { x: b.x, y: b.y, r: b.radius || 0 });
         if (hit || b === target) {
           b.forcePop = true;
-          b.lightExplosion = true;
           hitList.push(b);
         }
       });
@@ -470,6 +478,8 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       if (this.ctx && this.canvas) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       }
+      activeLaserSegment = null;
+      window.activeLaserSegment = null;
     }
   }
 
