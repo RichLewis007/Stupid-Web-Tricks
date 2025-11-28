@@ -205,34 +205,42 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     }
 
     animate() {
-      if (this.isActive) {
-        this.elements.forEach(el => {
-          const rect = el.getBoundingClientRect();
-          const centerX = rect.left + rect.width / 2;
-          const centerY = rect.top + rect.height / 2;
-          
-          const deltaX = (this.mouseX - centerX) * 0.15;
-          const deltaY = (this.mouseY - centerY) * 0.15;
-          const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-          
-          if (distance < 150) {
-            const rotateX = (deltaY / 150) * 5;
-            const rotateY = (deltaX / 150) * -5;
-            el.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-          } else {
-            el.style.transform = 'translate3d(0, 0, 0)';
-          }
-        });
-      } else {
-        // When inactive, check if we should trigger glow after transform settles
-        const timeSinceLastMove = Date.now() - this.lastMouseMoveTime;
-        if (timeSinceLastMove >= 350 && !this.isGlowing && this.lastMouseMoveTime > 0) {
-          this.triggerGlowSequence();
-          this.lastMouseMoveTime = 0; // Reset to prevent retriggering
-        }
-      }
+      if (this.isDestroyed) return;
       
-      this.animationFrame = requestAnimationFrame(() => this.animate());
+      try {
+        if (this.isActive) {
+          this.elements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const deltaX = (this.mouseX - centerX) * 0.15;
+            const deltaY = (this.mouseY - centerY) * 0.15;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            if (distance < 150) {
+              const rotateX = (deltaY / 150) * 5;
+              const rotateY = (deltaX / 150) * -5;
+              el.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            } else {
+              el.style.transform = 'translate3d(0, 0, 0)';
+            }
+          });
+        } else {
+          // When inactive, check if we should trigger glow after transform settles
+          const timeSinceLastMove = Date.now() - this.lastMouseMoveTime;
+          if (timeSinceLastMove >= 350 && !this.isGlowing && this.lastMouseMoveTime > 0) {
+            this.triggerGlowSequence();
+            this.lastMouseMoveTime = 0; // Reset to prevent retriggering
+          }
+        }
+        
+        this.animationFrame = requestAnimationFrame(() => this.animate());
+      } catch (error) {
+        console.error('MagneticText: Error in animation loop:', error);
+        // Continue the loop even if there's an error
+        this.animationFrame = requestAnimationFrame(() => this.animate());
+      }
     }
 
     destroy() {
@@ -323,6 +331,8 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.fadeTimeout = null;
       this.clearTimeout = null;
       this.resizeHandler = () => this.resize();
+      this.isVisible = true;
+      this.visibilityHandler = null;
     }
 
     init() {
@@ -334,8 +344,25 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.ctx = ctx;
       this.resize();
       window.addEventListener('resize', this.resizeHandler);
-      this.intervalId = window.setInterval(() => this.fire(), LASER_INTERVAL_MS);
-      setTimeout(() => this.fire(), LASER_INTERVAL_MS);
+      
+      // Handle visibility changes
+      if (typeof document !== 'undefined') {
+        this.visibilityHandler = () => {
+          this.isVisible = !document.hidden;
+        };
+        document.addEventListener('visibilitychange', this.visibilityHandler);
+      }
+      
+      this.intervalId = window.setInterval(() => {
+        if (this.isVisible) {
+          this.fire();
+        }
+      }, LASER_INTERVAL_MS);
+      setTimeout(() => {
+        if (this.isVisible) {
+          this.fire();
+        }
+      }, LASER_INTERVAL_MS);
     }
 
     resize() {
@@ -475,6 +502,12 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         this.clearTimeout = null;
       }
       window.removeEventListener('resize', this.resizeHandler);
+      
+      if (this.visibilityHandler) {
+        document.removeEventListener('visibilitychange', this.visibilityHandler);
+        this.visibilityHandler = null;
+      }
+      
       if (this.ctx && this.canvas) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       }
@@ -512,6 +545,8 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.minBubbleCount = 30;
       this.dynamicBubbleCount = 30;
       this.populationDirty = false;
+      this.isVisible = true;
+      this.visibilityHandler = null;
 
       if (typeof navigator !== 'undefined') {
         const deviceMemory = navigator.deviceMemory ?? 4;
@@ -569,6 +604,15 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         }
       }
       window.addEventListener('resize', this.resizeHandler);
+      
+      // Handle visibility changes to pause/resume animations
+      if (typeof document !== 'undefined') {
+        this.visibilityHandler = () => {
+          this.isVisible = !document.hidden;
+        };
+        document.addEventListener('visibilitychange', this.visibilityHandler);
+      }
+      
       this.animate();
     }
 
@@ -759,6 +803,14 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       const now = performance.now();
       this.lastFrameTime = now;
       
+      // Safety check: limit trail points to prevent memory issues
+      const maxTrailPointsHardLimit = 1000;
+      if (this.trailPoints.length > maxTrailPointsHardLimit) {
+        // Remove oldest points
+        const excess = this.trailPoints.length - maxTrailPointsHardLimit;
+        this.trailPoints.splice(-excess);
+      }
+      
       const timeSinceLastMove = now - this.lastPointerUpdate;
       const isStationary = timeSinceLastMove > this.stationaryThreshold && this.pointer.x > 0 && this.pointer.y > 0;
       
@@ -815,7 +867,11 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
       const clearWidth = this.canvas.width / this.dpr;
       const clearHeight = this.canvas.height / this.dpr;
-      this.ctx.clearRect(0, 0, clearWidth, clearHeight);
+      
+      // Only update and draw if visible (tab is active)
+      if (this.isVisible) {
+        this.ctx.clearRect(0, 0, clearWidth, clearHeight);
+      }
 
       this.trailPoints = this.trailPoints.filter(point => {
         point.x += point.vx;
@@ -842,6 +898,11 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         point.currentRadius = elapsed < delayMs ? point.baseRadius : point.baseRadius * lifeFactor;
 
         const alpha = elapsed < delayMs ? 1 : lifeFactor;
+
+        // Only draw if visible (tab is active)
+        if (!this.isVisible) {
+          return true; // Keep point but don't draw
+        }
 
         this.ctx.save();
 
@@ -890,7 +951,14 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       }
 
       this.ctx.globalAlpha = 1;
-      this.animationFrame = requestAnimationFrame(() => this.animate());
+      
+      try {
+        this.animationFrame = requestAnimationFrame(() => this.animate());
+      } catch (error) {
+        console.error('ParticleTrail: Error in animation loop:', error);
+        // Continue the loop even if there's an error
+        this.animationFrame = requestAnimationFrame(() => this.animate());
+      }
 
       if (now - this.lastPerformanceCheck >= 2000 && this.performanceSamples.length >= 20) {
         const avgFps = this.performanceSamples.reduce((sum, value) => sum + value, 0) / this.performanceSamples.length;
@@ -945,6 +1013,12 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         heroSection.removeEventListener('mouseleave', this.pointerLeaveHandler);
       }
       window.removeEventListener('resize', this.resizeHandler);
+      
+      if (this.visibilityHandler) {
+        document.removeEventListener('visibilitychange', this.visibilityHandler);
+        this.visibilityHandler = null;
+      }
+      
       this.trailPoints = [];
       if (this.ctx && this.canvas) {
         const clearWidth = this.canvas.width / this.dpr;

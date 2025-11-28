@@ -62,6 +62,7 @@ const {
       this.isRunning = false;
       this.mouse = { x: 0, y: 0 };
       this.pendingTimeouts = [];
+      this.maxPendingTimeouts = 50; // Limit pending timeouts to prevent memory leaks
       this.isDestroyed = false;
       this.animationFrameId = null;
       this.baseBubbleCount = config.bubbleCount;
@@ -77,6 +78,8 @@ const {
       this.spawnCount = 0;
       this.maxNormalRadius = 0;
       this.spawnSpeed = 1.2;
+      this.isVisible = true;
+      this.visibilityHandler = null;
       
       // Bind handlers to preserve context
       this.resizeHandler = () => this.resizeCanvas();
@@ -390,6 +393,14 @@ const {
         document.addEventListener('click', this.clickHandler);
       }
 
+      // Handle visibility changes to pause/resume animations
+      if (typeof document !== 'undefined') {
+        this.visibilityHandler = () => {
+          this.isVisible = !document.hidden;
+        };
+        document.addEventListener('visibilitychange', this.visibilityHandler);
+      }
+
       if (typeof window !== 'undefined' && window.matchMedia) {
         try {
           const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -417,6 +428,11 @@ const {
       document.removeEventListener('mousemove', this.mouseMoveHandler);
       document.removeEventListener('click', this.clickHandler);
 
+      if (this.visibilityHandler) {
+        document.removeEventListener('visibilitychange', this.visibilityHandler);
+        this.visibilityHandler = null;
+      }
+
       if (this.reduceMotionMediaQuery && this.reduceMotionListener) {
         if (this.reduceMotionMediaQuery.removeEventListener) {
           this.reduceMotionMediaQuery.removeEventListener('change', this.reduceMotionListener);
@@ -429,8 +445,13 @@ const {
     explodeShape(shape, index) {
       // Create explosion particles (lighter burst when requested)
       const particleCount = shape.lightExplosion ? 8 : 12;
-      for (let i = 0; i < particleCount; i++) {
-        const angle = (i / particleCount) * Math.PI * 2;
+      // Limit total particles to prevent memory issues
+      const currentParticles = this.shapes.filter(s => s.life !== undefined).length;
+      const maxParticles = 100; // Maximum particles allowed
+      const actualParticleCount = Math.min(particleCount, maxParticles - currentParticles);
+      
+      for (let i = 0; i < actualParticleCount; i++) {
+        const angle = (i / actualParticleCount) * Math.PI * 2;
         const distance = 60 + Math.random() * 40;
         const particle = {
           x: shape.x,
@@ -468,7 +489,18 @@ const {
         if (!this.isDestroyed) {
           this.createNewShape();
         }
+        // Remove timeout from pending list after it executes
+        const timeoutIndex = this.pendingTimeouts.indexOf(timeoutId);
+        if (timeoutIndex >= 0) {
+          this.pendingTimeouts.splice(timeoutIndex, 1);
+        }
       }, 1000);
+      
+      // Clean up old timeouts if we have too many
+      if (this.pendingTimeouts.length >= this.maxPendingTimeouts) {
+        const oldTimeout = this.pendingTimeouts.shift();
+        clearTimeout(oldTimeout);
+      }
       this.pendingTimeouts.push(timeoutId);
     }
 
@@ -565,18 +597,40 @@ const {
     }
 
     physicsLoop() {
-      if (!this.isRunning) return;
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      const delta = this.lastFrameTime !== null ? now - this.lastFrameTime : 16;
-      this.lastFrameTime = now;
+      if (!this.isRunning || this.isDestroyed) return;
+      
+      try {
+        const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        const delta = this.lastFrameTime !== null ? now - this.lastFrameTime : 16;
+        this.lastFrameTime = now;
 
-      this.updatePhysics();
-      this.drawShapes();
+        // Only update if visible (tab is active)
+        if (this.isVisible) {
+          this.updatePhysics();
+          this.drawShapes();
+          this.recordPerformanceSample(delta);
+          this.syncBubblePopulation();
+        } else {
+          // When tab is inactive, still clean up dead particles to prevent memory leaks
+          this.cleanupDeadParticles();
+        }
 
-      this.recordPerformanceSample(delta);
-      this.syncBubblePopulation();
-
-      this.animationFrameId = requestAnimationFrame(() => this.physicsLoop());
+        this.animationFrameId = requestAnimationFrame(() => this.physicsLoop());
+      } catch (error) {
+        console.error('SoapBubbles: Error in physics loop:', error);
+        // Continue the loop even if there's an error to prevent it from stopping
+        this.animationFrameId = requestAnimationFrame(() => this.physicsLoop());
+      }
+    }
+    
+    cleanupDeadParticles() {
+      // Remove dead particles when tab is inactive
+      for (let i = this.shapes.length - 1; i >= 0; i--) {
+        const shape = this.shapes[i];
+        if (shape.life !== undefined && shape.life <= 0) {
+          this.shapes.splice(i, 1);
+        }
+      }
     }
 
     destroy() {
@@ -664,6 +718,21 @@ const {
       const activeLaser =
         (typeof window !== 'undefined' && window.activeLaserSegment) || null;
 
+      // Limit shapes array size to prevent memory issues (safety check)
+      const maxShapes = 200;
+      if (this.shapes.length > maxShapes) {
+        // Remove oldest particles first
+        const particlesToRemove = this.shapes.length - maxShapes;
+        for (let r = 0; r < particlesToRemove; r++) {
+          const particleIndex = this.shapes.findIndex(s => s.life !== undefined);
+          if (particleIndex >= 0) {
+            this.shapes.splice(particleIndex, 1);
+          } else {
+            break;
+          }
+        }
+      }
+
       // Iterate backwards to safely remove items during iteration
       for (let i = this.shapes.length - 1; i >= 0; i--) {
         const shape = this.shapes[i];
@@ -681,7 +750,12 @@ const {
           shape.vx *= 0.98;
           shape.vy *= 0.98;
           
-          if (shape.life <= 0) {
+          // Also check if particle is way off screen and remove it early
+          const margin = 200;
+          const isOffScreen = shape.x < -margin || shape.x > screenWidth + margin ||
+                             shape.y < -margin || shape.y > screenHeight + margin;
+          
+          if (shape.life <= 0 || isOffScreen) {
             this.shapes.splice(i, 1);
             continue;
           }
