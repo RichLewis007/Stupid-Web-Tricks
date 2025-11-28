@@ -17,6 +17,42 @@ This project was developed over time when playing with modern front-end web tech
 
 ## [Unreleased]
 
+## [0.1.5] - 2025-11-28
+
+### Added
+
+- Laser sound effect with high-pitched tone and smooth pitch drop
+- Intersection Observer to pause animations when hero section is off-screen
+- Performance optimizations for low-end devices (memory and CPU core detection)
+- Visibility change handling to pause animations when browser tab is inactive
+- Description text collision detection for bubble popping on desktop screens
+
+### Changed
+
+- Optimized trail point limits from 600 to 120 (more realistic based on actual usage)
+- Reduced laser display duration for snappier feel (300ms → 200ms visible time)
+- Disabled bubble collisions with text/button elements on screens smaller than desktop (<1024px)
+- Improved memory management with limits on particles, timeouts, and array sizes
+- Enhanced error handling in animation loops to prevent crashes
+
+### Fixed
+
+- Memory leaks in SoapBubbles component (pending timeouts, particle accumulation)
+- Memory leaks in ParticleTrail (trail point accumulation)
+- Memory leaks in LaserOverlay (timeout cleanup)
+- Animation loops stopping unexpectedly due to unhandled errors
+- TypeScript warning for webkitAudioContext property access
+- Undefined `cores` variable in ParticleTrail performance optimization
+
+### Performance
+
+- Added automatic cleanup of dead particles when tab is inactive
+- Limited maximum shapes array to 200 items to prevent memory overflow
+- Limited maximum particles to 100 per explosion
+- Limited pending timeouts to 50 with automatic cleanup
+- Added hard limit of 1000 trail points as safety check
+- Improved CPU usage on low-end devices with adaptive bubble counts
+
 ## [0.1.4] - 2025-11-23
 
 ### Changed

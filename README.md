@@ -34,6 +34,8 @@ npm run check     # run Astro's diagnostics (optional)
 - **Fast Performance**: Astro's static site generation keeps things fast
 - **Mobile Friendly**: Responsive design that works everywhere
 - **Accessible**: Proper semantic HTML and accessibility features
+- **Optimized Animations**: Smart performance tuning for low-end devices with automatic pause when off-screen
+- **Sound Effects**: Interactive audio feedback for bubble pops and laser effects
 
 ## Tech Stack
 
@@ -41,6 +43,8 @@ npm run check     # run Astro's diagnostics (optional)
 - **Tailwind CSS** - Utility-first CSS (because writing custom CSS is tedious)
 - **GSAP** - For the fancy animations
 - **Lucide React** - Clean icons
+- **Web Audio API** - For interactive sound effects
+- **Intersection Observer API** - For performance optimization when off-screen
 - **Cloudflare or GitHub Pages** - Free hosting that actually works
 
 ## Project Structure
