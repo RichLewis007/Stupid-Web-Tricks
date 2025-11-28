@@ -662,6 +662,11 @@ const {
     checkCollisionWithElements(shape) {
       if (this.config.collisionSelectors.length === 0) return false;
       
+      // Disable collisions on screens smaller than desktop (1024px)
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        return false;
+      }
+      
       const canvasRect = this.canvas.getBoundingClientRect();
       
       const padding = Math.max(3, shape.radius * 0.15);
