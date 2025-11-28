@@ -396,11 +396,12 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
             s.y + s.radius <= height
         ) || [];
 
-      // If bubbles aren't ready yet, still show a streak across the hero
+      // If bubbles aren't ready yet, do nothing with laser
+      // x //, still show a streak across the hero
       if (!mainBubbles.length) {
-       // const startFallback = { x: 0, y: height * 0.5 };
-       // const endFallback = { x: width, y: height * 0.5 };
-     //   this.drawLaser(startFallback, endFallback);
+        // const startFallback = { x: 0, y: height * 0.5 };
+        // const endFallback = { x: width, y: height * 0.5 };
+        //   this.drawLaser(startFallback, endFallback);
         return;
       }
 
@@ -451,17 +452,17 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.canvas.style.opacity = '1';
       // force reflow so the next transition applies
       void this.canvas.offsetWidth;
-      this.canvas.style.transition = 'opacity 1s ease-out';
+      this.canvas.style.transition = 'opacity 1s ease-out'; // fade duration is 1 second
       if (this.fadeTimeout) clearTimeout(this.fadeTimeout);
       this.fadeTimeout = window.setTimeout(() => {
         this.canvas && (this.canvas.style.opacity = '0');
-      }, 900);
+      }, 600); //  fade starts after 600ms (laser visible for 600ms)
       if (this.clearTimeout) clearTimeout(this.clearTimeout);
       this.clearTimeout = window.setTimeout(() => {
         if (this.ctx && this.canvas) {
           this.ctx.clearRect(0, 0, this.canvas.width / this.dpr, this.canvas.height / this.dpr);
         }
-      }, 1600);
+      }, 1600); // canvas is cleared after 1600ms
     }
 
     popBubbles(mainBubbles, target, start, end) {
@@ -533,7 +534,9 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       this.stationaryThreshold = 500;
       this.lastFrameTime = 0;
       this.animationFrame = null;
-      this.initialMaxTrailPoints = 600;
+      // Realistic max: ~22 particles/sec × 4 sec lifetime = ~88 at max speed
+      // Using 120 to provide headroom for stationary bubbles and edge cases
+      this.initialMaxTrailPoints = 120;
       this.maxTrailPoints = this.initialMaxTrailPoints;
       this.performanceLimitedMax = null;
       this.minimumSpacing = 8;
@@ -550,17 +553,27 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
       if (typeof navigator !== 'undefined') {
         const deviceMemory = navigator.deviceMemory ?? 4;
+        const cores = navigator.hardwareConcurrency ?? 0;
+        
+        // Apply optimizations based on device capabilities
         if (deviceMemory <= 2) {
           console.log("LOW MEMORY!");
           this.initialMaxTrailPoints = Math.min(this.initialMaxTrailPoints, 30);
           this.minimumSpacing = 10;
           this.emitInterval = Math.max(this.emitInterval, 220);
         }
-// TODO: Revisit this corre number
-        // if (cores <= 4) {
-        //   console.log("LOW CORES!");
-        //   this.initialMaxTrailPoints = Math.min(this.initialMaxTrailPoints, 40);
-        // }
+        
+        // Check CPU cores - apply additional optimizations if cores are limited
+        if (cores > 0 && cores <= 3) {
+          console.log("LOW CORES!");
+          // Only reduce further if memory optimization didn't already set it lower
+          if (this.initialMaxTrailPoints > 30) {
+            this.initialMaxTrailPoints = Math.min(this.initialMaxTrailPoints, 40);
+          }
+          // Increase spacing and emission interval for low core systems
+          this.minimumSpacing = Math.max(this.minimumSpacing, 9);
+          this.emitInterval = Math.max(this.emitInterval, 200);
+        }
       }
       this.maxTrailPoints = this.initialMaxTrailPoints;
 
@@ -1030,7 +1043,7 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
   // Shared laser segment state so other systems can react
   let activeLaserSegment = null;
-  const LASER_INTERVAL_MS = 10000;
+  const LASER_INTERVAL_MS = 10000; // every 10 seconds
 
   // Initialize effects
   let magneticText = null;
