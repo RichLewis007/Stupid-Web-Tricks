@@ -18,7 +18,7 @@ let laserOverlay = null;
  */
 export function initHeroEffects() {
   console.log('initHeroEffects: Starting initialization');
-  
+
   magneticText = new MagneticText();
   magneticText.init();
 
