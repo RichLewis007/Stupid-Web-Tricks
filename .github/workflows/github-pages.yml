@@ -45,6 +45,22 @@ jobs:
           PUBLIC_SITE_URL: https://richlewis007.com/stupid-web-tricks
         run: npm run build:github
 
+      - name: Ensure .nojekyll exists
+        run: |
+          touch dist/.nojekyll
+          ls -la dist/.nojekyll || echo "Warning: .nojekyll file not found"
+
+      - name: Verify build output
+        run: |
+          echo "Checking dist directory structure:"
+          ls -la dist/ | head -20
+          echo ""
+          echo "Checking for _astro directory:"
+          ls -la dist/_astro/ 2>/dev/null | head -10 || echo "Warning: _astro directory not found"
+          echo ""
+          echo "Checking for .nojekyll:"
+          ls -la dist/.nojekyll || echo "Warning: .nojekyll not found"
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
