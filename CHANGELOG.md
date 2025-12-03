@@ -25,6 +25,12 @@ This project was developed over time when playing with modern front-end web tech
   - Mobile menu logic extracted to utility module (`src/lib/ui/mobileMenu.js`)
 - Unit tests for extracted animation modules
 - Performance monitoring and logging system
+- TypeScript type definitions and JSDoc annotations
+  - Created shared type definitions (`src/lib/types/index.d.ts`)
+  - Added type definitions for hero effects (`src/lib/hero/types.d.ts`)
+  - Added type definitions for bubbles system (`src/lib/bubbles/types.d.ts`)
+  - Added comprehensive JSDoc type annotations to all JavaScript modules
+  - Improved type safety across the codebase
 
 ### Changed
 

@@ -2,8 +2,9 @@
 
 /**
  * Initialize mobile menu functionality
- * @param {string} buttonId - ID of the mobile menu button
- * @param {string} menuId - ID of the mobile menu element
+ * @param {string} [buttonId='mobile-menu-button'] - ID of the mobile menu button
+ * @param {string} [menuId='mobile-menu'] - ID of the mobile menu element
+ * @returns {void}
  */
 export function initMobileMenu(buttonId = 'mobile-menu-button', menuId = 'mobile-menu') {
   function initialize() {

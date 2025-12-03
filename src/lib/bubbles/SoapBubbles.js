@@ -1,5 +1,14 @@
 // Standalone Soap Bubbles Animation System
+
+/**
+ * Soap Bubbles Animation System
+ * @class
+ */
 export class SoapBubbles {
+  /**
+   * @constructor
+   * @param {import('./types.js').SoapBubblesConfig} config - Configuration object
+   */
   constructor(config) {
     this.config = config;
     this.canvas = document.getElementById(config.canvasId);

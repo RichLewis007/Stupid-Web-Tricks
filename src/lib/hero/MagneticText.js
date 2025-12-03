@@ -1,6 +1,13 @@
 // Magnetic Text Effect - Interactive text that follows mouse movement
 
+/**
+ * Magnetic Text Effect - Interactive text that follows mouse movement
+ * @class
+ */
 export class MagneticText {
+  /**
+   * @constructor
+   */
   constructor() {
     this.elements = [];
     this.mouseX = 0;
@@ -17,6 +24,10 @@ export class MagneticText {
     this.mouseLeaveHandler = () => this.handleMouseLeave();
   }
 
+  /**
+   * Initialize the magnetic text effect
+   * @returns {void}
+   */
   init() {
     this.elements = Array.from(document.querySelectorAll('.magnetic-text'));
     if (this.elements.length === 0) return;
@@ -29,6 +40,11 @@ export class MagneticText {
     this.animate();
   }
 
+  /**
+   * Handle mouse move events
+   * @param {MouseEvent} e - Mouse event
+   * @returns {void}
+   */
   handleMouseMove(e) {
     this.mouseX = e.clientX;
     this.mouseY = e.clientY;

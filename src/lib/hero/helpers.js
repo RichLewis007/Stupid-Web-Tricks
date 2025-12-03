@@ -1,5 +1,12 @@
 // Helper functions for hero section effects
 
+/**
+ * Generate a random point on the edge of a rectangle
+ * @param {number} width - Width of the rectangle
+ * @param {number} height - Height of the rectangle
+ * @param {number} [margin=0] - Margin offset from edge
+ * @returns {{x: number, y: number}} Point on the edge
+ */
 export function randomEdgePoint(width, height, margin = 0) {
   const side = Math.floor(Math.random() * 4);
   switch (side) {
@@ -14,6 +21,15 @@ export function randomEdgePoint(width, height, margin = 0) {
   }
 }
 
+/**
+ * Extend a line segment from a start point in a direction until it hits a boundary
+ * @param {{x: number, y: number}} start - Starting point
+ * @param {{x: number, y: number}} dir - Direction vector
+ * @param {number} width - Width of the boundary
+ * @param {number} height - Height of the boundary
+ * @param {number} [margin=0] - Margin offset from boundary
+ * @returns {{x: number, y: number}} Point where line intersects boundary
+ */
 export function extendToBoundary(start, dir, width, height, margin = 0) {
   const candidates = [];
   if (Math.abs(dir.x) > 0.0001) {
@@ -35,6 +51,13 @@ export function extendToBoundary(start, dir, width, height, margin = 0) {
   return { x, y: best.y };
 }
 
+/**
+ * Check if a line segment intersects a circle
+ * @param {{x: number, y: number}} a - Start point of segment
+ * @param {{x: number, y: number}} b - End point of segment
+ * @param {{x: number, y: number, r: number}} circle - Circle definition
+ * @returns {boolean} True if segment intersects circle
+ */
 export function segmentCircleHit(a, b, circle) {
   const abx = b.x - a.x;
   const aby = b.y - a.y;

@@ -5,13 +5,25 @@ import { randomEdgePoint, extendToBoundary, segmentCircleHit } from './helpers.j
 export const LASER_INTERVAL_MS = 10000; // every 10 seconds
 
 // Shared laser segment state so other systems can react
+/** @type {import('./types.js').LaserSegment | null} */
 let activeLaserSegment = null;
 
+/**
+ * Get the currently active laser segment
+ * @returns {import('./types.js').LaserSegment | null} Active laser segment or null
+ */
 export function getActiveLaserSegment() {
   return activeLaserSegment;
 }
 
+/**
+ * Laser Overlay - Draws laser beams that pop bubbles
+ * @class
+ */
 export class LaserOverlay {
+  /**
+   * @constructor
+   */
   constructor() {
     this.canvas = null;
     this.ctx = null;
@@ -26,6 +38,10 @@ export class LaserOverlay {
     this.isOnScreen = true;
   }
 
+  /**
+   * Pause the laser overlay (stop sounds and prevent firing)
+   * @returns {void}
+   */
   pause() {
     this.isOnScreen = false;
     // Stop any ongoing sounds by closing audio context
@@ -35,10 +51,18 @@ export class LaserOverlay {
     }
   }
 
+  /**
+   * Resume the laser overlay
+   * @returns {void}
+   */
   resume() {
     this.isOnScreen = true;
   }
 
+  /**
+   * Play laser sound effect using Web Audio API
+   * @returns {void}
+   */
   playLaserSound() {
     // Don't play sound if hero is off screen
     if (!this.isOnScreen) return;

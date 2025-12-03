@@ -2,8 +2,13 @@
 
 /**
  * Performance Monitor - Tracks and logs performance metrics
+ * @class
  */
 export class PerformanceMonitor {
+  /**
+   * @constructor
+   * @param {import('../types/index.js').PerformanceMonitorOptions} [options={}] - Configuration options
+   */
   constructor(options = {}) {
     this.enabled = options.enabled ?? true;
     this.logThreshold = options.logThreshold ?? 16.67; // 60fps = 16.67ms per frame
@@ -18,6 +23,7 @@ export class PerformanceMonitor {
 
   /**
    * Start monitoring performance
+   * @returns {void}
    */
   start() {
     if (!this.enabled) return;
@@ -27,6 +33,7 @@ export class PerformanceMonitor {
 
   /**
    * Stop monitoring performance
+   * @returns {void}
    */
   stop() {
     if (this.animationFrameId) {
@@ -74,6 +81,7 @@ export class PerformanceMonitor {
 
   /**
    * Get average FPS over recent samples
+   * @returns {number} Average frames per second
    */
   getAverageFps() {
     if (this.samples.length === 0) return 0;
@@ -83,6 +91,7 @@ export class PerformanceMonitor {
 
   /**
    * Get average frame time (delta) over recent samples
+   * @returns {number} Average frame time in milliseconds
    */
   getAverageDelta() {
     if (this.samples.length === 0) return 0;
@@ -92,6 +101,7 @@ export class PerformanceMonitor {
 
   /**
    * Get performance statistics
+   * @returns {import('../types/index.js').PerformanceStats} Performance statistics
    */
   getStats() {
     if (this.samples.length === 0) {
@@ -131,6 +141,9 @@ export class PerformanceMonitor {
 
 /**
  * Log performance metrics to console
+ * @param {string} component - Component name
+ * @param {import('../types/index.js').PerformanceStats} stats - Performance statistics
+ * @returns {void}
  */
 export function logPerformance(component, stats) {
   if (typeof console !== 'undefined' && console.log) {
@@ -146,6 +159,9 @@ export function logPerformance(component, stats) {
 
 /**
  * Create a performance monitor with default settings
+ * @param {string} component - Component name for logging
+ * @param {import('../types/index.js').PerformanceMonitorOptions} [options={}] - Configuration options
+ * @returns {PerformanceMonitor} Performance monitor instance
  */
 export function createPerformanceMonitor(component, options = {}) {
   const monitor = new PerformanceMonitor({

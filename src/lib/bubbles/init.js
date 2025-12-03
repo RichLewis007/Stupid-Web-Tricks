@@ -4,15 +4,8 @@ import { SoapBubbles } from './SoapBubbles.js';
 
 /**
  * Initialize soap bubbles with the given configuration
- * @param {Object} config - Configuration object
- * @param {string} config.containerSelector - CSS selector for the container
- * @param {string} config.canvasId - Unique ID for the canvas element
- * @param {number} config.bubbleCount - Number of bubbles to render
- * @param {number} config.minRadius - Minimum bubble radius
- * @param {number} config.maxRadius - Maximum bubble radius
- * @param {string[]} config.collisionSelectors - Selectors for collision detection
- * @param {boolean} config.enableMousePop - Enable mouse pop interaction
- * @param {boolean} config.enableMouseInteraction - Enable mouse attraction
+ * @param {import('./types.js').SoapBubblesConfig} config - Configuration object
+ * @returns {void}
  */
 export function initSoapBubbles(config) {
   let soapBubbles = null;

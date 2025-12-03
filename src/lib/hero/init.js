@@ -2,13 +2,20 @@
 
 import { MagneticText } from './MagneticText.js';
 import { ParticleTrail } from './ParticleTrail.js';
-import { LaserOverlay, LASER_INTERVAL_MS } from './LaserOverlay.js';
+import { LaserOverlay } from './LaserOverlay.js';
 
 // Initialize effects
+/** @type {MagneticText | null} */
 let magneticText = null;
+/** @type {ParticleTrail | null} */
 let particleTrail = null;
+/** @type {LaserOverlay | null} */
 let laserOverlay = null;
 
+/**
+ * Initialize all hero section effects
+ * @returns {void}
+ */
 export function initHeroEffects() {
   magneticText = new MagneticText();
   magneticText.init();
