@@ -133,8 +133,7 @@ export class LaserOverlay {
   fire() {
     if (!this.canvas || !this.ctx) return;
     const width = this.canvas.width / this.dpr || this.canvas.clientWidth || window.innerWidth;
-    const height =
-      this.canvas.height / this.dpr || this.canvas.clientHeight || window.innerHeight;
+    const height = this.canvas.height / this.dpr || this.canvas.clientHeight || window.innerHeight;
 
     const soap = window?.soapBubbles_floatingShapesCanvas;
     const mainBubbles =
@@ -284,4 +283,3 @@ export class LaserOverlay {
     window.activeLaserSegment = null;
   }
 }
-

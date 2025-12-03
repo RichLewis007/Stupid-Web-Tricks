@@ -49,4 +49,3 @@ export function segmentCircleHit(a, b, circle) {
   const dy = circle.y - closestY;
   return dx * dx + dy * dy <= circle.r * circle.r;
 }
-

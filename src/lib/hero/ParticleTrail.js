@@ -79,9 +79,7 @@ export class ParticleTrail {
     const prefersReducedMotion = window.matchMedia
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
       : false;
-    const hasFinePointer = window.matchMedia
-      ? window.matchMedia('(pointer: fine)').matches
-      : true;
+    const hasFinePointer = window.matchMedia ? window.matchMedia('(pointer: fine)').matches : true;
     if (prefersReducedMotion || !hasFinePointer) {
       this.disabled = true;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -169,9 +167,7 @@ export class ParticleTrail {
     this.pointer.y = y;
     this.pointer.vx = this.pointer.x - (this.pointer.lastX ?? this.pointer.x);
     this.pointer.vy = this.pointer.y - (this.pointer.lastY ?? this.pointer.y);
-    const speed = Math.sqrt(
-      this.pointer.vx * this.pointer.vx + this.pointer.vy * this.pointer.vy,
-    );
+    const speed = Math.sqrt(this.pointer.vx * this.pointer.vx + this.pointer.vy * this.pointer.vy);
     this.pointer.speed = speed;
     this.pointer.active = true;
     this.lastPointerUpdate = performance.now();
@@ -565,4 +561,3 @@ export class ParticleTrail {
     }
   }
 }
-

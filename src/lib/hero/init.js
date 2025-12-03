@@ -103,4 +103,3 @@ if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', initHeroEffects);
   window.addEventListener('beforeunload', cleanupHeroEffects);
 }
-
