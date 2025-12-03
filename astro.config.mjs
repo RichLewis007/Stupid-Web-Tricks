@@ -5,8 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 const publicBase = process.env.PUBLIC_BASE_URL ?? '/';
 const defaultSite =
-  publicBase === '/stupid-web-tricks'
-    ? 'https://richlewis007.com/stupid-web-tricks' // GitHub Pages with custom domain + path
+  publicBase === '/Stupid-Web-Tricks'
+    ? 'https://richlewis007.com/Stupid-Web-Tricks' // GitHub Pages with custom domain + path (case-sensitive)
     : 'https://stupid-web-tricks.pages.dev'; // Cloudflare Pages default
 
 // https://astro.build/config

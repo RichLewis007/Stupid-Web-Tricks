@@ -15,9 +15,9 @@
 
 # Stupid Web Tricks
 
-A collection of web effects and animations I've been experimenting with. Built with Astro and React, with the source shown with comments and documentation to help you learn from and use these tricks in your own websites.
+A collection of web effects and animations - enjoy them, learn from them, and use them in your own projects!. Built with Astro and React, with the source shown with comments and documentation to help you use these tricks in your own websites.
 
-Check it out at: https://richlewis007.com/stupid-web-tricks/
+Check it out at: https://richlewis007.com/Stupid-Web-Tricks/
 
 ## Quick Start
 
@@ -151,7 +151,7 @@ This project supports deployment to both Cloudflare Pages and GitHub Pages:
 1. **Framework**: Astro
 2. **Build Command**: `npm run build:github`
 3. **Output Directory**: `dist`
-4. **Base URL**: `/stupid-web-tricks`
+4. **Base URL**: `/Stupid-Web-Tricks` (case-sensitive - matches repository name)
 5. **Custom Domain**: `https://richlewis007.com`
 
 ### Manual Build

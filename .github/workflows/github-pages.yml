@@ -35,14 +35,14 @@ jobs:
 
       - name: Type/AST check
         env:
-          PUBLIC_BASE_URL: /stupid-web-tricks
-          PUBLIC_SITE_URL: https://richlewis007.com/stupid-web-tricks
+          PUBLIC_BASE_URL: /Stupid-Web-Tricks
+          PUBLIC_SITE_URL: https://richlewis007.com/Stupid-Web-Tricks
         run: npm run check
 
       - name: Build
         env:
-          PUBLIC_BASE_URL: /stupid-web-tricks
-          PUBLIC_SITE_URL: https://richlewis007.com/stupid-web-tricks
+          PUBLIC_BASE_URL: /Stupid-Web-Tricks
+          PUBLIC_SITE_URL: https://richlewis007.com/Stupid-Web-Tricks
         run: npm run build:github
 
       - name: Ensure .nojekyll exists

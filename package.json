@@ -1,13 +1,13 @@
 {
-  "name": "stupid-web-tricks",
+  "name": "Stupid-Web-Tricks",
   "type": "module",
   "version": "0.1.4",
-  "description": "A collection of web effects and animations I've been playing around with",
+  "description": "A collection of web effects and animations - enjoy them, learn from them, and use them in your own projects!",
   "author": "Rich Lewis",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "build:github": "PUBLIC_BASE_URL=/stupid-web-tricks astro build",
+    "build:github": "PUBLIC_BASE_URL=/Stupid-Web-Tricks astro build",
     "preview": "astro preview",
     "clean": "rm -rf dist .astro",
     "clean:all": "rm -rf dist .astro node_modules",

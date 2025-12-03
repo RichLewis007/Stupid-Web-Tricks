@@ -7,7 +7,7 @@ build_output_directory = "dist"
 # GitHub Pages specific settings
 [env]
 NODE_ENV = "production"
-PUBLIC_BASE_URL = "/stupid-web-tricks"
+PUBLIC_BASE_URL = "/Stupid-Web-Tricks"
 
 # Headers for GitHub Pages
 [[headers]]
