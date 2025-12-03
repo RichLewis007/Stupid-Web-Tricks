@@ -74,11 +74,12 @@ function useDeferredPlay(play: () => void) {
 
 export default function SoundEffectsProvider() {
   // Get base URL from Astro (includes base path if configured)
-  const baseUrl = typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL 
-    ? import.meta.env.BASE_URL 
-    : '/';
+  const baseUrl =
+    typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL
+      ? import.meta.env.BASE_URL
+      : '/';
   const soundPath = `${baseUrl}assets/sounds/bubble-pop-1.wav`.replace(/\/+/g, '/'); // Remove duplicate slashes
-  
+
   const [playBubblePop, { sound }] = useSound(soundPath, {
     volume: 0.4,
     interrupt: true,
