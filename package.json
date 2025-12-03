@@ -16,6 +16,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "npm run check",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "prepare": "husky"
   },
   "dependencies": {
@@ -35,6 +38,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
-    "husky": "^9.1.7"
+    "@vitest/ui": "^4.0.15",
+    "husky": "^9.1.7",
+    "jsdom": "^27.2.0",
+    "vitest": "^4.0.15"
   }
 }

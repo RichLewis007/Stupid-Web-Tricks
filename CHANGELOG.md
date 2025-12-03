@@ -17,6 +17,31 @@ This project was developed over time when playing with modern front-end web tech
 
 ## [Unreleased]
 
+### Added
+
+- Code refactoring: Extracted large components into maintainable modules
+  - Hero section effects split into separate modules (`src/lib/hero/`)
+  - Soap bubbles system extracted to reusable modules (`src/lib/bubbles/`)
+  - Mobile menu logic extracted to utility module (`src/lib/ui/mobileMenu.js`)
+- Unit tests for extracted animation modules
+- Performance monitoring and logging system
+
+### Changed
+
+- Refactored `HeroSection.astro` (1478 lines → 262 lines)
+  - Extracted `MagneticText`, `LaserOverlay`, and `ParticleTrail` classes
+  - Moved helper functions to `src/lib/hero/helpers.js`
+  - Centralized initialization in `src/lib/hero/init.js`
+- Refactored `SoapBubbles.astro` (1146 lines → 85 lines)
+  - Extracted `SoapBubbles` class to `src/lib/bubbles/SoapBubbles.js`
+  - Moved initialization to `src/lib/bubbles/init.js`
+- Extracted mobile menu logic from `Layout.astro` to `src/lib/ui/mobileMenu.js`
+- Updated project documentation to reflect new structure
+
+### Fixed
+
+- Removed backup files (`.bak` files) from repository
+
 ## [0.1.5] - 2025-11-28
 
 ### Added

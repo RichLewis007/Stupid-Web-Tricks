@@ -51,8 +51,33 @@ npm run check     # run Astro's diagnostics (optional)
 
 ```
 src/
+├── components/
+│   ├── features/            # Reusable feature components
+│   │   ├── FloatingShapesCanvas.astro
+│   │   └── SoapBubbles.astro
+│   ├── providers/           # React context providers
+│   │   └── SoundEffectsProvider.tsx
+│   ├── sections/           # Page sections
+│   │   ├── HeroSection.astro
+│   │   ├── CategoriesSection.astro
+│   │   └── FeaturesSection.astro
+│   └── ui/                  # UI components
+│       └── CategoryCard.tsx
+├── lib/
+│   ├── bubbles/             # Soap bubbles animation system
+│   │   ├── SoapBubbles.js   # Main bubble class
+│   │   └── init.js          # Initialization logic
+│   ├── hero/                # Hero section effects
+│   │   ├── MagneticText.js  # Magnetic text effect
+│   │   ├── LaserOverlay.js  # Laser beam effect
+│   │   ├── ParticleTrail.js # Particle trail effect
+│   │   ├── helpers.js       # Shared helper functions
+│   │   └── init.js          # Hero effects initialization
+│   ├── ui/                  # UI utilities
+│   │   └── mobileMenu.js    # Mobile menu handler
+│   └── paths.js             # Path utilities
 ├── layouts/
-│   └── Layout.astro          # Main layout with nav
+│   └── Layout.astro         # Main layout with nav
 ├── pages/
 │   ├── index.astro          # Homepage with category cards
 │   ├── html.astro           # HTML tricks

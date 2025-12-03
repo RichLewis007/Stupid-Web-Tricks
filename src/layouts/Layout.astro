@@ -166,37 +166,8 @@ const navLinks = [
 
     <!-- Mobile menu script -->
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        if (mobileMenuButton && mobileMenu) {
-          const closeMenu = () => {
-            mobileMenu.classList.add('hidden');
-            mobileMenuButton.setAttribute('aria-expanded', 'false');
-          };
-
-          mobileMenuButton.addEventListener('click', function() {
-            const isOpen = mobileMenu.classList.toggle('hidden') === false;
-            mobileMenuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-          });
-
-          document.addEventListener('click', (e) => {
-            if (
-              !mobileMenu.contains(e.target as Node) &&
-              !mobileMenuButton.contains(e.target as Node)
-            ) {
-              closeMenu();
-            }
-          });
-
-          document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-              closeMenu();
-            }
-          });
-        }
-      });
+      import { initMobileMenu } from '../lib/ui/mobileMenu.js';
+      initMobileMenu();
     </script>
   </body>
 </html>
