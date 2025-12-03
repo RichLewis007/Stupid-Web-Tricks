@@ -52,14 +52,34 @@ jobs:
 
       - name: Verify build output
         run: |
-          echo "Checking dist directory structure:"
-          ls -la dist/ | head -20
+          echo "=== Checking dist directory structure ==="
+          ls -la dist/ | head -30
           echo ""
-          echo "Checking for _astro directory:"
-          ls -la dist/_astro/ 2>/dev/null | head -10 || echo "Warning: _astro directory not found"
+          echo "=== Checking for _astro directory ==="
+          if [ -d "dist/_astro" ]; then
+            echo "_astro directory found:"
+            ls -la dist/_astro/ | head -20
+            echo ""
+            echo "File count in _astro:"
+            find dist/_astro -type f | wc -l
+          else
+            echo "ERROR: _astro directory not found!"
+            echo "Checking for alternative locations:"
+            find dist -name "*astro*" -type d 2>/dev/null || echo "No astro directories found"
+          fi
           echo ""
-          echo "Checking for .nojekyll:"
+          echo "=== Checking for public files ==="
+          ls -la dist/favicon.svg 2>/dev/null || echo "Warning: favicon.svg not found in dist/"
+          ls -la dist/apple-touch-icon.png 2>/dev/null || echo "Warning: apple-touch-icon.png not found in dist/"
+          echo ""
+          echo "=== Checking for .nojekyll ==="
           ls -la dist/.nojekyll || echo "Warning: .nojekyll not found"
+          echo ""
+          echo "=== Checking dist/stupid-web-tricks if it exists ==="
+          if [ -d "dist/stupid-web-tricks" ]; then
+            echo "Found dist/stupid-web-tricks directory:"
+            ls -la dist/stupid-web-tricks/ | head -20
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
