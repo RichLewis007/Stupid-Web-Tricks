@@ -17,19 +17,14 @@ let laserOverlay = null;
  * @returns {void}
  */
 export function initHeroEffects() {
-  console.log('initHeroEffects: Starting initialization');
-
   magneticText = new MagneticText();
   magneticText.init();
 
   particleTrail = new ParticleTrail();
   particleTrail.init();
 
-  console.log('initHeroEffects: Creating LaserOverlay');
   laserOverlay = new LaserOverlay();
-  console.log('initHeroEffects: Calling laserOverlay.init()');
   laserOverlay.init();
-  console.log('initHeroEffects: LaserOverlay init() completed');
 
   // Set up Intersection Observer to pause animations when hero is off screen
   // Delay observer setup slightly to ensure all effects are initialized first

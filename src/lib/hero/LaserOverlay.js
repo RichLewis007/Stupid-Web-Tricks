@@ -114,18 +114,9 @@ export class LaserOverlay {
   }
 
   init() {
-    console.log('LaserOverlay.init() called');
-    console.log('LaserOverlay: Looking for canvas with id "heroLaser"');
     const canvas = document.getElementById('heroLaser');
-    console.log('LaserOverlay: Canvas search result:', canvas);
     if (!(canvas instanceof HTMLCanvasElement)) {
-      console.error('LaserOverlay: Canvas element "heroLaser" not found!', {
-        allCanvasElements: Array.from(document.querySelectorAll('canvas')).map((c) => ({
-          id: c.id,
-          className: c.className,
-        })),
-        documentReady: document.readyState,
-      });
+      console.warn('LaserOverlay: Canvas element "heroLaser" not found');
       return;
     }
     this.canvas = canvas;
@@ -135,10 +126,6 @@ export class LaserOverlay {
       return;
     }
     this.ctx = ctx;
-    console.log('LaserOverlay: Initialized successfully', {
-      canvasSize: { width: canvas.width, height: canvas.height },
-      interval: LASER_INTERVAL_MS,
-    });
     this.resize();
     window.addEventListener('resize', this.resizeHandler);
 
@@ -151,29 +138,14 @@ export class LaserOverlay {
     }
 
     this.intervalId = window.setInterval(() => {
-      console.log('LaserOverlay: Interval triggered', {
-        isVisible: this.isVisible,
-        isOnScreen: this.isOnScreen,
-        canvas: !!this.canvas,
-        ctx: !!this.ctx,
-      });
       if (this.isVisible && this.isOnScreen) {
         this.fire();
-      } else {
-        console.debug('LaserOverlay: Skipping interval fire', {
-          isVisible: this.isVisible,
-          isOnScreen: this.isOnScreen,
-        });
       }
     }, LASER_INTERVAL_MS);
 
     // Fire initial laser after a delay to ensure bubbles are ready
     // Only fire if bubbles are available at that time
     setTimeout(() => {
-      console.log('LaserOverlay: Initial fire attempt', {
-        isVisible: this.isVisible,
-        isOnScreen: this.isOnScreen,
-      });
       if (this.isVisible && this.isOnScreen) {
         this.fire(); // fire() will return early if no bubbles are available
       }
@@ -192,24 +164,14 @@ export class LaserOverlay {
   }
 
   fire() {
-    if (!this.canvas || !this.ctx) {
-      console.debug('LaserOverlay: Cannot fire - canvas or context not available');
-      return;
-    }
-
-    if (!this.isOnScreen) {
-      console.debug('LaserOverlay: Cannot fire - hero section is off screen');
-      return;
-    }
+    if (!this.canvas || !this.ctx) return;
+    if (!this.isOnScreen) return;
 
     const width = this.canvas.width / this.dpr || this.canvas.clientWidth || window.innerWidth;
     const height = this.canvas.height / this.dpr || this.canvas.clientHeight || window.innerHeight;
 
     const soap = window?.soapBubbles_floatingShapesCanvas;
-    if (!soap) {
-      console.debug('LaserOverlay: Cannot fire - bubbles not initialized yet');
-      return;
-    }
+    if (!soap) return;
 
     const mainBubbles =
       soap?.shapes?.filter(
@@ -228,7 +190,6 @@ export class LaserOverlay {
     // Only fire if there are bubbles fully on screen at this time
     // If no bubbles are available, skip this firing and wait for next interval
     if (!mainBubbles.length) {
-      console.debug('LaserOverlay: Skipping fire - no bubbles fully on screen at this time');
       return;
     }
 
@@ -244,16 +205,7 @@ export class LaserOverlay {
       .sort((a, b) => b.radius - a.radius)
       .slice(0, 6);
     const target = ranked[0];
-    if (!target) {
-      console.debug('LaserOverlay: No target bubble found after ranking');
-      return;
-    }
-
-    console.log('LaserOverlay: Firing laser at target bubble', {
-      targetRadius: target.radius,
-      targetPos: { x: target.x, y: target.y },
-      availableBubbles: mainBubbles.length,
-    });
+    if (!target) return;
 
     const start = randomEdgePoint(width, height, 60);
     let dir = { x: target.x - start.x, y: target.y - start.y };
