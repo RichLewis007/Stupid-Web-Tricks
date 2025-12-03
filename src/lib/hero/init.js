@@ -17,70 +17,79 @@ let laserOverlay = null;
  * @returns {void}
  */
 export function initHeroEffects() {
+  console.log('initHeroEffects: Starting initialization');
+  
   magneticText = new MagneticText();
   magneticText.init();
 
   particleTrail = new ParticleTrail();
   particleTrail.init();
 
+  console.log('initHeroEffects: Creating LaserOverlay');
   laserOverlay = new LaserOverlay();
+  console.log('initHeroEffects: Calling laserOverlay.init()');
   laserOverlay.init();
+  console.log('initHeroEffects: LaserOverlay init() completed');
 
   // Set up Intersection Observer to pause animations when hero is off screen
-  const heroSection = document.querySelector('.hero-section');
-  if (heroSection && 'IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const isOnScreen = entry.isIntersecting;
+  // Delay observer setup slightly to ensure all effects are initialized first
+  // This prevents the observer from immediately setting isOnScreen to false
+  setTimeout(() => {
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const isOnScreen = entry.isIntersecting;
 
-          // Pause/resume all animations
-          if (magneticText) {
-            if (isOnScreen) {
-              magneticText.resume();
-            } else {
-              magneticText.pause();
+            // Pause/resume all animations
+            if (magneticText) {
+              if (isOnScreen) {
+                magneticText.resume();
+              } else {
+                magneticText.pause();
+              }
             }
-          }
 
-          if (particleTrail) {
-            if (isOnScreen) {
-              particleTrail.resume();
-            } else {
-              particleTrail.pause();
+            if (particleTrail) {
+              if (isOnScreen) {
+                particleTrail.resume();
+              } else {
+                particleTrail.pause();
+              }
             }
-          }
 
-          if (laserOverlay) {
-            if (isOnScreen) {
-              laserOverlay.resume();
-            } else {
-              laserOverlay.pause();
+            if (laserOverlay) {
+              if (isOnScreen) {
+                laserOverlay.resume();
+              } else {
+                laserOverlay.pause();
+              }
             }
-          }
 
-          // Pause/resume bubble animations
-          const soapBubbles = window?.soapBubbles_floatingShapesCanvas;
-          if (
-            soapBubbles &&
-            typeof soapBubbles.pause === 'function' &&
-            typeof soapBubbles.resume === 'function'
-          ) {
-            if (isOnScreen) {
-              soapBubbles.resume();
-            } else {
-              soapBubbles.pause();
+            // Pause/resume bubble animations
+            const soapBubbles = window?.soapBubbles_floatingShapesCanvas;
+            if (
+              soapBubbles &&
+              typeof soapBubbles.pause === 'function' &&
+              typeof soapBubbles.resume === 'function'
+            ) {
+              if (isOnScreen) {
+                soapBubbles.resume();
+              } else {
+                soapBubbles.pause();
+              }
             }
-          }
-        });
-      },
-      {
-        threshold: 0.1, // Trigger when at least 10% of hero section is visible
-      },
-    );
+          });
+        },
+        {
+          threshold: 0.1, // Trigger when at least 10% of hero section is visible
+        },
+      );
 
-    observer.observe(heroSection);
-  }
+      observer.observe(heroSection);
+    }
+  }, 100); // Small delay to ensure effects are initialized first
 
   // Trigger initial jiggle sequence on page load
   setTimeout(() => {
@@ -105,8 +114,6 @@ export function cleanupHeroEffects() {
   }
 }
 
-// Auto-initialize on DOMContentLoaded
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', initHeroEffects);
-  window.addEventListener('beforeunload', cleanupHeroEffects);
-}
+// Note: initHeroEffects() is now called from HeroSection.astro script tag
+// This allows the module to be imported and the function to be called explicitly
+window.addEventListener('beforeunload', cleanupHeroEffects);

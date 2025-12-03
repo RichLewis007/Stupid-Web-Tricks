@@ -2,7 +2,6 @@
 // HeroSection.astro - Main hero section with magnetic text, particle trail, and liquid blobs
 import FloatingShapesCanvas from '../features/FloatingShapesCanvas.astro';
 import SoundEffectsProvider from '../providers/SoundEffectsProvider';
-import '../lib/hero/init.js';
 ---
 
 <section
@@ -71,8 +70,16 @@ import '../lib/hero/init.js';
 </section>
 
 <script>
-  // All hero effects are now in separate modules
-  // Imported via: import '../lib/hero/init.js';
+  // Initialize all hero section effects
+  import { initHeroEffects } from '../../lib/hero/init.js';
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeroEffects);
+  } else {
+    // DOM already loaded, initialize immediately
+    initHeroEffects();
+  }
 </script>
 
 <style>
