@@ -78,7 +78,10 @@ export default function SoundEffectsProvider() {
     typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL
       ? import.meta.env.BASE_URL
       : '/';
-  const soundPath = `${baseUrl}assets/sounds/bubble-pop-1.wav`.replace(/\/+/g, '/'); // Remove duplicate slashes
+  // Ensure proper path construction: baseUrl/assetPath
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const assetPath = 'assets/sounds/bubble-pop-1.wav';
+  const soundPath = `${normalizedBase}${assetPath}`;
 
   const [playBubblePop, { sound }] = useSound(soundPath, {
     volume: 0.4,
