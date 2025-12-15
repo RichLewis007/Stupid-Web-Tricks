@@ -20,6 +20,20 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
   <!-- Floating shapes canvas -->
   <FloatingShapesCanvas />
 
+  <!-- Pop Counters Display -->
+  <div class="absolute top-4 left-4 z-50 pointer-events-none">
+    <div class="press-start-2p-font text-white text-xs sm:text-sm text-center" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);">
+      <div>Player</div>
+      <div id="user-pop-count" class="text-yellow-300 mt-1" style="transform: translateX(-3px);">0</div>
+    </div>
+  </div>
+  <div class="absolute top-4 right-4 z-50 pointer-events-none">
+    <div class="press-start-2p-font text-white text-xs sm:text-sm text-center" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);">
+      <div>Laser</div>
+      <div id="laser-pop-count" class="text-red-300 mt-1">0</div>
+    </div>
+  </div>
+
   <!-- Particle trail canvas -->
   <canvas id="particleTrail" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
   <!-- Laser overlay canvas -->
@@ -80,9 +94,40 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     // DOM already loaded, initialize immediately
     initHeroEffects();
   }
+
+  // Update pop counters display
+  function updatePopCounters() {
+    const userCountEl = document.getElementById('user-pop-count');
+    const laserCountEl = document.getElementById('laser-pop-count');
+    
+    if (!userCountEl || !laserCountEl) {
+      setTimeout(updatePopCounters, 100);
+      return;
+    }
+
+    const bubbles = window?.soapBubbles_floatingShapesCanvas;
+    if (bubbles && typeof bubbles.getPopStats === 'function') {
+      const stats = bubbles.getPopStats();
+      userCountEl.textContent = stats.pointerPops.toString();
+      laserCountEl.textContent = stats.laserPops.toString();
+    }
+
+    // Update every 100ms for real-time display
+    setTimeout(updatePopCounters, 100);
+  }
+
+  // Start updating counters after a short delay to ensure bubbles are initialized
+  setTimeout(updatePopCounters, 500);
 </script>
 
 <style>
+  /* Press Start 2P font */
+  .press-start-2p-font {
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+
   /* Hero button styling */
   .hero-button {
     position: relative;
