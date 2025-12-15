@@ -22,14 +22,26 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 
   <!-- Pop Counters Display -->
   <div class="absolute top-4 left-4 z-50 pointer-events-none">
-    <div class="press-start-2p-font text-white text-xs sm:text-sm text-center" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);">
-      <div>Player</div>
-      <div id="user-pop-count" class="text-yellow-300 mt-1" style="transform: translateX(-3px);">0</div>
+    <div
+      class="press-start-2p-font text-white text-xs sm:text-sm text-center"
+      style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);"
+    >
+      <div id="player-label">Player</div>
+      <div id="user-pop-count" class="text-yellow-300 mt-1" style="transform: translateX(-3px);">
+        0
+      </div>
     </div>
   </div>
   <div class="absolute top-4 right-4 z-50 pointer-events-none">
-    <div class="press-start-2p-font text-white text-xs sm:text-sm text-center" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);">
-      <div>Laser</div>
+    <div
+      class="press-start-2p-font text-white text-xs sm:text-sm text-center"
+      style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);"
+    >
+      <div class="flex items-center justify-center gap-2 relative">
+        <span id="laser-status-dot" class="laser-status-dot"></span>
+        <span id="laser-label">Laser</span>
+        <span id="laser-score-line" class="laser-score-line"></span>
+      </div>
       <div id="laser-pop-count" class="text-red-300 mt-1">0</div>
     </div>
   </div>
@@ -95,12 +107,18 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     initHeroEffects();
   }
 
-  // Update pop counters display
+  // Track laser winning state for 60-second timer
+  let laserWinningStartTime = null;
+  let laserLabelChanged = false;
+
+  // Update pop counters display and laser status dot
   function updatePopCounters() {
     const userCountEl = document.getElementById('user-pop-count');
     const laserCountEl = document.getElementById('laser-pop-count');
-    
-    if (!userCountEl || !laserCountEl) {
+    const laserDotEl = document.getElementById('laser-status-dot');
+    const laserLabelEl = document.getElementById('laser-label');
+
+    if (!userCountEl || !laserCountEl || !laserDotEl || !laserLabelEl) {
       setTimeout(updatePopCounters, 100);
       return;
     }
@@ -110,6 +128,77 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       const stats = bubbles.getPopStats();
       userCountEl.textContent = stats.pointerPops.toString();
       laserCountEl.textContent = stats.laserPops.toString();
+
+      // Track when laser is winning for 60 seconds
+      const now = Date.now();
+      if (stats.laserPops > stats.pointerPops) {
+        // Laser is winning
+        if (laserWinningStartTime === null) {
+          laserWinningStartTime = now;
+          console.log('Laser started winning, timer started');
+        }
+
+        const laserWinningDuration = now - laserWinningStartTime;
+        const sixtySeconds = 60000;
+
+        // Debug: log progress every 10 seconds
+        if (laserWinningDuration > 0 && laserWinningDuration % 10000 < 100) {
+          console.log(`Laser winning for ${Math.floor(laserWinningDuration / 1000)} seconds`);
+        }
+
+        // If laser has been winning for 60 seconds, change "Laser" to "Winner"
+        if (laserWinningDuration >= sixtySeconds && !laserLabelChanged) {
+          console.log('Laser has been winning for 60 seconds, changing label to Winner');
+          laserLabelEl.textContent = 'Winner';
+          laserLabelChanged = true;
+        }
+      } else {
+        // Player is winning or tied - reset timer and label
+        if (laserWinningStartTime !== null) {
+          console.log('Laser no longer winning, resetting timer');
+          laserWinningStartTime = null;
+        }
+        if (laserLabelChanged) {
+          laserLabelEl.textContent = 'Laser';
+          laserLabelChanged = false;
+        }
+      }
+
+      // Show/hide laser score line based on score comparison
+      const laserLineEl = document.getElementById('laser-score-line');
+      if (laserLineEl) {
+        if (stats.laserPops > stats.pointerPops) {
+          laserLineEl.style.display = 'block';
+        } else {
+          laserLineEl.style.display = 'none';
+        }
+      }
+    }
+
+    // Update laser status dot size based on firing rate
+    const laserOverlay = window?.laserOverlay_instance;
+    if (laserOverlay && laserOverlay.currentInterval !== undefined) {
+      const baseInterval = 10000; // LASER_INTERVAL_MS (10 seconds)
+      const currentInterval = laserOverlay.currentInterval;
+
+      // Calculate size multiplier based on firing rate
+      // Normal (10s): 1x (6px), Fast (5s): 2x (12px), Very Fast (2.5s): 4x (24px)
+      let sizeMultiplier = 1;
+      if (currentInterval <= baseInterval / 4 + 100) {
+        // Very fast rate (2.5s) - 4x size
+        sizeMultiplier = 4;
+      } else if (currentInterval <= baseInterval / 2 + 100) {
+        // Fast rate (5s) - 2x size
+        sizeMultiplier = 2;
+      } else {
+        // Normal rate (10s) - 1x size
+        sizeMultiplier = 1;
+      }
+
+      // Base size is 6px, scale by multiplier
+      const dotSize = 6 * sizeMultiplier;
+      laserDotEl.style.width = `${dotSize}px`;
+      laserDotEl.style.height = `${dotSize}px`;
     }
 
     // Update every 100ms for real-time display
@@ -126,6 +215,44 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     font-family: 'Press Start 2P', 'Courier New', monospace;
     line-height: 1.6;
     letter-spacing: 0;
+  }
+
+  /* Laser status dot */
+  .laser-status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: rgba(255, 40, 40, 1);
+    box-shadow:
+      0 0 4px rgba(255, 40, 40, 0.8),
+      0 0 8px rgba(255, 40, 40, 0.6),
+      0 0 12px rgba(255, 40, 40, 0.4);
+    transition:
+      width 0.3s ease,
+      height 0.3s ease,
+      box-shadow 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  /* Laser score line - appears when laser is winning */
+  .laser-score-line {
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      to right,
+      rgba(255, 120, 120, 0.7) 0%,
+      rgba(255, 40, 40, 1) 50%,
+      rgba(255, 120, 120, 0.7) 100%
+    );
+    box-shadow:
+      0 0 4px rgba(255, 40, 40, 0.8),
+      0 0 8px rgba(255, 60, 60, 0.6);
+    display: none;
+    transition: opacity 0.3s ease;
   }
 
   /* Hero button styling */

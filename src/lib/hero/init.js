@@ -27,6 +27,8 @@ export function initHeroEffects() {
 
   laserOverlay = new LaserOverlay();
   laserOverlay.init();
+  // Make laserOverlay accessible for dot size updates
+  window.laserOverlay_instance = laserOverlay;
 
   // Set up Intersection Observer to pause animations when hero is off screen
   // Delay observer setup slightly to ensure all effects are initialized first
@@ -109,6 +111,7 @@ export function cleanupHeroEffects() {
     laserOverlay.destroy();
     laserOverlay = null;
   }
+  window.laserOverlay_instance = null;
   if (intersectionObserver) {
     intersectionObserver.disconnect();
     intersectionObserver = null;

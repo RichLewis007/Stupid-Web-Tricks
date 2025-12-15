@@ -36,6 +36,7 @@ export class LaserOverlay {
     this.visibilityHandler = null;
     this.audioContext = null;
     this.isOnScreen = true;
+    this.currentInterval = LASER_INTERVAL_MS;
   }
 
   /**
@@ -137,11 +138,7 @@ export class LaserOverlay {
       document.addEventListener('visibilitychange', this.visibilityHandler);
     }
 
-    this.intervalId = window.setInterval(() => {
-      if (this.isVisible && this.isOnScreen) {
-        this.fire();
-      }
-    }, LASER_INTERVAL_MS);
+    this.startInterval();
 
     // Fire initial laser after a delay to ensure bubbles are ready
     // Only fire if bubbles are available at that time
@@ -150,6 +147,87 @@ export class LaserOverlay {
         this.fire(); // fire() will return early if no bubbles are available
       }
     }, 3000); // Wait 3 seconds for bubbles to initialize
+
+    // Monitor pop stats and adjust interval dynamically
+    this.startIntervalMonitor();
+  }
+
+  /**
+   * Start the laser firing interval
+   * @returns {void}
+   */
+  startInterval() {
+    // Clear existing interval if any
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+
+    this.intervalId = window.setInterval(() => {
+      if (this.isVisible && this.isOnScreen) {
+        this.fire();
+      }
+    }, this.currentInterval);
+  }
+
+  /**
+   * Monitor pop stats and adjust laser interval based on player performance
+   * Once the laser speeds up, it stays at that speed until laser score >= player score
+   * @returns {void}
+   */
+  startIntervalMonitor() {
+    const checkAndUpdateInterval = () => {
+      const bubbles = window?.soapBubbles_floatingShapesCanvas;
+      if (bubbles && typeof bubbles.getPopStats === 'function') {
+        const stats = bubbles.getPopStats();
+        const playerScore = stats.pointerPops;
+        const laserScore = stats.laserPops;
+
+        let newInterval = this.currentInterval; // Default: keep current rate
+
+        // Only reduce firing rate (slow down) when laser score >= player score
+        // AND we're currently at a faster rate
+        if (
+          laserScore >= playerScore &&
+          laserScore > 0 &&
+          this.currentInterval < LASER_INTERVAL_MS
+        ) {
+          // Laser has caught up or is ahead - slow down to normal rate
+          newInterval = LASER_INTERVAL_MS; // Normal rate (10 seconds)
+          console.log(
+            `Laser caught up! (${laserScore} >= ${playerScore}) Slowing down from ${this.currentInterval}ms to ${newInterval}ms`,
+          );
+        }
+        // Speed up based on point difference (only when laser is behind)
+        else if (laserScore >= 0 && playerScore > laserScore) {
+          const pointDifference = playerScore - laserScore;
+
+          // If laser is behind by 20+ points, use very fast rate (2.5 seconds)
+          if (pointDifference >= 20) {
+            newInterval = LASER_INTERVAL_MS / 4; // 2.5 seconds
+          }
+          // Else if laser is behind by 10+ points, use fast rate (5 seconds)
+          else if (pointDifference >= 10) {
+            newInterval = LASER_INTERVAL_MS / 2; // 5 seconds
+          }
+          // If player is ahead but by less than 10 points, keep current rate (don't slow down)
+          // This means if we're already at fast/very fast, stay there
+        }
+        // If scores are equal and both are 0, or laser is ahead but already at normal rate, keep current rate
+
+        // Only update if interval changed
+        if (newInterval !== this.currentInterval) {
+          this.currentInterval = newInterval;
+          this.startInterval(); // Restart interval with new timing
+        }
+      }
+
+      // Check every second
+      setTimeout(checkAndUpdateInterval, 1000);
+    };
+
+    // Start monitoring after a delay to ensure bubbles are initialized
+    setTimeout(checkAndUpdateInterval, 2000);
   }
 
   resize() {
