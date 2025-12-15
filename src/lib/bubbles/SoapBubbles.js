@@ -31,6 +31,9 @@ export class SoapBubbles {
     this.maxPendingTimeouts = 50; // Limit pending timeouts to prevent memory leaks
     this.isDestroyed = false;
     this.animationFrameId = null;
+    // Pop counters
+    this.laserPopCount = 0;
+    this.pointerPopCount = 0;
     this.baseBubbleCount = config.bubbleCount;
     this.dynamicBubbleCount = config.bubbleCount;
     this.minBubbleCount = Math.max(3, Math.floor(config.bubbleCount * 0.6));
@@ -360,6 +363,7 @@ export class SoapBubbles {
         // This ensures it goes through the same path as collision-based pops
         shape.isPopping = true;
         shape.popPhase = 0;
+        shape.popReason = 'pointer'; // Track pop reason
         this.triggerPopSound(shape);
         break;
       }
@@ -423,6 +427,14 @@ export class SoapBubbles {
   }
 
   explodeShape(shape, index) {
+    // Increment pop counters based on pop reason
+    if (shape.popReason === 'laser') {
+      this.laserPopCount++;
+    } else if (shape.popReason === 'pointer') {
+      this.pointerPopCount++;
+    }
+    // Note: 'collision' pops (with elements) are not counted
+
     // Create explosion particles (lighter burst when requested)
     const particleCount = shape.lightExplosion ? 8 : 12;
     // Limit total particles to prevent memory issues
@@ -622,6 +634,27 @@ export class SoapBubbles {
     }
   }
 
+  /**
+   * Get pop statistics
+   * @returns {{laserPops: number, pointerPops: number, totalPops: number}}
+   */
+  getPopStats() {
+    return {
+      laserPops: this.laserPopCount,
+      pointerPops: this.pointerPopCount,
+      totalPops: this.laserPopCount + this.pointerPopCount,
+    };
+  }
+
+  /**
+   * Reset pop counters
+   * @returns {void}
+   */
+  resetPopCounters() {
+    this.laserPopCount = 0;
+    this.pointerPopCount = 0;
+  }
+
   destroy() {
     if (!this.initialized) return;
 
@@ -732,6 +765,10 @@ export class SoapBubbles {
     for (let i = this.shapes.length - 1; i >= 0; i--) {
       const shape = this.shapes[i];
       if (shape.forcePop) {
+        // Ensure popReason is set for forcePop bubbles
+        if (!shape.popReason) {
+          shape.popReason = 'laser';
+        }
         shape.isPopping = true;
         shape.popPhase = 0;
         shape.forcePop = false;
@@ -760,6 +797,16 @@ export class SoapBubbles {
         continue;
       }
 
+      // Handle forcePop (laser hits) - explode immediately
+      if (shape.forcePop && !shape.isPopping) {
+        // Ensure popReason is set if not already
+        if (!shape.popReason) {
+          shape.popReason = 'laser';
+        }
+        this.explodeShape(shape, i);
+        continue;
+      }
+
       // Handle pop animation
       if (shape.isPopping) {
         shape.popPhase = (shape.popPhase || 0) + 0.15;
@@ -780,6 +827,7 @@ export class SoapBubbles {
         if (hit) {
           shape.forcePop = true;
           shape.lightExplosion = true;
+          shape.popReason = 'laser'; // Track pop reason
           this.triggerPopSound(shape);
           continue;
         }
@@ -789,12 +837,14 @@ export class SoapBubbles {
       if (!shape.isPopping && this.checkCollisionWithMouse(shape)) {
         shape.isPopping = true;
         shape.popPhase = 0;
+        shape.popReason = 'pointer'; // Track pop reason
         this.triggerPopSound(shape);
       }
 
       if (!shape.isPopping && this.checkCollisionWithElements(shape)) {
         shape.isPopping = true;
         shape.popPhase = 0;
+        shape.popReason = 'collision'; // Track pop reason (not counted as pointer)
         this.triggerPopSound(shape);
       }
 

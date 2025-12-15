@@ -272,6 +272,7 @@ export class LaserOverlay {
       const hit = segmentCircleHit(start, end, { x: b.x, y: b.y, r: b.radius || 0 });
       if (hit || b === target) {
         b.forcePop = true;
+        b.popReason = 'laser'; // Track pop reason for counter
         hitList.push(b);
       }
     });
