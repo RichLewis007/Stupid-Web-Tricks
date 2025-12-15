@@ -561,4 +561,3 @@ export class ParticleTrail {
     }
   }
 }
-

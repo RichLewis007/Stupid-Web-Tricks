@@ -88,4 +88,3 @@ describe('Hero Helpers', () => {
     });
   });
 });
-

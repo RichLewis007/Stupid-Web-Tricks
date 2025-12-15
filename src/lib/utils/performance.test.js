@@ -133,4 +133,3 @@ describe('createPerformanceMonitor', () => {
     monitor.stop();
   });
 });
-
