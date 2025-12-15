@@ -120,3 +120,4 @@ export interface MobileMenuConfig {
   buttonId?: string;
   menuId?: string;
 }
+

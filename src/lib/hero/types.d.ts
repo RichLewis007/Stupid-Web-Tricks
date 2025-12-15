@@ -25,3 +25,4 @@ export interface ParticleTrailPoint {
 }
 
 export { Point, Circle, Segment, LaserSegment };
+
