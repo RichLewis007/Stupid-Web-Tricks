@@ -2,6 +2,8 @@
   <img src="assets/readme-banner.jpg" alt="Stupid Web Tricks Banner" width="100%">
 </div>
 
+now updated!
+
 <div align="center">
 
 [![CI](https://github.com/richlewis007/stupid-web-tricks/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/richlewis007/stupid-web-tricks/actions)
