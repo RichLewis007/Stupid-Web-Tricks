@@ -99,6 +99,14 @@ export default function SoundEffectsProvider() {
 
   useEffect(() => {
     const handleBubblePop = () => {
+      // Check if sounds are muted
+      try {
+        const muted = localStorage.getItem('soundEffectsMuted') === 'true';
+        if (muted) return;
+      } catch (error) {
+        // Silently fail if localStorage is not available
+      }
+
       const ctx = Howler?.ctx;
       if (ctx && ctx.state === 'suspended' && !navigator.userActivation?.hasBeenActive) {
         return;

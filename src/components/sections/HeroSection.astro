@@ -26,8 +26,11 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
       class="press-start-2p-font text-white text-xs sm:text-sm text-center"
       style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);"
     >
-      <div id="player-label">Player</div>
-      <div id="user-pop-count" class="text-yellow-300 mt-1" style="transform: translateX(-3px);">
+      <div class="flex items-center justify-center gap-2 relative">
+        <span id="player-label">Player</span>
+        <span id="player-score-line" class="player-score-line"></span>
+      </div>
+      <div id="user-pop-count" class="text-yellow-300 mt-1" style="transform: translateX(-8px);">
         0
       </div>
     </div>
@@ -42,7 +45,13 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
         <span id="laser-label">Laser</span>
         <span id="laser-score-line" class="laser-score-line"></span>
       </div>
-      <div id="laser-pop-count" class="text-red-300 mt-1">0</div>
+      <div
+        id="laser-pop-count"
+        class="mt-1"
+        style="color: rgba(255, 40, 40, 1); text-shadow: 0 0 4px rgba(255, 40, 40, 0.8), 0 0 8px rgba(255, 40, 40, 0.6);"
+      >
+        0
+      </div>
     </div>
   </div>
 
@@ -53,6 +62,52 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     id="heroLaser"
     class="absolute inset-0 w-full h-full pointer-events-none z-40 block"
     style="opacity: 0;"></canvas>
+
+  <!-- Sound Mute Button -->
+  <button
+    id="sound-mute-button"
+    class="absolute bottom-4 right-4 z-50 p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+    aria-label="Toggle sound effects"
+    title="Toggle sound effects"
+  >
+    <!-- Speaker icon (unmuted) -->
+    <svg
+      id="sound-icon-unmuted"
+      class="w-6 h-6 text-white"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+      ></path>
+    </svg>
+    <!-- Speaker with slash icon (muted) -->
+    <svg
+      id="sound-icon-muted"
+      class="w-6 h-6 text-white hidden"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+      ></path>
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+    </svg>
+  </button>
 
   <!-- Content -->
   <div
@@ -96,8 +151,13 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
 </section>
 
 <script>
+  // @ts-nocheck
   // Initialize all hero section effects
   import { initHeroEffects } from '../../lib/hero/init.js';
+  import { initSoundControl, toggleMute, isMuted } from '../../lib/utils/soundControl.js';
+
+  // Initialize sound control
+  initSoundControl();
 
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
@@ -105,6 +165,49 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
   } else {
     // DOM already loaded, initialize immediately
     initHeroEffects();
+  }
+
+  // Setup mute button
+  function setupMuteButton() {
+    const muteButton = document.getElementById('sound-mute-button');
+    const unmutedIcon = document.getElementById('sound-icon-unmuted');
+    const mutedIcon = document.getElementById('sound-icon-muted');
+
+    if (!muteButton || !unmutedIcon || !mutedIcon) {
+      setTimeout(setupMuteButton, 100);
+      return;
+    }
+
+    // Update icon based on current mute state
+    function updateIcon() {
+      const muted = isMuted();
+      if (muted) {
+        unmutedIcon?.classList.add('hidden');
+        mutedIcon?.classList.remove('hidden');
+      } else {
+        unmutedIcon?.classList.remove('hidden');
+        mutedIcon?.classList.add('hidden');
+      }
+    }
+
+    // Set initial icon state
+    updateIcon();
+
+    // Handle button click
+    muteButton.addEventListener('click', () => {
+      toggleMute();
+      updateIcon();
+    });
+
+    // Listen for mute state changes from other sources
+    window.addEventListener('soundEffects:muteChanged', updateIcon);
+  }
+
+  // Setup mute button when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupMuteButton);
+  } else {
+    setupMuteButton();
   }
 
   // Track laser winning state for 60-second timer
@@ -173,9 +276,20 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
           laserLineEl.style.display = 'none';
         }
       }
+
+      // Show/hide player score line based on score comparison
+      const playerLineEl = document.getElementById('player-score-line');
+      if (playerLineEl) {
+        if (stats.pointerPops > stats.laserPops) {
+          playerLineEl.style.display = 'block';
+        } else {
+          playerLineEl.style.display = 'none';
+        }
+      }
     }
 
     // Update laser status dot size based on firing rate
+    // @ts-ignore
     const laserOverlay = window?.laserOverlay_instance;
     if (laserOverlay && laserOverlay.currentInterval !== undefined) {
       const baseInterval = 10000; // LASER_INTERVAL_MS (10 seconds)
@@ -251,6 +365,26 @@ import SoundEffectsProvider from '../providers/SoundEffectsProvider';
     box-shadow:
       0 0 4px rgba(255, 40, 40, 0.8),
       0 0 8px rgba(255, 60, 60, 0.6);
+    display: none;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Player score line - appears when player is winning */
+  .player-score-line {
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      to right,
+      rgba(255, 220, 120, 0.7) 0%,
+      rgba(255, 200, 40, 1) 50%,
+      rgba(255, 220, 120, 0.7) 100%
+    );
+    box-shadow:
+      0 0 4px rgba(255, 200, 40, 0.8),
+      0 0 8px rgba(255, 220, 60, 0.6);
     display: none;
     transition: opacity 0.3s ease;
   }

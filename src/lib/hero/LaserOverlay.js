@@ -68,6 +68,18 @@ export class LaserOverlay {
     // Don't play sound if hero is off screen
     if (!this.isOnScreen) return;
 
+    // Check if sounds are muted
+    try {
+      // Import sound control utility
+      if (typeof window !== 'undefined') {
+        // Check localStorage for mute state
+        const muted = localStorage.getItem('soundEffectsMuted') === 'true';
+        if (muted) return;
+      }
+    } catch (error) {
+      // Silently fail if localStorage is not available
+    }
+
     try {
       // Create audio context if it doesn't exist
       if (!this.audioContext) {
