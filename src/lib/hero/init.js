@@ -11,6 +11,8 @@ let magneticText = null;
 let particleTrail = null;
 /** @type {LaserOverlay | null} */
 let laserOverlay = null;
+/** @type {IntersectionObserver | null} */
+let intersectionObserver = null;
 
 /**
  * Initialize all hero section effects
@@ -32,7 +34,7 @@ export function initHeroEffects() {
   setTimeout(() => {
     const heroSection = document.querySelector('.hero-section');
     if (heroSection && 'IntersectionObserver' in window) {
-      const observer = new IntersectionObserver(
+      intersectionObserver = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             const isOnScreen = entry.isIntersecting;
@@ -82,7 +84,7 @@ export function initHeroEffects() {
         },
       );
 
-      observer.observe(heroSection);
+      intersectionObserver.observe(heroSection);
     }
   }, 100); // Small delay to ensure effects are initialized first
 
@@ -106,6 +108,10 @@ export function cleanupHeroEffects() {
   if (laserOverlay) {
     laserOverlay.destroy();
     laserOverlay = null;
+  }
+  if (intersectionObserver) {
+    intersectionObserver.disconnect();
+    intersectionObserver = null;
   }
 }
 
