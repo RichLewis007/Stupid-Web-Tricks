@@ -47,6 +47,12 @@ This project was developed over time when playing with modern front-end web tech
 ### Fixed
 
 - Removed backup files (`.bak` files) from repository
+- Fixed SoapBubbles component initialization issue where multiple instances would all target the first canvas element instead of their respective instances
+  - Changed from `querySelector` to `getElementById` with `canvasId` passed via `define:vars`
+  - Each component instance now correctly initializes its own canvas
+- Fixed memory leak in IntersectionObserver that wasn't being disconnected during cleanup
+  - Observer reference now stored at module scope in `src/lib/hero/init.js`
+  - Added proper cleanup in `cleanupHeroEffects()` to disconnect observer
 
 ## [0.1.5] - 2025-11-28
 

@@ -46,26 +46,88 @@ const config = {
   data-config={JSON.stringify(config)}
   style={`z-index: ${zIndex}; pointer-events: ${pointerEvents};`}></canvas>
 
-<script define:vars={{ canvasId, config }}>
+<script>
+  // @ts-nocheck - TypeScript types for setTimeout vary by environment
   import { initSoapBubbles } from '../../lib/bubbles/init.js';
 
-  // Initialize using the specific canvasId for this component instance
+  // Track initialization state to prevent leaks
+  let initTimeoutId = null;
+  let domContentLoadedListener = null;
+  let hasInitialized = false;
+
+  // Find all uninitialized canvas elements and initialize them
   function initialize() {
-    const canvas = document.getElementById(canvasId);
-    if (canvas) {
-      // Use the config passed via define:vars, which is scoped to this component instance
-      initSoapBubbles(config);
-    } else {
-      // Canvas not found yet, retry
-      setTimeout(initialize, 100);
+    // Clear any pending timeout
+    if (initTimeoutId !== null) {
+      clearTimeout(initTimeoutId);
+      initTimeoutId = null;
+    }
+
+    const canvases = document.querySelectorAll(
+      '.soap-bubbles-canvas[data-config]:not([data-initialized])',
+    );
+
+    canvases.forEach((canvas) => {
+      const canvasId = canvas.id;
+      if (!canvasId) {
+        console.warn('SoapBubbles: Canvas found without ID, skipping');
+        return;
+      }
+
+      // Check if already initialized
+      if (canvas.hasAttribute('data-initialized')) {
+        return;
+      }
+
+      console.log(`SoapBubbles: Initializing for canvasId: ${canvasId}`);
+
+      // Read config from data attribute
+      const configJson = canvas.getAttribute('data-config');
+      if (configJson) {
+        try {
+          const config = JSON.parse(configJson);
+          console.log(`SoapBubbles: Config parsed for "${canvasId}"`, config);
+
+          // Mark as initialized before calling init to prevent double initialization
+          canvas.setAttribute('data-initialized', 'true');
+          initSoapBubbles(config);
+        } catch (e) {
+          console.error('SoapBubbles: Failed to initialize', e);
+        }
+      } else {
+        console.warn(`SoapBubbles: No data-config attribute found on canvas "${canvasId}"`);
+      }
+    });
+
+    // If no canvases found yet and we haven't initialized, retry (with limit)
+    if (canvases.length === 0 && !hasInitialized) {
+      initTimeoutId = setTimeout(initialize, 100);
+    } else if (canvases.length > 0) {
+      hasInitialized = true;
+    }
+  }
+
+  // Cleanup function
+  function cleanup() {
+    if (initTimeoutId !== null) {
+      clearTimeout(initTimeoutId);
+      initTimeoutId = null;
+    }
+    if (domContentLoadedListener) {
+      document.removeEventListener('DOMContentLoaded', domContentLoadedListener);
+      domContentLoadedListener = null;
     }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
+    domContentLoadedListener = initialize;
+    document.addEventListener('DOMContentLoaded', domContentLoadedListener);
   } else {
-    setTimeout(initialize, 0);
+    initTimeoutId = setTimeout(initialize, 0);
   }
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', cleanup);
 </script>
 
 <style>
