@@ -46,18 +46,15 @@ const config = {
   data-config={JSON.stringify(config)}
   style={`z-index: ${zIndex}; pointer-events: ${pointerEvents};`}></canvas>
 
-<script>
+<script define:vars={{ canvasId, config }}>
   import { initSoapBubbles } from '../../lib/bubbles/init.js';
 
-  // Get config from canvas data attribute
+  // Initialize using the specific canvasId for this component instance
   function initialize() {
-    const canvas = document.querySelector('.soap-bubbles-canvas[data-config]');
+    const canvas = document.getElementById(canvasId);
     if (canvas) {
-      const configJson = canvas.getAttribute('data-config');
-      if (configJson) {
-        const config = JSON.parse(configJson);
-        initSoapBubbles(config);
-      }
+      // Use the config passed via define:vars, which is scoped to this component instance
+      initSoapBubbles(config);
     } else {
       // Canvas not found yet, retry
       setTimeout(initialize, 100);
