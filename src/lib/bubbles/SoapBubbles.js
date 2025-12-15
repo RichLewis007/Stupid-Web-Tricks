@@ -372,8 +372,12 @@ export class SoapBubbles {
 
   bindEvents() {
     window.addEventListener('resize', this.resizeHandler);
-    if (this.config.enableMouseInteraction || this.config.enableMousePop) {
+    // Mouse move only needed for interaction (attraction), not for popping
+    if (this.config.enableMouseInteraction) {
       document.addEventListener('mousemove', this.mouseMoveHandler);
+    }
+    // Click handler for popping bubbles
+    if (this.config.enableMousePop) {
       document.addEventListener('click', this.clickHandler);
     }
 
@@ -833,13 +837,8 @@ export class SoapBubbles {
         }
       }
 
-      // Check for collisions
-      if (!shape.isPopping && this.checkCollisionWithMouse(shape)) {
-        shape.isPopping = true;
-        shape.popPhase = 0;
-        shape.popReason = 'pointer'; // Track pop reason
-        this.triggerPopSound(shape);
-      }
+      // Note: Mouse collision popping removed - bubbles only pop on click now
+      // The handleClick method handles clicking to pop bubbles
 
       if (!shape.isPopping && this.checkCollisionWithElements(shape)) {
         shape.isPopping = true;

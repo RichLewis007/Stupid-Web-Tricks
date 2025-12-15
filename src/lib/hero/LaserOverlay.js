@@ -184,7 +184,7 @@ export class LaserOverlay {
 
   /**
    * Monitor pop stats and adjust laser interval based on player performance
-   * Once the laser speeds up, it stays at that speed until laser score >= player score
+   * Once the laser speeds up, it NEVER slows down until laser score >= player score
    * @returns {void}
    */
   startIntervalMonitor() {
@@ -211,21 +211,38 @@ export class LaserOverlay {
           );
         }
         // Speed up based on point difference (only when laser is behind)
-        else if (laserScore >= 0 && playerScore > laserScore) {
+        // IMPORTANT: Once sped up, we NEVER slow down until laserScore >= playerScore
+        else if (playerScore > laserScore) {
           const pointDifference = playerScore - laserScore;
+          const veryFastInterval = LASER_INTERVAL_MS / 4; // 2.5 seconds
+          const fastInterval = LASER_INTERVAL_MS / 2; // 5 seconds
 
           // If laser is behind by 20+ points, use very fast rate (2.5 seconds)
+          // Only speed up if not already at this rate or faster (smaller interval = faster)
           if (pointDifference >= 20) {
-            newInterval = LASER_INTERVAL_MS / 4; // 2.5 seconds
+            if (this.currentInterval > veryFastInterval) {
+              newInterval = veryFastInterval;
+              console.log(
+                `Laser behind by ${pointDifference} points, speeding up to very fast rate (${newInterval}ms)`,
+              );
+            }
+            // Already at very fast or faster, keep it
           }
           // Else if laser is behind by 10+ points, use fast rate (5 seconds)
+          // Only speed up if currently at normal rate (not already at fast or very fast)
           else if (pointDifference >= 10) {
-            newInterval = LASER_INTERVAL_MS / 2; // 5 seconds
+            if (this.currentInterval >= LASER_INTERVAL_MS) {
+              newInterval = fastInterval;
+              console.log(
+                `Laser behind by ${pointDifference} points, speeding up to fast rate (${newInterval}ms)`,
+              );
+            }
+            // Already at fast or very fast, keep it (never slow down)
           }
-          // If player is ahead but by less than 10 points, keep current rate (don't slow down)
-          // This means if we're already at fast/very fast, stay there
+          // If player is ahead but by less than 10 points, keep current rate
+          // This ensures we NEVER slow down until laserScore >= playerScore
         }
-        // If scores are equal and both are 0, or laser is ahead but already at normal rate, keep current rate
+        // If scores are equal (both 0 or same value) and laser is at normal rate, keep it
 
         // Only update if interval changed
         if (newInterval !== this.currentInterval) {
